@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Beacon Example Wallet",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "Reference Chrome extension wallet for Beacon SDK - a blueprint for wallet developers integrating Tezos dApp connectivity",
   "permissions": ["storage"],
   "action": {

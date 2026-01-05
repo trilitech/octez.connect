@@ -53,6 +53,11 @@ const logger = new Logger('WalletClient')
  * The WalletClient has to be used in the wallet. It handles all the logic related to connecting to beacon-compatible
  * dapps and handling/responding to requests.
  *
+ * @warning For browser extensions: The WalletClient maintains a persistent connection that polls relay servers
+ * every 30 seconds. Call `destroy()` when the client is no longer needed to stop polling and free resources.
+ * For extensions, consider conditional initialization - only connect when there are existing peers or when
+ * a new pairing request arrives. See the README for lifecycle management best practices.
+ *
  * @category Wallet
  */
 export class WalletClient extends Client {
