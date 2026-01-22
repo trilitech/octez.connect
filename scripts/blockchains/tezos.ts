@@ -24,6 +24,7 @@ export enum NetworkType {
   SEOULNET = 'seoulnet',
   SHADOWNET = 'shadownet',
   TALLINNNET = 'tallinnnet',
+  TEZLINK_SHADOWNET = 'tezlink_shadownet',
   CUSTOM = 'custom'
 }
 
@@ -95,7 +96,8 @@ export const tezosWebList: WebApp[] = [
       [NetworkType.RIONET]: 'https://metamask.tezos.com/',
       [NetworkType.SEOULNET]: 'https://metamask.tezos.com/',
       [NetworkType.SHADOWNET]: 'https://metamask.tezos.com/',
-      [NetworkType.TALLINNNET]: 'https://metamask.tezos.com/'
+      [NetworkType.TALLINNNET]: 'https://metamask.tezos.com/',
+      [NetworkType.TEZLINK_SHADOWNET]: 'https://metamask.tezos.com/'
     }
   },
   {
@@ -127,7 +129,8 @@ export const tezosWebList: WebApp[] = [
       [NetworkType.RIONET]: 'https://rionet.kukai.app',
       [NetworkType.SEOULNET]: 'https://seoulnet.kukai.app',
       [NetworkType.SHADOWNET]: 'https://shadownet.kukai.app',
-      [NetworkType.TALLINNNET]: 'https://tallinnnet.kukai.app'
+      [NetworkType.TALLINNNET]: 'https://tallinnnet.kukai.app',
+      [NetworkType.TEZLINK_SHADOWNET]: 'https://shadownet-tezlink.kukai.app'
     }
   },
 
@@ -159,7 +162,8 @@ export const tezosWebList: WebApp[] = [
       [NetworkType.RIONET]: 'https://ghostnet.tzsafe.marigold.dev',
       [NetworkType.SEOULNET]: 'https://ghostnet.tzsafe.marigold.dev',
       [NetworkType.SHADOWNET]: 'https://ghostnet.tzsafe.marigold.dev',
-      [NetworkType.TALLINNNET]: 'https://ghostnet.tzsafe.marigold.dev'
+      [NetworkType.TALLINNNET]: 'https://ghostnet.tzsafe.marigold.dev',
+      [NetworkType.TEZLINK_SHADOWNET]: 'https://tezlink.tzsafe.marigold.dev'
     }
   }
 ]

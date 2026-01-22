@@ -38,6 +38,7 @@ export interface WebApp extends AppBase {
     [NetworkType.SEOULNET]?: string
     [NetworkType.SHADOWNET]?: string
     [NetworkType.TALLINNNET]?: string
+    [NetworkType.TEZLINK_SHADOWNET]?: string
     [NetworkType.CUSTOM]?: string
   }
 }
