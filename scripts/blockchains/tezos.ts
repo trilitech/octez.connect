@@ -54,6 +54,15 @@ export const tezosExtensionList: ExtensionApp[] = [
     color: '',
     logo: 'extension-temple.png',
     link: 'https://templewallet.com/'
+  },
+  {
+    key: "nightly_chrome",
+    id: "fiikommddbeccaoicoejoniammnalkfa",
+    name: "Nightly",
+    shortName: "Nightly",
+    color: "#6067F9",
+    logo: "tezos_extension-nightly.svg",
+    link: "https://nightly.app/download"
   }
 ]
 
@@ -287,13 +296,15 @@ export const tezosIosList: App[] = [
     supportedInteractionStandards: ['wallet_connect'],
     universalLink: '',
     deepLink: undefined
+  },
+  {
+    key: "nightly_ios",
+    name: "Nightly",
+    shortName: "Nightly",
+    color: "#6067F9",
+    logo: "tezos_ios-nightly.svg",
+    supportedInteractionStandards: ["wallet_connect", "beacon"],
+    universalLink: "",
+    deepLink: "nightly://"
   }
-  // {
-  //   name: 'Galleon',
-  //   shortName: 'Galleon',
-  //   color: '',
-  //   logo: 'ios-galleon.png',
-  //   universalLink: 'https://cryptonomic.tech',
-  //   deepLink: 'galleon://'
-  // }
 ]
