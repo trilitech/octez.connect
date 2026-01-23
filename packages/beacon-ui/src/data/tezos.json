@@ -99,7 +99,8 @@
         "rionet": "https://metamask.tezos.com/",
         "seoulnet": "https://metamask.tezos.com/",
         "shadownet": "https://metamask.tezos.com/",
-        "tallinnnet": "https://metamask.tezos.com/"
+        "tallinnnet": "https://metamask.tezos.com/",
+        "tezlink-shadownet": "https://metamask.tezos.com/"
       }
     },
     {
@@ -133,7 +134,8 @@
         "rionet": "https://rionet.kukai.app",
         "seoulnet": "https://seoulnet.kukai.app",
         "shadownet": "https://shadownet.kukai.app",
-        "tallinnnet": "https://tallinnnet.kukai.app"
+        "tallinnnet": "https://tallinnnet.kukai.app",
+        "tezlink-shadownet": "https://shadownet-tezlink.kukai.app"
       }
     },
     {
@@ -164,7 +166,8 @@
         "rionet": "https://ghostnet.tzsafe.marigold.dev",
         "seoulnet": "https://ghostnet.tzsafe.marigold.dev",
         "shadownet": "https://ghostnet.tzsafe.marigold.dev",
-        "tallinnnet": "https://ghostnet.tzsafe.marigold.dev"
+        "tallinnnet": "https://ghostnet.tzsafe.marigold.dev",
+        "tezlink-shadownet": "https://tezlink-shadownet.tzsafe.marigold.dev"
       }
     }
   ],
