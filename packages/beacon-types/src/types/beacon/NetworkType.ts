@@ -21,5 +21,6 @@ export enum NetworkType {
   SEOULNET = 'seoulnet',
   SHADOWNET = 'shadownet',
   TALLINNNET = 'tallinnnet',
+  TEZLINK_SHADOWNET = 'tezlink-shadownet',
   CUSTOM = 'custom'
 }

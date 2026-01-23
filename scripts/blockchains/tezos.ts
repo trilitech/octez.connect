@@ -24,6 +24,7 @@ export enum NetworkType {
   SEOULNET = 'seoulnet',
   SHADOWNET = 'shadownet',
   TALLINNNET = 'tallinnnet',
+  TEZLINK_SHADOWNET = 'tezlink-shadownet',
   CUSTOM = 'custom'
 }
 
@@ -54,6 +55,15 @@ export const tezosExtensionList: ExtensionApp[] = [
     color: '',
     logo: 'extension-temple.png',
     link: 'https://templewallet.com/'
+  },
+  {
+    key: "nightly_chrome",
+    id: "fiikommddbeccaoicoejoniammnalkfa",
+    name: "Nightly",
+    shortName: "Nightly",
+    color: "#6067F9",
+    logo: "tezos_extension-nightly.svg",
+    link: "https://nightly.app/download"
   }
 ]
 
@@ -86,7 +96,8 @@ export const tezosWebList: WebApp[] = [
       [NetworkType.RIONET]: 'https://metamask.tezos.com/',
       [NetworkType.SEOULNET]: 'https://metamask.tezos.com/',
       [NetworkType.SHADOWNET]: 'https://metamask.tezos.com/',
-      [NetworkType.TALLINNNET]: 'https://metamask.tezos.com/'
+      [NetworkType.TALLINNNET]: 'https://metamask.tezos.com/',
+      [NetworkType.TEZLINK_SHADOWNET]: 'https://metamask.tezos.com/'
     }
   },
   {
@@ -118,7 +129,8 @@ export const tezosWebList: WebApp[] = [
       [NetworkType.RIONET]: 'https://rionet.kukai.app',
       [NetworkType.SEOULNET]: 'https://seoulnet.kukai.app',
       [NetworkType.SHADOWNET]: 'https://shadownet.kukai.app',
-      [NetworkType.TALLINNNET]: 'https://tallinnnet.kukai.app'
+      [NetworkType.TALLINNNET]: 'https://tallinnnet.kukai.app',
+      [NetworkType.TEZLINK_SHADOWNET]: 'https://shadownet-tezlink.kukai.app'
     }
   },
 
@@ -150,7 +162,8 @@ export const tezosWebList: WebApp[] = [
       [NetworkType.RIONET]: 'https://ghostnet.tzsafe.marigold.dev',
       [NetworkType.SEOULNET]: 'https://ghostnet.tzsafe.marigold.dev',
       [NetworkType.SHADOWNET]: 'https://ghostnet.tzsafe.marigold.dev',
-      [NetworkType.TALLINNNET]: 'https://ghostnet.tzsafe.marigold.dev'
+      [NetworkType.TALLINNNET]: 'https://ghostnet.tzsafe.marigold.dev',
+      [NetworkType.TEZLINK_SHADOWNET]: 'https://tezlink.tzsafe.marigold.dev'
     }
   }
 ]
@@ -287,13 +300,15 @@ export const tezosIosList: App[] = [
     supportedInteractionStandards: ['wallet_connect'],
     universalLink: '',
     deepLink: undefined
+  },
+  {
+    key: "nightly_ios",
+    name: "Nightly",
+    shortName: "Nightly",
+    color: "#6067F9",
+    logo: "tezos_ios-nightly.svg",
+    supportedInteractionStandards: ["wallet_connect", "beacon"],
+    universalLink: "",
+    deepLink: "nightly://"
   }
-  // {
-  //   name: 'Galleon',
-  //   shortName: 'Galleon',
-  //   color: '',
-  //   logo: 'ios-galleon.png',
-  //   universalLink: 'https://cryptonomic.tech',
-  //   deepLink: 'galleon://'
-  // }
 ]

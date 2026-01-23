@@ -26,7 +26,8 @@ export class TzktBlockExplorer extends BlockExplorer {
       [NetworkType.RIONET]: 'https://rionet.tzkt.io',
       [NetworkType.SEOULNET]: 'https://seoulnet.tzkt.io',
       [NetworkType.SHADOWNET]: 'https://shadownet.tzkt.io',
-      [NetworkType.TALLINNNET]: 'https://tallinnnet.tzkt.io'
+      [NetworkType.TALLINNNET]: 'https://tallinnnet.tzkt.io',
+      [NetworkType.TEZLINK_SHADOWNET]: 'https://shadownet.tezlink.tzkt.io'
     }
   ) {
     super(rpcUrls)
