@@ -1,5 +1,5 @@
 {
-  "name": "@airgap/beacon-utils",
+  "name": "@tezos-x/beacon-utils",
   "version": "4.7.0",
   "description": "This package contains utility functions that are used throughout the beacon-sdk",
   "author": "Andreas Gassmann <a.gassmann@papers.ch>",
