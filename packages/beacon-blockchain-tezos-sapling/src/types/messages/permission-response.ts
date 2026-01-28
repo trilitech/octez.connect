@@ -1,4 +1,4 @@
-import { AppMetadata, NetworkType, PermissionResponseV3 } from '@airgap/beacon-types'
+import { AppMetadata, NetworkType, PermissionResponseV3 } from '@tezos-x/beacon-types'
 import { TezosSaplingPermissionScope } from '../permission-scope'
 
 export interface TezosSaplingPermissionResponse extends PermissionResponseV3<'tezos-sapling'> {

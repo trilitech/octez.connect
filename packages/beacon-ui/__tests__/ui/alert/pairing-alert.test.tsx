@@ -1,5 +1,5 @@
 import { act, render, screen, fireEvent, RenderResult } from '@testing-library/react'
-import { NetworkType, StorageKey } from '@airgap/beacon-types'
+import { NetworkType, StorageKey } from '@tezos-x/beacon-types'
 import PairingAlert from '../../../src/ui/alert/components/pairing-alert'
 import { ConfigurableAlertProps } from '../../../src/ui/common'
 

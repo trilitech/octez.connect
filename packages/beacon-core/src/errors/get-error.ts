@@ -2,7 +2,7 @@
 import { BeaconError } from './BeaconError'
 import { BroadcastBeaconError } from './BroadcastBeaconError'
 import { NetworkNotSupportedBeaconError } from './NetworkNotSupportedBeaconError'
-import { BeaconErrorType } from '@airgap/beacon-types'
+import { BeaconErrorType } from '@tezos-x/beacon-types'
 import { assertNever } from '../utils/assert-never'
 import { AbortedBeaconError } from './AbortedBeaconError'
 import { NoAddressBeaconError } from './NoAddressBeaconError'

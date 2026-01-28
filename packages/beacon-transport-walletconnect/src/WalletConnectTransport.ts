@@ -10,10 +10,10 @@ import {
   WalletConnectPairingRequest,
   NetworkType,
   TransportType
-} from '@airgap/beacon-types'
-import { Transport, PeerManager } from '@airgap/beacon-core'
+} from '@tezos-x/beacon-types'
+import { Transport, PeerManager } from '@tezos-x/beacon-core'
 import { SignClientTypes } from '@walletconnect/types'
-import { ExposedPromise } from '@airgap/beacon-utils'
+import { ExposedPromise } from '@tezos-x/beacon-utils'
 
 /**
  * @internalapi

@@ -1,6 +1,6 @@
 # Beacon SDK
 
-[![npm](https://img.shields.io/npm/v/@airgap/beacon-sdk.svg?colorB=brightgreen)](https://www.npmjs.com/package/@airgap/beacon-sdk)
+[![npm](https://img.shields.io/npm/v/@tezos-x/beacon-sdk.svg?colorB=brightgreen)](https://www.npmjs.com/package/@tezos-x/beacon-sdk)
 [![documentation](https://img.shields.io/badge/documentation-online-brightgreen.svg)](https://airgap-it.github.io/beacon-sdk/)
 [![GitHub Action](https://github.com/airgap-it/beacon-sdk/workflows/Build%2C%20Test%20and%20Analyze/badge.svg)](https://github.com/airgap-it/beacon-sdk/actions?query=workflow%3A%22Build%2C+Test+and+Analyze%22+branch%3Amain)
 [![code style: prettier](https://img.shields.io/badge/code_style-prettier-ff69b4.svg?style=flat-square)](https://github.com/prettier/prettier)
@@ -27,13 +27,13 @@ The documentation can be found [here](https://docs.walletbeacon.io/), technical 
 ## Installation
 
 ```
-npm i --save @airgap/beacon-sdk
+npm i --save @tezos-x/beacon-sdk
 ```
 
 ## Example DApp integration
 
 ```ts
-import { DAppClient } from '@airgap/beacon-sdk'
+import { DAppClient } from '@tezos-x/beacon-sdk'
 
 const dAppClient = new DAppClient({ name: 'My Sample DApp' })
 

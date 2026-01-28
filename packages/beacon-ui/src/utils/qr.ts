@@ -1,5 +1,5 @@
 import QRCode from 'qrcode-svg'
-import { Logger } from '@airgap/beacon-core'
+import { Logger } from '@tezos-x/beacon-core'
 
 const logger = new Logger('QR')
 

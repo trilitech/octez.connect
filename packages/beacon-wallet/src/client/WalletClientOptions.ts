@@ -1,4 +1,4 @@
-import { NodeDistributions, Storage } from '@airgap/beacon-types'
+import { NodeDistributions, Storage } from '@tezos-x/beacon-types'
 
 /**
  * @category Wallet

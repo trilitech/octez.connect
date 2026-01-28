@@ -1,4 +1,4 @@
-import { NetworkType, AnalyticsInterface, WalletInfo } from '@airgap/beacon-types'
+import { NetworkType, AnalyticsInterface, WalletInfo } from '@tezos-x/beacon-types'
 import { MergedWallet } from '../utils/wallets'
 
 // ALERT

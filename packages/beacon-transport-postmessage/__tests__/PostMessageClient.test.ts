@@ -1,17 +1,17 @@
 // __tests__/communication-client/PostMessageClient.test.ts
 
-import { windowRef, Serializer } from '@airgap/beacon-core'
-import { openCryptobox, secretbox_NONCEBYTES, secretbox_MACBYTES } from '@airgap/beacon-utils'
+import { windowRef, Serializer } from '@tezos-x/beacon-core'
+import { openCryptobox, secretbox_NONCEBYTES, secretbox_MACBYTES } from '@tezos-x/beacon-utils'
 import {
   ExtensionMessageTarget,
   Origin,
   ExtendedPostMessagePairingResponse
-} from '@airgap/beacon-types'
+} from '@tezos-x/beacon-types'
 import { PostMessageClient } from '../src/PostMessageClient'
 
-// --- 1) Mocks for @airgap/beacon-core ---
-jest.mock('@airgap/beacon-core', () => {
-  const actual = jest.requireActual('@airgap/beacon-core')
+// --- 1) Mocks for @tezos-x/beacon-core ---
+jest.mock('@tezos-x/beacon-core', () => {
+  const actual = jest.requireActual('@tezos-x/beacon-core')
 
   const windowRef = {
     postMessage: jest.fn(),
@@ -42,9 +42,9 @@ jest.mock('@airgap/beacon-core', () => {
   }
 })
 
-// --- 2) Mocks for @airgap/beacon-utils ---
-jest.mock('@airgap/beacon-utils', () => {
-  const actual = jest.requireActual('@airgap/beacon-utils')
+// --- 2) Mocks for @tezos-x/beacon-utils ---
+jest.mock('@tezos-x/beacon-utils', () => {
+  const actual = jest.requireActual('@tezos-x/beacon-utils')
   return {
     ...actual,
     openCryptobox: jest.fn(),

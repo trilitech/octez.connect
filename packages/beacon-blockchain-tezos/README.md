@@ -1,10 +1,10 @@
-# `@airgap/beacon-blockchain-tezos`
+# `@tezos-x/beacon-blockchain-tezos`
 
-This package is part of the `@airgap/beacon-sdk` project. [Read more](https://github.com/airgap-it/beacon-sdk)
+This package is part of the `@tezos-x/beacon-sdk` project. [Read more](https://github.com/airgap-it/beacon-sdk)
 
 ## Introduction
 
-This package adds support for the `tezos` blockchain. It can be used in combination with the `@airgap/beacon-dapp` or `@airgap/beacon-wallet` packages.
+This package adds support for the `tezos` blockchain. It can be used in combination with the `@tezos-x/beacon-dapp` or `@tezos-x/beacon-wallet` packages.
 
 ## Usage
 

@@ -1,7 +1,7 @@
 import { renderHook, act, waitFor } from '@testing-library/react'
 import useWallets from '../../src/ui/alert/hooks/useWallets'
-import { PostMessageTransport } from '@airgap/beacon-transport-postmessage'
-import { NetworkType } from '@airgap/beacon-types'
+import { PostMessageTransport } from '@tezos-x/beacon-transport-postmessage'
+import { NetworkType } from '@tezos-x/beacon-types'
 
 // =====================================================================
 // Mock the wallet utilities with a simple transformation so that the final
@@ -84,7 +84,7 @@ jest.mock('../../src/ui/alert/wallet-lists', () => ({
 
 // =====================================================================
 // Mock PostMessageTransport so we can control the returned available extensions.
-jest.mock('@airgap/beacon-transport-postmessage', () => ({
+jest.mock('@tezos-x/beacon-transport-postmessage', () => ({
   PostMessageTransport: {
     getAvailableExtensions: jest.fn()
   }
@@ -105,7 +105,7 @@ const mockRemoveEventListener = jest.fn((event, handler) => {
 })
 
 // Renamed variables starting with "mock" are allowed in module factory.
-jest.mock('@airgap/beacon-core', () => ({
+jest.mock('@tezos-x/beacon-core', () => ({
   windowRef: {
     addEventListener: (event: any, handler: any) => mockAddEventListener(event, handler),
     removeEventListener: (event: any, handler: any) => mockRemoveEventListener(event, handler)

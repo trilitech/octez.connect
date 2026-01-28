@@ -1,6 +1,6 @@
-# `@airgap/beacon-utils`
+# `@tezos-x/beacon-utils`
 
-This package is part of the `@airgap/beacon-sdk` project. [Read more](https://github.com/airgap-it/beacon-sdk)
+This package is part of the `@tezos-x/beacon-sdk` project. [Read more](https://github.com/airgap-it/beacon-sdk)
 
 ## Introduction
 

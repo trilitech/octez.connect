@@ -1,6 +1,6 @@
 import { PermissionManager } from '../../src/managers/PermissionManager'
 import { PermissionValidator } from '../../src/managers/PermissionValidator'
-import { Storage, StorageKey, PermissionInfo, BeaconMessage } from '@airgap/beacon-types'
+import { Storage, StorageKey, PermissionInfo, BeaconMessage } from '@tezos-x/beacon-types'
 
 /**
  * A simple in-memory implementation of the Beacon Storage abstract class

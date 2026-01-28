@@ -1,6 +1,6 @@
 import { render, screen, fireEvent } from '@testing-library/react'
 import TopWallets from '../../src/components/top-wallets/index'
-import { StorageKey } from '@airgap/beacon-types'
+import { StorageKey } from '@tezos-x/beacon-types'
 import { MergedWallet } from 'src/utils/wallets'
 
 // --- Mock the Wallet component ---

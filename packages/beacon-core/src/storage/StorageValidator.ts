@@ -1,4 +1,4 @@
-import { Storage, StorageKey } from '@airgap/beacon-types'
+import { Storage, StorageKey } from '@tezos-x/beacon-types'
 
 export class StorageValidator {
   constructor(private readonly storage: Storage) {}

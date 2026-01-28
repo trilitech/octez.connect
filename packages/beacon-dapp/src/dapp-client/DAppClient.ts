@@ -76,7 +76,7 @@ import {
   // EncryptPayloadResponseOutput,
   // EncryptPayloadResponse,
   // EncryptPayloadRequest
-} from '@airgap/beacon-types'
+} from '@tezos-x/beacon-types'
 import {
   Client,
   Transport,
@@ -93,7 +93,7 @@ import {
   MultiTabChannel,
   BACKEND_URL,
   getError
-} from '@airgap/beacon-core'
+} from '@tezos-x/beacon-core'
 import {
   getAddressFromPublicKey,
   ExposedPromise,
@@ -104,17 +104,17 @@ import {
   prefixPublicKey,
   isValidAddress,
   getKeypairFromSeed
-} from '@airgap/beacon-utils'
+} from '@tezos-x/beacon-utils'
 import { messageEvents } from '../beacon-message-events'
 import { BlockExplorer } from '../utils/block-explorer'
 import { TzktBlockExplorer } from '../utils/tzkt-blockexplorer'
 
 import { DAppClientOptions } from './DAppClientOptions'
-import { BeaconEventHandler } from '@airgap/beacon-dapp'
+import { BeaconEventHandler } from '@tezos-x/beacon-dapp'
 import { DappPostMessageTransport } from '../transports/DappPostMessageTransport'
 import { DappP2PTransport } from '../transports/DappP2PTransport'
 import { DappWalletConnectTransport } from '../transports/DappWalletConnectTransport'
-import { PostMessageTransport } from '@airgap/beacon-transport-postmessage'
+import { PostMessageTransport } from '@tezos-x/beacon-transport-postmessage'
 import {
   AlertButton,
   closeToast,
@@ -133,8 +133,8 @@ import {
   isMobileOS,
   isIOS,
   currentOS
-} from '@airgap/beacon-ui'
-import { WalletConnectTransport } from '@airgap/beacon-transport-walletconnect'
+} from '@tezos-x/beacon-ui'
+import { WalletConnectTransport } from '@tezos-x/beacon-transport-walletconnect'
 
 const logger = new Logger('DAppClient')
 

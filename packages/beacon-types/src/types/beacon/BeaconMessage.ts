@@ -17,7 +17,7 @@ import {
   SimulatedProofOfEventChallengeRequest,
   SimulatedProofOfEventChallengeResponse,
   ChangeAccountRequest
-} from '@airgap/beacon-types'
+} from '@tezos-x/beacon-types'
 
 /**
  * @internalapi

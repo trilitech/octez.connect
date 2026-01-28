@@ -1,5 +1,5 @@
 import { desktopList, extensionList, iOSList, webList } from '../ui/alert/wallet-lists'
-import { DesktopApp, App, ExtensionApp, WebApp } from '@airgap/beacon-types'
+import { DesktopApp, App, ExtensionApp, WebApp } from '@tezos-x/beacon-types'
 
 /**
  * Initialize with tezos wallets for backwards compatibility

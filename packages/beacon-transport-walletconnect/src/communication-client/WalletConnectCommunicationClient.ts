@@ -6,7 +6,7 @@ import {
   Logger,
   WCStorage,
   SDK_VERSION
-} from '@airgap/beacon-core'
+} from '@tezos-x/beacon-core'
 import Client from '@walletconnect/sign-client'
 import { ProposalTypes, SessionTypes, SignClientTypes } from '@walletconnect/types'
 import { getSdkError } from '@walletconnect/utils'
@@ -45,8 +45,8 @@ import {
   SignPayloadResponseInput,
   StorageKey,
   TransportType
-} from '@airgap/beacon-types'
-import { generateGUID, getAddressFromPublicKey, isPublicKeySC } from '@airgap/beacon-utils'
+} from '@tezos-x/beacon-types'
+import { generateGUID, getAddressFromPublicKey, isPublicKeySC } from '@tezos-x/beacon-utils'
 
 const TEZOS_PLACEHOLDER = 'tezos'
 const BEACON_SDK_VERSION = 'beacon_sdk_version'

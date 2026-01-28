@@ -4,12 +4,12 @@ import {
   ExtendedWalletConnectPairingResponse,
   TransportStatus,
   NetworkType
-} from '@airgap/beacon-types'
-import { Logger } from '@airgap/beacon-core'
-import { WalletConnectTransport } from '@airgap/beacon-transport-walletconnect'
+} from '@tezos-x/beacon-types'
+import { Logger } from '@tezos-x/beacon-core'
+import { WalletConnectTransport } from '@tezos-x/beacon-transport-walletconnect'
 import { KeyPair } from '@stablelib/ed25519'
 import { SignClientTypes } from '@walletconnect/types'
-import { isMobileOS } from '@airgap/beacon-ui'
+import { isMobileOS } from '@tezos-x/beacon-ui'
 
 const logger = new Logger('DappWalletConnectTransport')
 

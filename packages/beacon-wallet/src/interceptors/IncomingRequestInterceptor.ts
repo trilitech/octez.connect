@@ -14,9 +14,9 @@ import {
   PermissionRequestV3,
   BeaconBaseMessage
   // EncryptPayloadRequestOutput
-} from '@airgap/beacon-types'
-import { AppMetadataManager, Logger } from '@airgap/beacon-core'
-import { SimulatedProofOfEventChallengeRequestOutput } from '@airgap/beacon-types/dist/esm/types/beacon/messages/BeaconRequestOutputMessage'
+} from '@tezos-x/beacon-types'
+import { AppMetadataManager, Logger } from '@tezos-x/beacon-core'
+import { SimulatedProofOfEventChallengeRequestOutput } from '@tezos-x/beacon-types/dist/esm/types/beacon/messages/BeaconRequestOutputMessage'
 
 const logger = new Logger('IncomingRequestInterceptor')
 

@@ -1,4 +1,4 @@
-import { BeaconBaseMessage, BeaconMessageType, SigningType } from '@airgap/beacon-types'
+import { BeaconBaseMessage, BeaconMessageType, SigningType } from '@tezos-x/beacon-types'
 
 /**
  * @category Message

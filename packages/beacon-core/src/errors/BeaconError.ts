@@ -1,4 +1,4 @@
-import { BeaconErrorType } from '@airgap/beacon-types'
+import { BeaconErrorType } from '@tezos-x/beacon-types'
 
 /**
  * @category Error

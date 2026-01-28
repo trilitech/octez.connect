@@ -1,4 +1,4 @@
-import { BeaconBaseMessage, BeaconMessageType, Network } from '@airgap/beacon-types'
+import { BeaconBaseMessage, BeaconMessageType, Network } from '@tezos-x/beacon-types'
 
 /**
  * @category Message

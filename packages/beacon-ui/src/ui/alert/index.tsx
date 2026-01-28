@@ -5,7 +5,7 @@ import { AlertConfig, ConfigurableAlertProps } from '../common'
 import PairingAlert from './components/pairing-alert'
 import InfoAlert from './components/info-alert'
 import { getColorMode } from 'src/utils/colorMode'
-import { NetworkType } from '@airgap/beacon-types'
+import { NetworkType } from '@tezos-x/beacon-types'
 
 // Import the bundled CSS as a raw string
 import cssText from './aggregated.css'

@@ -4,7 +4,7 @@
     "outDir": "./dist/esm",
     "baseUrl": ".",
     "paths": {
-      "@airgap/beacon-blockchain-tezos-sapling": ["./src"]
+      "@tezos-x/beacon-blockchain-tezos-sapling": ["./src"]
     }
   },
   "include": ["./src"]

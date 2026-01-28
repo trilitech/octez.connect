@@ -22,7 +22,7 @@ import {
   TezosTransferTicketOperation,
   TezosUpdateConsensusKeyOperation,
   TezosVdfRevelationOperation
-} from '@airgap/beacon-types'
+} from '@tezos-x/beacon-types'
 import { TezosActivateAccountOperation } from './operations/ActivateAccount'
 import { TezosBallotOperation } from './operations/Ballot'
 import { TezosDelegationOperation } from './operations/Delegation'

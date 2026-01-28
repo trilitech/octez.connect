@@ -8,7 +8,7 @@ import {
   closeToast,
   openToast,
   ToastAction
-} from '@airgap/beacon-dapp'
+} from '@tezos-x/beacon-dapp'
 import {
   BeaconErrorType,
   ExtendedPostMessagePairingResponse,
@@ -28,7 +28,7 @@ import {
   AnalyticsInterface,
   ProofOfEventChallengeResponseOutput,
   SimulatedProofOfEventChallengeResponseOutput
-} from '@airgap/beacon-types'
+} from '@tezos-x/beacon-types'
 import {
   UnknownBeaconError,
   Transport,
@@ -36,9 +36,9 @@ import {
   getError
   // EncryptPayloadResponseOutput,
   // EncryptionOperation
-} from '@airgap/beacon-core'
+} from '@tezos-x/beacon-core'
 import { shortenString } from './utils/shorten-string'
-import { isMobile, isMobileOS } from '@airgap/beacon-ui'
+import { isMobile, isMobileOS } from '@tezos-x/beacon-ui'
 
 const logger = new Logger('BeaconEvents')
 

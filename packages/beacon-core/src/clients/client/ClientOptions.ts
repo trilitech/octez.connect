@@ -1,4 +1,4 @@
-import { Storage, NodeDistributions } from '@airgap/beacon-types'
+import { Storage, NodeDistributions } from '@tezos-x/beacon-types'
 
 /**
  * @internalapi

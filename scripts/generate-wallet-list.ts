@@ -77,7 +77,7 @@ const generateForBlockchains = (
     const webListWithInlinedLogo = await convert(webList)
     const iosListWithInlinedLogo = await convert(iosList)
 
-    let out = `import { App, DesktopApp, ExtensionApp, WebApp } from '@airgap/beacon-types'\n\n`
+    let out = `import { App, DesktopApp, ExtensionApp, WebApp } from '@tezos-x/beacon-types'\n\n`
 
     out += `export const extensionList: ExtensionApp[] = ${JSON.stringify(
       extensionListWithInlinedLogo,

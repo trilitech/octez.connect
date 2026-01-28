@@ -1,5 +1,5 @@
-import { PeerInfoType } from '@airgap/beacon-types'
-import { toHex, getHexHash, sealCryptobox } from '@airgap/beacon-utils'
+import { PeerInfoType } from '@tezos-x/beacon-types'
+import { toHex, getHexHash, sealCryptobox } from '@tezos-x/beacon-utils'
 import { convertPublicKeyToX25519, convertSecretKeyToX25519, KeyPair } from '@stablelib/ed25519'
 import { clientSessionKeys, serverSessionKeys, SessionKeys } from '@stablelib/x25519-session'
 import { ClientEvents } from './ClientEvents'

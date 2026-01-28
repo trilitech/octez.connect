@@ -4,7 +4,7 @@
     "outDir": "./dist/esm",
     "baseUrl": ".",
     "paths": {
-      "@airgap/beacon-dapp": ["./src"]
+      "@tezos-x/beacon-dapp": ["./src"]
     }
   },
   "include": ["./src"]

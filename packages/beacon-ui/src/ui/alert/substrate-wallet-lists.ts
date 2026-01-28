@@ -1,4 +1,4 @@
-import { App, DesktopApp, ExtensionApp, WebApp } from '@airgap/beacon-types'
+import { App, DesktopApp, ExtensionApp, WebApp } from '@tezos-x/beacon-types'
 
 export const extensionList: ExtensionApp[] = []
 

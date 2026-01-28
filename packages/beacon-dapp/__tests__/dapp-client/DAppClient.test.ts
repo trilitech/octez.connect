@@ -1,16 +1,16 @@
 // __tests__/DAppClient.test.ts
 import { DAppClient } from '../../src/dapp-client/DAppClient'
-import { NetworkType } from '@airgap/beacon-types'
-import { ExposedPromise } from '@airgap/beacon-utils'
-import { LocalStorage } from '@airgap/beacon-core'
+import { NetworkType } from '@tezos-x/beacon-types'
+import { ExposedPromise } from '@tezos-x/beacon-utils'
+import { LocalStorage } from '@tezos-x/beacon-core'
 import { BeaconEvent } from '../../src/events'
 
 //
-// 1) Mock out all the heavy @airgap/beacon-core and @airgap/beacon-ui dependencies,
+// 1) Mock out all the heavy @tezos-x/beacon-core and @tezos-x/beacon-ui dependencies,
 //    so we can instantiate DAppClient without spinning up real transports, storage, etc.
 //
 
-jest.mock('@airgap/beacon-ui', () => ({
+jest.mock('@tezos-x/beacon-ui', () => ({
   setColorMode: jest.fn(),
   getColorMode: jest.fn().mockReturnValue('light'),
   setDesktopList: jest.fn(),
@@ -29,8 +29,8 @@ jest.mock('@airgap/beacon-ui', () => ({
   closeToast: jest.fn()
 }))
 
-jest.mock('@airgap/beacon-core', () => {
-  const actual = jest.requireActual('@airgap/beacon-core')
+jest.mock('@tezos-x/beacon-core', () => {
+  const actual = jest.requireActual('@tezos-x/beacon-core')
   return {
     ...actual,
     // a minimal in-memory LocalStorage stub

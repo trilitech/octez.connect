@@ -1,4 +1,4 @@
-import { AnalyticsInterface, Storage } from '@airgap/beacon-types'
+import { AnalyticsInterface, Storage } from '@tezos-x/beacon-types'
 
 /**
  * @internalapi

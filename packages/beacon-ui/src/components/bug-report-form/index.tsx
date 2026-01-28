@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react'
-import { BACKEND_URL, IndexedDBStorage, Logger, SDK_VERSION } from '@airgap/beacon-core'
-import { StorageKey } from '@airgap/beacon-types'
+import { BACKEND_URL, IndexedDBStorage, Logger, SDK_VERSION } from '@tezos-x/beacon-core'
+import { StorageKey } from '@tezos-x/beacon-types'
 import { currentBrowser, currentOS } from '../../utils/platform'
 
 const logger = new Logger('BugReport')

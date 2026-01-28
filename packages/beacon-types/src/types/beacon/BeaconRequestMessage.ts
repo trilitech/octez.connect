@@ -6,7 +6,7 @@ import {
   ProofOfEventChallengeRequest,
   SimulatedProofOfEventChallengeRequest
   // EncryptPayloadRequest
-} from '@airgap/beacon-types'
+} from '@tezos-x/beacon-types'
 
 /**
  * @internalapi

@@ -1,6 +1,6 @@
-# `@airgap/beacon-wallet`
+# `@tezos-x/beacon-wallet`
 
-This package is part of the `@airgap/beacon-sdk` project. [Read more](https://github.com/airgap-it/beacon-sdk)
+This package is part of the `@tezos-x/beacon-sdk` project. [Read more](https://github.com/airgap-it/beacon-sdk)
 
 ## Introduction
 
@@ -9,7 +9,7 @@ Use this package in your wallet to instanciate a `WalletClient` object and commu
 ## Usage
 
 ```
-import { WalletClient } from '@airgap/beacon-wallet'
+import { WalletClient } from '@tezos-x/beacon-wallet'
 
 const walletClient = new WalletClient({ name: "Example Wallet" });
 ```

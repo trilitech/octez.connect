@@ -7,7 +7,7 @@ import {
   AccountInfo,
   ProofOfEventChallengeResponse,
   SimulatedProofOfEventChallengeResponse
-} from '@airgap/beacon-types'
+} from '@tezos-x/beacon-types'
 
 /**
  * @category DApp

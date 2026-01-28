@@ -1,4 +1,4 @@
-import { Optional } from '@airgap/beacon-types'
+import { Optional } from '@tezos-x/beacon-types'
 import {
   PermissionRequest,
   OperationRequest,
@@ -7,7 +7,7 @@ import {
   SimulatedProofOfEventChallengeRequest,
   // EncryptPayloadRequest,
   BroadcastRequest
-} from '@airgap/beacon-types'
+} from '@tezos-x/beacon-types'
 
 /**
  * @internalapi

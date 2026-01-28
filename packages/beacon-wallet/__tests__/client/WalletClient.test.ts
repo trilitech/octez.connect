@@ -1,15 +1,15 @@
 // __tests__/client/WalletClient.test.ts
 
 import axios from 'axios'
-import { Client, LocalStorage } from '@airgap/beacon-core'
-import { StorageKey } from '@airgap/beacon-types'
+import { Client, LocalStorage } from '@tezos-x/beacon-core'
+import { StorageKey } from '@tezos-x/beacon-types'
 import { WalletClient } from '../../src/client/WalletClient'
 import { WalletP2PTransport } from '../../src/transports/WalletP2PTransport'
 
 jest.mock('axios')
 
 // Stub out all of beacon-utils, including generateGUID
-jest.mock('@airgap/beacon-utils', () => ({
+jest.mock('@tezos-x/beacon-utils', () => ({
   ExposedPromise: class {
     public promise = new Promise<boolean>(() => {})
     public resolve = jest.fn()
@@ -19,8 +19,8 @@ jest.mock('@airgap/beacon-utils', () => ({
 }))
 
 // Stub everything from beacon-core *except* Client, so subclassing still works
-jest.mock('@airgap/beacon-core', () => {
-  const actual = jest.requireActual('@airgap/beacon-core')
+jest.mock('@tezos-x/beacon-core', () => {
+  const actual = jest.requireActual('@tezos-x/beacon-core')
   return {
     ...actual,
     LocalStorage: jest.fn().mockImplementation(() => ({

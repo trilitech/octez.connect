@@ -1,6 +1,6 @@
 import { useMemo } from 'react'
 import { arrangeTopWallets, mergeWallets, parseWallets } from '../../../utils/wallets'
-import { NetworkType } from '@airgap/beacon-types'
+import { NetworkType } from '@tezos-x/beacon-types'
 import { desktopList, extensionList, iOSList, webList } from '../substrate-wallet-lists'
 
 const useSubstrateWallets = (networkType?: NetworkType, featuredWallets?: string[]) => {

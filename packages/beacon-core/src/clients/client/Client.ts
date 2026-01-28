@@ -1,4 +1,4 @@
-import { ExposedPromise, generateGUID } from '@airgap/beacon-utils'
+import { ExposedPromise, generateGUID } from '@tezos-x/beacon-utils'
 import {
   ConnectionContext,
   TransportType,
@@ -12,7 +12,7 @@ import {
   BeaconRequestMessage,
   BeaconMessageWrapper,
   NodeDistributions
-} from '@airgap/beacon-types'
+} from '@tezos-x/beacon-types'
 import { BeaconClient } from '../beacon-client/BeaconClient'
 import { AccountManager } from '../../managers/AccountManager'
 import { getSenderId } from '../../utils/get-sender-id'

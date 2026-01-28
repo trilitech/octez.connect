@@ -1,4 +1,4 @@
-import { PostMessageTransport } from '@airgap/beacon-transport-postmessage'
+import { PostMessageTransport } from '@tezos-x/beacon-transport-postmessage'
 
 /**
  * An object with promises to indicate whether or not that transport is available.
