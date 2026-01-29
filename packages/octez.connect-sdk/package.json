@@ -1,0 +1,47 @@
+{
+  "name": "@tezos-x/octez.connect-sdk",
+  "version": "1.0.0",
+  "description": "The `octez.connect-sdk` simplifies and abstracts the communication between dApps and wallets over different transport layers.",
+  "author": "Andreas Gassmann <a.gassmann@papers.ch>",
+  "license": "ISC",
+  "main": "dist/cjs/index.js",
+  "module": "dist/esm/index.js",
+  "unpkg": "dist/octez.connect.min.js",
+  "types": "dist/esm/index.d.ts",
+  "exports": {
+    "require": "./dist/cjs/index.js",
+    "import": "./dist/esm/index.js"
+  },
+  "directories": {
+    "lib": "dist/esm",
+    "test": "__tests__"
+  },
+  "files": [
+    "dist"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/trilitech/octez.connect-sdk.git"
+  },
+  "scripts": {
+    "tsc": "tsc -p tsconfig.json && tsc -p tsconfig-cjs.json"
+  },
+  "bugs": {
+    "url": "https://github.com/trilitech/octez.connect-sdk/issues"
+  },
+  "dependencies": {
+    "@tezos-x/octez.connect-blockchain-substrate": "1.0.0",
+    "@tezos-x/octez.connect-blockchain-tezos": "1.0.0",
+    "@tezos-x/octez.connect-core": "1.0.0",
+    "@tezos-x/octez.connect-dapp": "1.0.0",
+    "@tezos-x/octez.connect-transport-matrix": "1.0.0",
+    "@tezos-x/octez.connect-transport-postmessage": "1.0.0",
+    "@tezos-x/octez.connect-types": "1.0.0",
+    "@tezos-x/octez.connect-ui": "1.0.0",
+    "@tezos-x/octez.connect-utils": "1.0.0",
+    "@tezos-x/octez.connect-wallet": "1.0.0"
+  }
+}

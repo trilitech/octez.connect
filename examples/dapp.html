@@ -4,7 +4,7 @@
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta http-equiv="Content-Style-Type" content="text/css" />
-    <title>Beacon Example DApp</title>
+    <title>octez.connect Example DApp</title>
 
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/water.css@2/out/water.css" />
 
@@ -26,7 +26,7 @@
       })
     </script>
 
-    <script src="./walletbeacon.min.js"></script>
+    <script src="./octez.connect.min.js"></script>
 
     <style>
       /* To test if our UI is affected by global styles */
@@ -41,7 +41,7 @@
   </head>
 
   <body>
-    Beacon Example
+    octez.connect Example
     <br /><br />
     <span>
       Active account:
@@ -221,14 +221,14 @@
         },
         matrixNodes: {
           [beacon.Regions.EUROPE_WEST]: [
-            'beacon-node-1.diamond.papers.tech',
-            'beacon-node-1.sky.papers.tech',
-            'beacon-node-2.sky.papers.tech',
-            'beacon-node-1.hope.papers.tech',
-            'beacon-node-1.hope-2.papers.tech',
-            'beacon-node-1.hope-3.papers.tech',
-            'beacon-node-1.hope-4.papers.tech',
-            'beacon-node-1.hope-5.papers.tech'
+          'beacon-node-1.octez.io',
+          'beacon-node-2.octez.io',
+          'beacon-node-3.octez.io',
+          'beacon-node-4.octez.io',
+          'beacon-node-5.octez.io',
+          'beacon-node-6.octez.io',
+          'beacon-node-7.octez.io',
+          'beacon-node-8.octez.io'
           ],
           [beacon.Regions.NORTH_AMERICA_EAST]: []
         },
@@ -703,7 +703,7 @@
       // Add event listener to the button
       document.getElementById('sendNotification').addEventListener('click', () => {
         client
-          .sendNotification('Beacon Test', 'Message', '', 'xtz')
+          .sendNotification('octez.connect Test', 'Message', '', 'xtz')
           .then((res) => console.log('Notification Response', res))
       })
     </script>

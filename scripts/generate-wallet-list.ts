@@ -7,7 +7,7 @@ import {
   App,
   AppBase,
   DesktopApp
-} from '../packages/beacon-types/src/types/ui'
+} from '../packages/octez.connect-types/src/types/ui'
 
 import {
   substrateExtensionList,
@@ -77,7 +77,7 @@ const generateForBlockchains = (
     const webListWithInlinedLogo = await convert(webList)
     const iosListWithInlinedLogo = await convert(iosList)
 
-    let out = `import { App, DesktopApp, ExtensionApp, WebApp } from '@airgap/beacon-types'\n\n`
+    let out = `import { App, DesktopApp, ExtensionApp, WebApp } from '@tezos-x/octez.connect-types'\n\n`
 
     out += `export const extensionList: ExtensionApp[] = ${JSON.stringify(
       extensionListWithInlinedLogo,
@@ -137,7 +137,7 @@ const generateForBlockchains = (
 
 // Usage examples with default 'wallet-lists'
 generateForBlockchains(
-  'beacon-blockchain-tezos',
+  'octez.connect-blockchain-tezos',
   tezosExtensionList,
   tezosDesktopList,
   tezosWebList,
@@ -145,7 +145,7 @@ generateForBlockchains(
 )
 
 generateForBlockchains(
-  'beacon-blockchain-tezos-sapling',
+  'octez.connect-blockchain-tezos-sapling',
   tezosSaplingExtensionList,
   tezosSaplingDesktopList,
   tezosSaplingWebList,
@@ -153,7 +153,7 @@ generateForBlockchains(
 )
 
 generateForBlockchains(
-  'beacon-blockchain-substrate',
+  'octez.connect-blockchain-substrate',
   substrateExtensionList,
   substrateDesktopList,
   substrateWebList,
@@ -161,7 +161,7 @@ generateForBlockchains(
 )
 
 generateForBlockchains(
-  'beacon-ui',
+  'octez.connect-ui',
   tezosExtensionList,
   tezosDesktopList,
   tezosWebList,
@@ -170,7 +170,7 @@ generateForBlockchains(
 
 // Custom filename example:
 generateForBlockchains(
-  'beacon-ui',
+  'octez.connect-ui',
   substrateExtensionList,
   substrateDesktopList,
   substrateWebList,

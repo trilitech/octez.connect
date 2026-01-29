@@ -12,7 +12,7 @@
       window.beaconSdkDebugEnabled = true
     </script>
 
-    <script src="../walletbeacon.min.js"></script>
+    <script src="../octez.connect.min.js"></script>
   </head>
   <body class="p-4">
     <script>
@@ -54,7 +54,7 @@
           // Update document theme
           document.documentElement.setAttribute('data-theme', event.data.theme)
           
-          // Update Beacon color mode
+          // Update octez.connect color mode
           if (beacon.setColorMode) {
             beacon.setColorMode(
               event.data.theme === 'dark' ? beacon.ColorMode.DARK : beacon.ColorMode.LIGHT

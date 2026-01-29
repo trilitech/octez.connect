@@ -18,7 +18,7 @@ test('should open Kukai Web', async () => {
   const dapp = await dappCtx.newPage()
   await dapp.goto('http://localhost:1234/dapp.html')
 
-  // --- trigger the Beacon pairing alert ---
+  // --- trigger the octez.connect pairing alert ---
   await dapp.click('#requestPermission')
   ;(await dapp.waitForSelector('div.alert-wrapper-show', {
     state: 'visible',
@@ -53,11 +53,10 @@ test('should display AirGap QR code and copy pairing code to clipboard', async (
   const dapp = await dappCtx.newPage()
   await dapp.goto('http://localhost:1234/dapp.html')
 
-  // --- trigger the Beacon pairing alert ---
+  // --- trigger the octez.connect pairing alert ---
   await dapp.click('#requestPermission')
   await dapp.waitForSelector('div.alert-wrapper-show', { state: 'visible', timeout: 30_000 })
 
-  // --- choose AirGap and wait for QR display ---
   await dapp.click('h3:has-text("AirGap")')
   await dapp.waitForSelector('div.qr-right', { state: 'visible', timeout: 30_000 })
 
@@ -76,7 +75,7 @@ test('should display Temple Wallet', async () => {
   const dapp = await dappCtx.newPage()
   await dapp.goto('http://localhost:1234/dapp.html')
 
-  // --- trigger the Beacon pairing alert ---
+  // --- trigger the octez.connect pairing alert ---
   await dapp.click('#requestPermission')
   await dapp.waitForSelector('div.alert-wrapper-show', { state: 'visible', timeout: 30_000 })
 
@@ -97,20 +96,19 @@ test('should display Temple Wallet', async () => {
   // TODO extension pairing??
 })
 
-test('should pair other with Beacon', async () => {
+test('should pair other with octez.connect', async () => {
   const dapp = await dappCtx.newPage()
   await dapp.goto('http://localhost:1234/dapp.html')
 
-  // --- trigger the Beacon pairing alert ---
+  // --- trigger the octez.connect pairing alert ---
   await dapp.click('#requestPermission')
   await dapp.waitForSelector('div.alert-wrapper-show', { state: 'visible', timeout: 30_000 })
 
-  // --- choose AirGap and wait for QR display ---
   await dapp.click('div.alert-footer')
   await dapp.click('button:has-text("Show QR code")')
   await dapp.waitForSelector('span.pair-other-info', { state: 'visible', timeout: 30_000 })
 
-  await dapp.click('button:has-text("Beacon")')
+  await dapp.click('button:has-text("octez.connect")')
 
   await dapp.waitForSelector('div.qr-right', { state: 'visible', timeout: 30_000 })
 
@@ -129,11 +127,11 @@ test('should pair other with WalletConnect', async () => {
   const dapp = await dappCtx.newPage()
   await dapp.goto('http://localhost:1234/dapp.html')
 
-  // --- trigger the Beacon pairing alert ---
+  // --- trigger the octez.connect pairing alert ---
   await dapp.click('#requestPermission')
   await dapp.waitForSelector('div.alert-wrapper-show', { state: 'visible', timeout: 30_000 })
 
-  // --- choose AirGap and wait for QR display ---
+
   await dapp.click('div.alert-footer')
   await dapp.click('button:has-text("Show QR code")')
   await dapp.waitForSelector('span.pair-other-info', { state: 'visible', timeout: 30_000 })
@@ -157,7 +155,7 @@ test('should close the pairing alert', async () => {
   const dapp = await dappCtx.newPage()
   await dapp.goto('http://localhost:1234/dapp.html')
 
-  // --- trigger the Beacon pairing alert ---
+  // --- trigger the octez.connect pairing alert ---
   await dapp.click('#requestPermission')
   await dapp.waitForSelector('div.alert-wrapper-show', { state: 'visible', timeout: 30_000 })
 
@@ -170,7 +168,7 @@ test('should show "No active account" error alert', async () => {
   const dapp = await dappCtx.newPage()
   await dapp.goto('http://localhost:1234/dapp.html')
 
-  // --- trigger the Beacon pairing alert ---
+  // --- trigger the octez.connect pairing alert ---
   await dapp.click('#sendToSelf')
   await dapp.waitForSelector('div.alert-wrapper-show', { state: 'visible', timeout: 30_000 })
 

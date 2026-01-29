@@ -1,5 +1,5 @@
-import { App, DesktopApp, ExtensionApp, WebApp } from 'packages/beacon-types/src/types/ui'
-// import { NetworkType } from 'packages/beacon-types/src/types'
+import { App, DesktopApp, ExtensionApp, WebApp } from 'packages/octez.connect-types/src/types/ui'
+// import { NetworkType } from 'packages/octez.connect-types/src/types'
 // TODO: Temporary build fix
 export enum NetworkType {
   MAINNET = 'mainnet',

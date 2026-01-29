@@ -1,0 +1,38 @@
+{
+  "name": "@tezos-x/octez.connect-blockchain-tezos-sapling",
+  "version": "1.0.0",
+  "description": "This package adds support for `tezos-sapling`, the sapling integration on the Tezos blockchain. It can be used in combination with the `@tezos-x/octez.connect-dapp` or `@tezos-x/octez.connect-wallet` packages.",
+  "author": "Andreas Gassmann <a.gassmann@papers.ch>",
+  "license": "ISC",
+  "main": "dist/cjs/index.js",
+  "module": "dist/esm/index.js",
+  "types": "dist/esm/index.d.ts",
+  "exports": {
+    "require": "./dist/cjs/index.js",
+    "import": "./dist/esm/index.js"
+  },
+  "directories": {
+    "lib": "dist/esm",
+    "test": "__tests__"
+  },
+  "files": [
+    "dist"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/trilitech/octez.connect-sdk.git"
+  },
+  "scripts": {
+    "tsc": "tsc -p tsconfig.json && tsc -p tsconfig-cjs.json"
+  },
+  "bugs": {
+    "url": "https://github.com/trilitech/octez.connect-sdk/issues"
+  },
+  "dependencies": {
+    "@tezos-x/octez.connect-types": "1.0.0",
+    "@tezos-x/octez.connect-ui": "1.0.0"
+  }
+}

@@ -1,0 +1,44 @@
+{
+  "name": "@tezos-x/octez.connect-dapp",
+  "version": "1.0.0",
+  "description": "Use this package on your dApp to instanciate a DAppClient object and communicate to wallets.",
+  "author": "Andreas Gassmann <a.gassmann@papers.ch>",
+  "license": "ISC",
+  "main": "dist/cjs/index.js",
+  "module": "dist/esm/index.js",
+  "unpkg": "dist/octez.connect.dapp.min.js",
+  "types": "dist/esm/index.d.ts",
+  "exports": {
+    "require": "./dist/cjs/index.js",
+    "import": "./dist/esm/index.js"
+  },
+  "directories": {
+    "lib": "dist/esm",
+    "test": "__tests__"
+  },
+  "files": [
+    "dist"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/trilitech/octez.connect-sdk.git"
+  },
+  "scripts": {
+    "tsc": "tsc -p tsconfig.json && tsc -p tsconfig-cjs.json",
+    "test": "jest"
+  },
+  "bugs": {
+    "url": "https://github.com/trilitech/octez.connect-sdk/issues"
+  },
+  "dependencies": {
+    "@tezos-x/octez.connect-core": "1.0.0",
+    "@tezos-x/octez.connect-transport-matrix": "1.0.0",
+    "@tezos-x/octez.connect-transport-postmessage": "1.0.0",
+    "@tezos-x/octez.connect-transport-walletconnect": "1.0.0",
+    "@tezos-x/octez.connect-ui": "1.0.0",
+    "broadcast-channel": "^7.1.0"
+  }
+}
