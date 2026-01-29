@@ -9,7 +9,7 @@
     "packages/*"
   ],
   "keywords": [
-    "airgap",
+    "trilitech",
     "beacon",
     "crypto",
     "blockchain",
@@ -18,10 +18,9 @@
     "dapp"
   ],
   "license": "MIT",
-  "homepage": "https://www.airgap.it",
   "repository": {
     "type": "git",
-    "url": "https://github.com/airgap-it/beacon-sdk"
+    "url": "https://github.com/trilitech/beacon-sdk"
   },
   "engines": {
     "npm": ">=7.0.0",

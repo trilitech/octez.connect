@@ -57,7 +57,6 @@ test('should display AirGap QR code and copy pairing code to clipboard', async (
   await dapp.click('#requestPermission')
   await dapp.waitForSelector('div.alert-wrapper-show', { state: 'visible', timeout: 30_000 })
 
-  // --- choose AirGap and wait for QR display ---
   await dapp.click('h3:has-text("AirGap")')
   await dapp.waitForSelector('div.qr-right', { state: 'visible', timeout: 30_000 })
 
@@ -105,7 +104,6 @@ test('should pair other with Beacon', async () => {
   await dapp.click('#requestPermission')
   await dapp.waitForSelector('div.alert-wrapper-show', { state: 'visible', timeout: 30_000 })
 
-  // --- choose AirGap and wait for QR display ---
   await dapp.click('div.alert-footer')
   await dapp.click('button:has-text("Show QR code")')
   await dapp.waitForSelector('span.pair-other-info', { state: 'visible', timeout: 30_000 })
@@ -133,7 +131,7 @@ test('should pair other with WalletConnect', async () => {
   await dapp.click('#requestPermission')
   await dapp.waitForSelector('div.alert-wrapper-show', { state: 'visible', timeout: 30_000 })
 
-  // --- choose AirGap and wait for QR display ---
+
   await dapp.click('div.alert-footer')
   await dapp.click('button:has-text("Show QR code")')
   await dapp.waitForSelector('span.pair-other-info', { state: 'visible', timeout: 30_000 })

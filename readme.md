@@ -2,7 +2,7 @@
 
 [![npm](https://img.shields.io/npm/v/@tezos-x/beacon-sdk.svg?colorB=brightgreen)](https://www.npmjs.com/package/@tezos-x/beacon-sdk)
 [![documentation](https://img.shields.io/badge/documentation-online-brightgreen.svg)](https://airgap-it.github.io/beacon-sdk/)
-[![GitHub Action](https://github.com/airgap-it/beacon-sdk/workflows/Build%2C%20Test%20and%20Analyze/badge.svg)](https://github.com/airgap-it/beacon-sdk/actions?query=workflow%3A%22Build%2C+Test+and+Analyze%22+branch%3Amain)
+[![GitHub Action](https://github.com/trilitech/beacon-sdk/workflows/Build%2C%20Test%20and%20Analyze/badge.svg)](https://github.com/trilitech/beacon-sdk/actions?query=workflow%3A%22Build%2C+Test+and+Analyze%22+branch%3Amain)
 [![code style: prettier](https://img.shields.io/badge/code_style-prettier-ff69b4.svg?style=flat-square)](https://github.com/prettier/prettier)
 
 > Connect Wallets with dApps on Tezos
@@ -85,7 +85,7 @@ For a more complete example, take a look at the `example-wallet.html` file.
 
 ## Adding a wallet to beacon-sdk
 
-Please create a PR and add your wallet [here](https://github.com/airgap-it/beacon-sdk/blob/master/scripts/generate-wallet-list.ts).
+Please create a PR and add your wallet [here](https://github.com/trilitech/beacon-sdk/blob/master/scripts/generate-wallet-list.ts).
 
 For iOS wallets, the wallet needs to define a custom url scheme to support the same-device functionality.
 

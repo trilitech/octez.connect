@@ -24,13 +24,13 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/airgap-it/beacon-sdk.git"
+    "url": "git+https://github.com/trilitech/beacon-sdk.git"
   },
   "scripts": {
     "tsc": "tsc -p tsconfig.json && tsc -p tsconfig-cjs.json"
   },
   "bugs": {
-    "url": "https://github.com/airgap-it/beacon-sdk/issues"
+    "url": "https://github.com/trilitech/beacon-sdk/issues"
   },
   "dependencies": {
     "@types/chrome": "0.0.315"

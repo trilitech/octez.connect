@@ -14,7 +14,6 @@ on the highest group/project level necessary and add it to this issue as well
 ## Which issues need to be completed
 
 <!--- List all issues that need to be done. Example:
-- [] papers/airgap/airgap-vault#242+
 If you use this format, add the + at the end of the path
 --->
 
@@ -22,4 +21,4 @@ If you use this format, add the + at the end of the path
 
 <!--- these standard labels will be added to this issue, leave it as it is --->
 
-/label ~2141 ~"proj::airgap" ~"proj::beacon"
+/label ~2141 ~"proj::trilitech" ~"proj::beacon"

@@ -1,6 +1,6 @@
 # `@tezos-x/beacon-blockchain-substrate`
 
-This package is part of the `@tezos-x/beacon-sdk` project. [Read more](https://github.com/airgap-it/beacon-sdk)
+This package is part of the `@tezos-x/beacon-sdk` project. [Read more](https://github.com/trilitech/beacon-sdk)
 
 ## Introduction
 
