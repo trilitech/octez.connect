@@ -1,6 +1,6 @@
 {
   "name": "@tezos-x/octez.connect-blockchain-substrate",
-  "version": "4.7.0",
+  "version": "1.0.0",
   "description": "This package adds support for `substrate` based blockchains. It can be used in combination with the `@tezos-x/octez.connect-dapp` or `@tezos-x/octez.connect-wallet` packages.",
   "author": "Andreas Gassmann <a.gassmann@papers.ch>",
   "homepage": "https://walletbeacon.io",
@@ -33,7 +33,7 @@
     "url": "https://github.com/trilitech/octez.connect-sdk/issues"
   },
   "dependencies": {
-    "@tezos-x/octez.connect-types": "4.7.0",
-    "@tezos-x/octez.connect-ui": "4.7.0"
+    "@tezos-x/octez.connect-types": "1.0.0",
+    "@tezos-x/octez.connect-ui": "1.0.0"
   }
 }

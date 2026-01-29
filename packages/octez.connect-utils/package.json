@@ -1,6 +1,6 @@
 {
   "name": "@tezos-x/octez.connect-utils",
-  "version": "4.7.0",
+  "version": "1.0.0",
   "description": "This package contains utility functions that are used throughout the octez.connect-sdk",
   "author": "Andreas Gassmann <a.gassmann@papers.ch>",
   "homepage": "https://walletbeacon.io",

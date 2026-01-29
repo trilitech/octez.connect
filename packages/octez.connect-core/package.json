@@ -1,6 +1,6 @@
 {
   "name": "@tezos-x/octez.connect-core",
-  "version": "4.7.0",
+  "version": "1.0.0",
   "description": "This package contains internal methods that are used by both the dApp and wallet client.",
   "author": "Andreas Gassmann <a.gassmann@papers.ch>",
   "homepage": "https://walletbeacon.io",
@@ -34,8 +34,8 @@
     "url": "https://github.com/trilitech/octez.connect-sdk/issues"
   },
   "dependencies": {
-    "@tezos-x/octez.connect-types": "4.7.0",
-    "@tezos-x/octez.connect-utils": "4.7.0",
+    "@tezos-x/octez.connect-types": "1.0.0",
+    "@tezos-x/octez.connect-utils": "1.0.0",
     "@stablelib/ed25519": "^2.0.2",
     "@stablelib/nacl": "^2.0.1",
     "@stablelib/utf8": "^2.0.1",

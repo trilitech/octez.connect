@@ -1,6 +1,6 @@
 {
   "name": "@tezos-x/octez.connect-ui",
-  "version": "4.7.0",
+  "version": "1.0.0",
   "description": "This package contains the UI part (alerts and toasts) of the octez.connect SDK.",
   "author": "Andreas Gassmann <a.gassmann@papers.ch>",
   "homepage": "https://walletbeacon.io",
@@ -34,10 +34,10 @@
     "url": "https://github.com/trilitech/octez.connect-sdk/issues"
   },
   "dependencies": {
-    "@tezos-x/octez.connect-core": "4.7.0",
-    "@tezos-x/octez.connect-transport-postmessage": "4.7.0",
-    "@tezos-x/octez.connect-types": "4.7.0",
-    "@tezos-x/octez.connect-utils": "4.7.0",
+    "@tezos-x/octez.connect-core": "1.0.0",
+    "@tezos-x/octez.connect-transport-postmessage": "1.0.0",
+    "@tezos-x/octez.connect-types": "1.0.0",
+    "@tezos-x/octez.connect-utils": "1.0.0",
     "@walletconnect/utils": "2.18.0",
     "qrcode-svg": "^1.1.0",
     "react": "^19.1.0",

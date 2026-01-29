@@ -1,6 +1,6 @@
 {
   "name": "@tezos-x/octez.connect-dapp",
-  "version": "4.7.0",
+  "version": "1.0.0",
   "description": "Use this package on your dApp to instanciate a DAppClient object and communicate to wallets.",
   "author": "Andreas Gassmann <a.gassmann@papers.ch>",
   "homepage": "https://walletbeacon.io",
@@ -35,11 +35,11 @@
     "url": "https://github.com/trilitech/octez.connect-sdk/issues"
   },
   "dependencies": {
-    "@tezos-x/octez.connect-core": "4.7.0",
-    "@tezos-x/octez.connect-transport-matrix": "4.7.0",
-    "@tezos-x/octez.connect-transport-postmessage": "4.7.0",
-    "@tezos-x/octez.connect-transport-walletconnect": "4.7.0",
-    "@tezos-x/octez.connect-ui": "4.7.0",
+    "@tezos-x/octez.connect-core": "1.0.0",
+    "@tezos-x/octez.connect-transport-matrix": "1.0.0",
+    "@tezos-x/octez.connect-transport-postmessage": "1.0.0",
+    "@tezos-x/octez.connect-transport-walletconnect": "1.0.0",
+    "@tezos-x/octez.connect-ui": "1.0.0",
     "broadcast-channel": "^7.1.0"
   }
 }

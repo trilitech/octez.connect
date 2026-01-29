@@ -1,6 +1,6 @@
 {
   "name": "@tezos-x/octez.connect-sdk",
-  "version": "4.7.0",
+  "version": "1.0.0",
   "description": "The `octez.connect-sdk` simplifies and abstracts the communication between dApps and wallets over different transport layers.",
   "author": "Andreas Gassmann <a.gassmann@papers.ch>",
   "homepage": "https://walletbeacon.io",
@@ -34,15 +34,15 @@
     "url": "https://github.com/trilitech/octez.connect-sdk/issues"
   },
   "dependencies": {
-    "@tezos-x/octez.connect-blockchain-substrate": "4.7.0",
-    "@tezos-x/octez.connect-blockchain-tezos": "4.7.0",
-    "@tezos-x/octez.connect-core": "4.7.0",
-    "@tezos-x/octez.connect-dapp": "4.7.0",
-    "@tezos-x/octez.connect-transport-matrix": "4.7.0",
-    "@tezos-x/octez.connect-transport-postmessage": "4.7.0",
-    "@tezos-x/octez.connect-types": "4.7.0",
-    "@tezos-x/octez.connect-ui": "4.7.0",
-    "@tezos-x/octez.connect-utils": "4.7.0",
-    "@tezos-x/octez.connect-wallet": "4.7.0"
+    "@tezos-x/octez.connect-blockchain-substrate": "1.0.0",
+    "@tezos-x/octez.connect-blockchain-tezos": "1.0.0",
+    "@tezos-x/octez.connect-core": "1.0.0",
+    "@tezos-x/octez.connect-dapp": "1.0.0",
+    "@tezos-x/octez.connect-transport-matrix": "1.0.0",
+    "@tezos-x/octez.connect-transport-postmessage": "1.0.0",
+    "@tezos-x/octez.connect-types": "1.0.0",
+    "@tezos-x/octez.connect-ui": "1.0.0",
+    "@tezos-x/octez.connect-utils": "1.0.0",
+    "@tezos-x/octez.connect-wallet": "1.0.0"
   }
 }

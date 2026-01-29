@@ -1,6 +1,6 @@
 {
   "name": "@tezos-x/octez.connect-transport-postmessage",
-  "version": "4.7.0",
+  "version": "1.0.0",
   "description": "This package contains methods to facilitate communication over the postmessage interface of the browser to talk to browser extensions.",
   "author": "Andreas Gassmann <a.gassmann@papers.ch>",
   "homepage": "https://walletbeacon.io",
@@ -34,8 +34,8 @@
     "url": "https://github.com/trilitech/octez.connect-sdk/issues"
   },
   "dependencies": {
-    "@tezos-x/octez.connect-core": "4.7.0",
-    "@tezos-x/octez.connect-types": "4.7.0",
-    "@tezos-x/octez.connect-utils": "4.7.0"
+    "@tezos-x/octez.connect-core": "1.0.0",
+    "@tezos-x/octez.connect-types": "1.0.0",
+    "@tezos-x/octez.connect-utils": "1.0.0"
   }
 }
