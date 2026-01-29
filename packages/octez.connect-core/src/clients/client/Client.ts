@@ -173,7 +173,7 @@ export abstract class Client extends BeaconClient {
    */
   public async getOwnAppMetadata(): Promise<AppMetadata> {
     return {
-      senderId: await getSenderId(await this.octezConnectId),
+      senderId: await getSenderId(await this.beaconId),
       name: this.name,
       icon: this.iconUrl
     }
@@ -254,7 +254,7 @@ export abstract class Client extends BeaconClient {
     const request: DisconnectMessage = {
       id: await generateGUID(),
       version: peer.version,
-      senderId: await getSenderId(await this.octezConnectId),
+      senderId: await getSenderId(await this.beaconId),
       type: BeaconMessageType.Disconnect
     }
 
