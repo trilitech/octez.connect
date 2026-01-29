@@ -1,13 +1,9 @@
 # octez.connect SDK
 
 [![npm](https://img.shields.io/npm/v/@tezos-x/octez.connect-sdk.svg?colorB=brightgreen)](https://www.npmjs.com/package/@tezos-x/octez.connect-sdk)
-[![documentation](https://img.shields.io/badge/documentation-online-brightgreen.svg)](https://airgap-it.github.io/octez.connect-sdk/)
+[![documentation](https://img.shields.io/badge/documentation-online-brightgreen.svg)](https://trilitech.github.io/octez.connect-sdk/)
 [![GitHub Action](https://github.com/trilitech/octez.connect-sdk/workflows/Build%2C%20Test%20and%20Analyze/badge.svg)](https://github.com/trilitech/octez.connect-sdk/actions?query=workflow%3A%22Build%2C+Test+and+Analyze%22+branch%3Amain)
 [![code style: prettier](https://img.shields.io/badge/code_style-prettier-ff69b4.svg?style=flat-square)](https://github.com/prettier/prettier)
-
-> Connect Wallets with dApps on Tezos
-
-[octez.connect](https://walletbeacon.io) is the implementation of the wallet interaction standard [tzip-10](https://gitlab.com/tzip/tzip/blob/master/proposals/tzip-10/tzip-10.md) which describes the connnection of a dApp with a wallet.
 
 ## Intro
 
@@ -15,14 +11,6 @@ The `octez.connect-sdk` simplifies and abstracts the communication between dApps
 
 Developers that plan to develop complex smart contract interactions can use [Taquito](https://github.com/ecadlabs/taquito) with the `BeaconWallet`, which uses this SDK under the hood, but provides helpful methods to interact with contracts.
 
-Besides this Typescript SDK, we also provide SDKs for native iOS and Android Wallets:
-
-- [octez.connect Android SDK (Kotlin)](https://github.com/airgap-it/beacon-android-sdk)
-- [octez.connect iOS SDK (Swift)](https://github.com/airgap-it/beacon-ios-sdk)
-
-## Documentation
-
-The documentation can be found [here](https://docs.walletbeacon.io/), technical documentation can be found [here](https://typedocs.walletbeacon.io/).
 
 ## Installation
 

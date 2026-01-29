@@ -74,7 +74,7 @@ e2e/output
 e2e/playwright-report
 combined.webm
 
-examples/walletbeacon.min.js
+examples/octez.connect.min.js
 
 lib
 docs

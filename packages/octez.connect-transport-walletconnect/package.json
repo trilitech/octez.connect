@@ -3,7 +3,6 @@
   "version": "1.0.0",
   "description": "This package contains methods to facilitate communication over the WalletConnect network.",
   "author": "Papers AG",
-  "homepage": "https://walletbeacon.io",
   "license": "ISC",
   "main": "dist/cjs/index.js",
   "module": "dist/esm/index.js",

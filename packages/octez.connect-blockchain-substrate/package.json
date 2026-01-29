@@ -3,7 +3,6 @@
   "version": "1.0.0",
   "description": "This package adds support for `substrate` based blockchains. It can be used in combination with the `@tezos-x/octez.connect-dapp` or `@tezos-x/octez.connect-wallet` packages.",
   "author": "Andreas Gassmann <a.gassmann@papers.ch>",
-  "homepage": "https://walletbeacon.io",
   "license": "ISC",
   "main": "dist/cjs/index.js",
   "module": "dist/esm/index.js",

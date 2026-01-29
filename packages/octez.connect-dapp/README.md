@@ -14,4 +14,3 @@ import { DAppClient } from '@tezos-x/octez.connect-dapp'
 const dAppClient = new DAppClient({ name: "octez.connect Docs" });
 ```
 
-Check our documentation for more information. [Documentation](https://docs.walletbeacon.io)

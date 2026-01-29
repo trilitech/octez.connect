@@ -13,5 +13,3 @@ import { WalletClient } from '@tezos-x/octez.connect-wallet'
 
 const walletClient = new WalletClient({ name: "Example Wallet" });
 ```
-
-Check our documentation for more information. [Documentation](https://docs.walletbeacon.io)

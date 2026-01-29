@@ -943,8 +943,7 @@ export class DAppClient extends Client {
   public async setActiveAccount(account?: AccountInfo): Promise<void> {
     if (!this.isGetActiveAccountHandled) {
       console.warn(
-        `An active account has been received, but no active subscription was found for BeaconEvent.ACTIVE_ACCOUNT_SET.
-        For more information, visit: https://docs.walletbeacon.io/guides/migration-guide`
+        `An active account has been received, but no active subscription was found for BeaconEvent.ACTIVE_ACCOUNT_SET.`
       )
     }
 

@@ -3,11 +3,10 @@
   "version": "1.0.0",
   "description": "Use this package on your dApp to instanciate a DAppClient object and communicate to wallets.",
   "author": "Andreas Gassmann <a.gassmann@papers.ch>",
-  "homepage": "https://walletbeacon.io",
   "license": "ISC",
   "main": "dist/cjs/index.js",
   "module": "dist/esm/index.js",
-  "unpkg": "dist/walletbeacon.dapp.min.js",
+  "unpkg": "dist/octez.connect.dapp.min.js",
   "types": "dist/esm/index.d.ts",
   "exports": {
     "require": "./dist/cjs/index.js",

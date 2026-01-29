@@ -3,7 +3,6 @@
   "version": "1.0.0",
   "description": "This package contains methods to facilitate communication over the octez.connect network, a decentralised P2P network that is based on the matrix protocol.",
   "author": "Andreas Gassmann <a.gassmann@papers.ch>",
-  "homepage": "https://walletbeacon.io",
   "license": "ISC",
   "main": "dist/cjs/index.js",
   "module": "dist/esm/index.js",

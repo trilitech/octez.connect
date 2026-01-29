@@ -3,11 +3,10 @@
   "version": "1.0.0",
   "description": "The `octez.connect-sdk` simplifies and abstracts the communication between dApps and wallets over different transport layers.",
   "author": "Andreas Gassmann <a.gassmann@papers.ch>",
-  "homepage": "https://walletbeacon.io",
   "license": "ISC",
   "main": "dist/cjs/index.js",
   "module": "dist/esm/index.js",
-  "unpkg": "dist/walletbeacon.min.js",
+  "unpkg": "dist/octez.connect.min.js",
   "types": "dist/esm/index.d.ts",
   "exports": {
     "require": "./dist/cjs/index.js",

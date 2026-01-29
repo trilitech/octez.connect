@@ -19,5 +19,3 @@ const client = new DAppClient({
 const substrateBlockchain = new SubstrateBlockchain()
 client.addBlockchain(substrateBlockchain)
 ```
-
-Check our documentation for more information. [Documentation](https://docs.walletbeacon.io)

@@ -19,5 +19,3 @@ const client = new DAppClient({
 const tezosSaplingBlockchain = new TezosSaplingBlockchain()
 client.addBlockchain(tezosSaplingBlockchain)
 ```
-
-Check our documentation for more information. [Documentation](https://docs.walletbeacon.io)

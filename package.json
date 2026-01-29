@@ -3,7 +3,7 @@
   "description": "The octez.connect-sdk allows you to easily connect DApps with Wallets through P2P communication or a chrome extension.",
   "main": "dist/cjs/index.js",
   "module": "dist/esm/index.js",
-  "unpkg": "dist/walletbeacon.min.js",
+  "unpkg": "dist/octez.connect.min.js",
   "types": "dist/esm/index.d.ts",
   "workspaces": [
     "packages/*"
@@ -30,9 +30,9 @@
     "prebuild": "ts-node --project tsconfig-cjs.json scripts/generate-wallet-list.ts",
     "build": "npm run check-version && lerna run tsc && npm run webpack:all",
     "webpack:all": "npm run webpack:sdk && npm run webpack:dapp && npm run webpack:wallet",
-    "webpack:sdk": "webpack --mode=development --config webpack.config.js --entry=./packages/octez.connect-sdk/dist/cjs/index.js --output-path ./webpack_builds/sdk && terser --ecma=12 ./webpack_builds/sdk/main.js -o ./packages/octez.connect-sdk/dist/walletbeacon.min.js && cp ./packages/octez.connect-sdk/dist/walletbeacon.min.js ./examples/walletbeacon.min.js",
-    "webpack:dapp": "webpack --mode=development --entry=./packages/octez.connect-dapp/dist/cjs/index.js --output-path ./webpack_builds/dapp && terser --ecma=12 ./webpack_builds/dapp/main.js -o ./packages/octez.connect-dapp/dist/walletbeacon.dapp.min.js",
-    "webpack:wallet": "webpack --mode=development --entry=./packages/octez.connect-wallet/dist/cjs/index.js --output-path ./webpack_builds/wallet && terser --ecma=12 ./webpack_builds/wallet/main.js -o ./packages/octez.connect-wallet/dist/walletbeacon.wallet.min.js",
+    "webpack:sdk": "webpack --mode=development --config webpack.config.js --entry=./packages/octez.connect-sdk/dist/cjs/index.js --output-path ./webpack_builds/sdk && terser --ecma=12 ./webpack_builds/sdk/main.js -o ./packages/octez.connect-sdk/dist/octez.connect.min.js && cp ./packages/octez.connect-sdk/dist/octez.connect.min.js ./examples/octez.connect.min.js",
+    "webpack:dapp": "webpack --mode=development --entry=./packages/octez.connect-dapp/dist/cjs/index.js --output-path ./webpack_builds/dapp && terser --ecma=12 ./webpack_builds/dapp/main.js -o ./packages/octez.connect-dapp/dist/octez.connect.dapp.min.js",
+    "webpack:wallet": "webpack --mode=development --entry=./packages/octez.connect-wallet/dist/cjs/index.js --output-path ./webpack_builds/wallet && terser --ecma=12 ./webpack_builds/wallet/main.js -o ./packages/octez.connect-wallet/dist/octez.connect.wallet.min.js",
     "prettier": "prettier --write 'src/**/*' '**/src/**/*' 'docs/**/*.md' 'example-dapp.html' 'example-wallet.html'",
     "lint": "eslint 'src/**/*.ts'",
     "lint:fix": "eslint 'src/**/*.ts' --fix",

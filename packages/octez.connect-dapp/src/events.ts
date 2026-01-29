@@ -333,8 +333,7 @@ const showNoPermissionAlert = async (): Promise<void> => {
 const showInvalidActiveAccountState = async (): Promise<void> => {
   openAlert({
     title: 'Invalid state',
-    body: `An active account has been received, but no active subscription was found for BeaconEvent.ACTIVE_ACCOUNT_SET.
-    For more information, visit: https://docs.walletbeacon.io/guides/migration-guide`
+    body: `An active account has been received, but no active subscription was found for BeaconEvent.ACTIVE_ACCOUNT_SET.`
   })
 }
 
