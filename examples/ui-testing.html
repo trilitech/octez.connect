@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Beacon UI Components</title>
+    <title>octez.connect UI Components</title>
 
     <link href="https://cdn.jsdelivr.net/npm/daisyui@5" rel="stylesheet" type="text/css" />
     <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
@@ -19,7 +19,7 @@
     <div class="container mx-auto p-4 max-w-5xl">
       <div class="navbar bg-base-200 rounded-box mb-4">
         <div class="flex-1">
-          <h1 class="text-2xl font-bold px-4">Beacon UI Components</h1>
+          <h1 class="text-2xl font-bold px-4">octez.connect UI Components</h1>
         </div>
         <div class="flex-none">
           <label class="swap swap-rotate">
@@ -102,7 +102,7 @@
         // Toggle DaisyUI theme
         document.documentElement.setAttribute('data-theme', isDarkMode ? 'dark' : 'light')
 
-        // Set the color mode in the Beacon SDK
+        // Set the color mode in the octez.connect SDK
         if (beacon.setColorMode) {
           beacon.setColorMode(isDarkMode ? beacon.ColorMode.DARK : beacon.ColorMode.LIGHT)
         }

@@ -1,4 +1,4 @@
-import { App, DesktopApp, ExtensionApp, WebApp } from 'packages/beacon-types/src/types/ui'
+import { App, DesktopApp, ExtensionApp, WebApp } from 'packages/octez.connect-types/src/types/ui'
 
 // TODO: Temporary build fix
 export enum NetworkType {

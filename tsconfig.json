@@ -27,31 +27,31 @@
     "allowSyntheticDefaultImports": true
   },
   "paths": {
-    "beacon-core": ["packages/beacon-core/lib/beacon-core", "packages/beacon-core/lib"],
-    "beacon-dapp": ["packages/beacon-dapp/lib/beacon-dapp", "packages/beacon-dapp/lib"],
-    "beacon-blockchain-substrate": [
-      "packages/beacon-blockchain-substrate/lib/beacon-blockchain-substrate",
-      "packages/beacon-blockchain-substrate/lib"
+    "octez.connect-core": ["packages/octez.connect-core/lib/octez.connect-core", "packages/octez.connect-core/lib"],
+    "octez.connect-dapp": ["packages/octez.connect-dapp/lib/octez.connect-dapp", "packages/octez.connect-dapp/lib"],
+    "octez.connect-blockchain-substrate": [
+      "packages/octez.connect-blockchain-substrate/lib/octez.connect-blockchain-substrate",
+      "packages/octez.connect-blockchain-substrate/lib"
     ],
-    "beacon-blockchain-tezos": [
-      "packages/beacon-blockchain-tezos/lib/beacon-blockchain-tezos",
-      "packages/beacon-blockchain-tezos/lib"
+    "octez.connect-blockchain-tezos": [
+      "packages/octez.connect-blockchain-tezos/lib/octez.connect-blockchain-tezos",
+      "packages/octez.connect-blockchain-tezos/lib"
     ],
-    "beacon-blockchain-tezos-sapling": [
-      "packages/beacon-blockchain-tezos-sapling/lib/beacon-blockchain-tezos-sapling",
-      "packages/beacon-blockchain-tezos-sapling/lib"
+    "octez.connect-blockchain-tezos-sapling": [
+      "packages/octez.connect-blockchain-tezos-sapling/lib/octez.connect-blockchain-tezos-sapling",
+      "packages/octez.connect-blockchain-tezos-sapling/lib"
     ],
-    "beacon-transport-matrix": [
-      "packages/beacon-transport-matrix/lib/beacon-transport-matrix",
-      "packages/beacon-transport-matrix/lib"
+    "octez.connect-transport-matrix": [
+      "packages/octez.connect-transport-matrix/lib/octez.connect-transport-matrix",
+      "packages/octez.connect-transport-matrix/lib"
     ],
-    "beacon-transport-postmessage": [
-      "packages/beacon-transport-postmessage/lib/beacon-transport-postmessage",
-      "packages/beacon-transport-postmessage/lib"
+    "octez.connect-transport-postmessage": [
+      "packages/octez.connect-transport-postmessage/lib/octez.connect-transport-postmessage",
+      "packages/octez.connect-transport-postmessage/lib"
     ],
-    "beacon-types": ["packages/beacon-types/lib/beacon-types", "packages/beacon-types/lib"],
-    "beacon-ui": ["packages/beacon-ui/lib/beacon-ui", "packages/beacon-ui/lib"],
-    "beacon-utils": ["packages/beacon-utils/lib/beacon-utils", "packages/beacon-utils/lib"],
-    "beacon-wallet": ["packages/beacon-wallet/lib/beacon-wallet", "packages/beacon-wallet/lib"]
+    "octez.connect-types": ["packages/octez.connect-types/lib/octez.connect-types", "packages/octez.connect-types/lib"],
+    "octez.connect-ui": ["packages/octez.connect-ui/lib/octez.connect-ui", "packages/octez.connect-ui/lib"],
+    "octez.connect-utils": ["packages/octez.connect-utils/lib/octez.connect-utils", "packages/octez.connect-utils/lib"],
+    "octez.connect-wallet": ["packages/octez.connect-wallet/lib/octez.connect-wallet", "packages/octez.connect-wallet/lib"]
   }
 }

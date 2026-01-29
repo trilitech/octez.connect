@@ -1,0 +1,43 @@
+{
+  "name": "@tezos-x/octez.connect-utils",
+  "version": "4.7.0",
+  "description": "This package contains utility functions that are used throughout the octez.connect-sdk",
+  "author": "Andreas Gassmann <a.gassmann@papers.ch>",
+  "homepage": "https://walletbeacon.io",
+  "license": "ISC",
+  "main": "dist/cjs/index.js",
+  "module": "dist/esm/index.js",
+  "types": "dist/esm/index.d.ts",
+  "exports": {
+    "require": "./dist/cjs/index.js",
+    "import": "./dist/esm/index.js"
+  },
+  "directories": {
+    "lib": "dist/esm",
+    "test": "__tests__"
+  },
+  "files": [
+    "dist"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/trilitech/octez.connect-sdk.git"
+  },
+  "scripts": {
+    "tsc": "tsc -p tsconfig.json && tsc -p tsconfig-cjs.json",
+    "test": "jest"
+  },
+  "bugs": {
+    "url": "https://github.com/trilitech/octez.connect-sdk/issues"
+  },
+  "dependencies": {
+    "@stablelib/ed25519": "^2.0.2",
+    "@stablelib/nacl": "^2.0.1",
+    "@stablelib/random": "^2.0.1",
+    "@stablelib/utf8": "^2.0.1",
+    "bs58check": "4.0.0"
+  }
+}

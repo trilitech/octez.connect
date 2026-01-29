@@ -1,5 +1,5 @@
 import { readFileSync } from 'fs'
-import { SDK_VERSION } from '../packages/beacon-core/src/constants'
+import { SDK_VERSION } from '../packages/octez.connect-core/src/constants'
 
 const lernaJson = './lerna.json'
 

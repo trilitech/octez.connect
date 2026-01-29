@@ -54,7 +54,7 @@
           // Update document theme
           document.documentElement.setAttribute('data-theme', event.data.theme)
           
-          // Update Beacon color mode
+          // Update octez.connect color mode
           if (beacon.setColorMode) {
             beacon.setColorMode(
               event.data.theme === 'dark' ? beacon.ColorMode.DARK : beacon.ColorMode.LIGHT
