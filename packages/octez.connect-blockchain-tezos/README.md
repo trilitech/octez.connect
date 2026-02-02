@@ -1,6 +1,6 @@
 # `@tezos-x/octez.connect-blockchain-tezos`
 
-This package is part of the `@tezos-x/octez.connect-sdk` project. [Read more](https://github.com/trilitech/octez.connect-sdk)
+This package is part of the `@tezos-x/octez.connect-sdk` project. [Read more](https://github.com/trilitech/octez.connect)
 
 ## Introduction
 
@@ -9,8 +9,8 @@ This package adds support for the `tezos` blockchain. It can be used in combinat
 ## Usage
 
 ```
-import { DAppClient } from '@airga/octez.connect-dapp'
-import { TezosBlockchain } from '@airga/octez.connect-blockchain-tezos'
+import { DAppClient } from '@tezos-x/octez.connect-dapp'
+import { TezosBlockchain } from '@tezos-x/octez.connect-blockchain-tezos'
 
 const client = new DAppClient({
     name: 'Example DApp',
