@@ -1,6 +1,6 @@
 # `@tezos-x/octez.connect-utils`
 
-This package is part of the `@tezos-x/octez.connect-sdk` project. [Read more](https://github.com/trilitech/octez.connect-sdk)
+This package is part of the `@tezos-x/octez.connect-sdk` project. [Read more](https://github.com/trilitech/octez.connect)
 
 ## Introduction
 
