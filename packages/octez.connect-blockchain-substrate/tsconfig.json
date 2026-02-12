@@ -7,7 +7,7 @@
     "baseUrl": ".",
     "paths": {
       "@tezos-x/octez.connect-blockchain-substrate": ["./src"],
-      "@tezos-x/octez.connect-ui/data/*": ["../beacon-ui/src/data/*"]
+      "@tezos-x/octez.connect-ui/data/*": ["../octez.connect-ui/src/data/*"]
     }
   },
   "include": ["./src"]
