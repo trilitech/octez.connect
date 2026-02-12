@@ -4,7 +4,7 @@
  * UI-friendly types for the Beacon V2 protocol.
  */
 
-import type { PermissionScope, SigningType } from '@airgap/beacon-types'
+import type { PermissionScope, SigningType } from '@tezos-x/octez.connect-types'
 
 export interface NetworkConfig {
   type: string

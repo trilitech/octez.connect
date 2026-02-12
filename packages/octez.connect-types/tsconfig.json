@@ -1,0 +1,11 @@
+{
+  "extends": "../../tsconfig.json",
+  "compilerOptions": {
+    "outDir": "./dist/esm",
+    "baseUrl": ".",
+    "paths": {
+      "@tezos-x/octez.connect-types": ["./src"]
+    }
+  },
+  "include": ["./src"]
+}

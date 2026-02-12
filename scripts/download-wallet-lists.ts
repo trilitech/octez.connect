@@ -3,7 +3,7 @@ import { writeFile, mkdir } from 'fs/promises'
 import * as https from 'https'
 
 const GITHUB_RELEASES_BASE = 'https://github.com/airgap-it/beacon-wallet-list/releases/latest/download'
-const BEACON_UI_DATA_DIR = path.join(process.cwd(), 'packages/beacon-ui/src/data')
+const BEACON_UI_DATA_DIR = path.join(process.cwd(), 'packages/octez.connect-ui/src/data')
 
 async function downloadFile(url: string): Promise<string> {
   return new Promise((resolve, reject) => {

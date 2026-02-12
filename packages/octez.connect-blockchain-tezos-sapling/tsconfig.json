@@ -1,0 +1,14 @@
+{
+  "extends": "../../tsconfig.json",
+  "compilerOptions": {
+    "rootDir": "./src",
+    "outDir": "./dist/esm",
+    "resolveJsonModule": true,
+    "baseUrl": ".",
+    "paths": {
+      "@tezos-x/octez.connect-blockchain-tezos-sapling": ["./src"],
+      "@tezos-x/octez.connect-ui/data/*": ["../beacon-ui/src/data/*"]
+    }
+  },
+  "include": ["./src"]
+}

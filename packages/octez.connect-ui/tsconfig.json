@@ -1,0 +1,21 @@
+{
+  "extends": "../../tsconfig.json",
+  "compilerOptions": {
+    "outDir": "./dist/esm",
+    // "target": "ESNext",
+    // "module": "ESNext",
+    // "moduleResolution": "node",
+    // "allowSyntheticDefaultImports": true,
+    // "esModuleInterop": true,
+    "jsx": "preserve",
+    "jsxImportSource": "react",
+    "types": ["vite/client", "node", "chrome", "jest"],
+    "noEmit": true,
+    "resolveJsonModule": true,
+    "baseUrl": ".",
+    "paths": {
+      "@tezos-x/octez.connect-ui": ["./src"]
+    }
+  },
+  "include": ["src/**/*", "__tests__/**/*"]
+}

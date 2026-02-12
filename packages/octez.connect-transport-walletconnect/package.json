@@ -1,0 +1,46 @@
+{
+  "name": "@tezos-x/octez.connect-transport-walletconnect",
+  "version": "1.0.0",
+  "description": "This package contains methods to facilitate communication over the WalletConnect network.",
+  "author": "Papers AG",
+  "homepage": "https://octez-connect.tezos.com",
+  "license": "ISC",
+  "main": "dist/cjs/index.js",
+  "module": "dist/esm/index.js",
+  "types": "dist/esm/index.d.ts",
+  "exports": {
+    "require": "./dist/cjs/index.js",
+    "import": "./dist/esm/index.js"
+  },
+  "directories": {
+    "lib": "dist/esm",
+    "test": "__tests__"
+  },
+  "files": [
+    "dist"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/trilitech/octez.connect.git"
+  },
+  "scripts": {
+    "tsc": "tsc -p tsconfig.json && tsc -p tsconfig-cjs.json",
+    "test": "jest"
+  },
+  "bugs": {
+    "url": "https://github.com/trilitech/octez.connect/issues"
+  },
+  "dependencies": {
+    "@tezos-x/octez.connect-core": "1.0.0",
+    "@tezos-x/octez.connect-types": "1.0.0",
+    "@tezos-x/octez.connect-utils": "1.0.0",
+    "@walletconnect/sign-client": "2.18.0",
+    "elliptic": "^6.6.1"
+  },
+  "devDependencies": {
+    "@types/elliptic": "^6.4.18"
+  }
+}

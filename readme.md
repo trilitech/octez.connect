@@ -1,13 +1,13 @@
 # Beacon SDK
 
-[![npm](https://img.shields.io/npm/v/@airgap/beacon-sdk.svg?colorB=brightgreen)](https://www.npmjs.com/package/@airgap/beacon-sdk)
-[![documentation](https://img.shields.io/badge/documentation-online-brightgreen.svg)](https://airgap-it.github.io/beacon-sdk/)
-[![GitHub Action](https://github.com/airgap-it/beacon-sdk/workflows/Build%2C%20Test%20and%20Analyze/badge.svg)](https://github.com/airgap-it/beacon-sdk/actions?query=workflow%3A%22Build%2C+Test+and+Analyze%22+branch%3Amain)
+[![npm](https://img.shields.io/npm/v/@tezos-x/octez.connect-sdk.svg?colorB=brightgreen)](https://www.npmjs.com/package/@tezos-x/octez.connect-sdk)
+[![documentation](https://img.shields.io/badge/documentation-online-brightgreen.svg)](https://octez-connect.tezos.com)
+[![GitHub Action](https://github.com/trilitech/octez.connect/workflows/Build%2C%20Test%20and%20Analyze/badge.svg)](https://github.com/trilitech/octez.connect/actions?query=workflow%3A%22Build%2C+Test+and+Analyze%22+branch%3Amain)
 [![code style: prettier](https://img.shields.io/badge/code_style-prettier-ff69b4.svg?style=flat-square)](https://github.com/prettier/prettier)
 
 > Connect Wallets with dApps on Tezos
 
-[Beacon](https://walletbeacon.io) is the implementation of the wallet interaction standard [tzip-10](https://gitlab.com/tzip/tzip/blob/master/proposals/tzip-10/tzip-10.md) which describes the connnection of a dApp with a wallet.
+[Beacon](https://octez.connect.trilitech.com) is the implementation of the wallet interaction standard [tzip-10](https://gitlab.com/tzip/tzip/blob/master/proposals/tzip-10/tzip-10.md) which describes the connnection of a dApp with a wallet.
 
 ## Intro
 
@@ -22,18 +22,18 @@ Besides this Typescript SDK, we also provide SDKs for native iOS and Android Wal
 
 ## Documentation
 
-The documentation can be found [here](https://docs.walletbeacon.io/), technical documentation can be found [here](https://typedocs.walletbeacon.io/).
+The documentation can be found [here](https://octez-connect.tezos.com/), technical documentation can be found [here](https://typeoctez-connect.tezos.com/).
 
 ## Installation
 
 ```
-npm i --save @airgap/beacon-sdk
+npm i --save @tezos-x/octez.connect-sdk
 ```
 
 ## Example DApp integration
 
 ```ts
-import { DAppClient } from '@airgap/beacon-sdk'
+import { DAppClient } from '@tezos-x/octez.connect-sdk'
 
 const dAppClient = new DAppClient({ name: 'My Sample DApp' })
 
@@ -85,7 +85,7 @@ For a more complete example, take a look at the `example-wallet.html` file.
 
 ## Adding a wallet to beacon-sdk
 
-Please create a PR and add your wallet [here](https://github.com/airgap-it/beacon-sdk/blob/master/scripts/generate-wallet-list.ts).
+Please create a PR and add your wallet [here](https://github.com/trilitech/octez.connect/blob/master/scripts/generate-wallet-list.ts).
 
 For iOS wallets, the wallet needs to define a custom url scheme to support the same-device functionality.
 

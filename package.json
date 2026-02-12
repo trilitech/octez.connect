@@ -1,15 +1,15 @@
 {
-  "name": "@airgap/beacon-sdk",
+  "name": "@tezos-x/octez.connect-sdk",
   "description": "The beacon-sdk allows you to easily connect DApps with Wallets through P2P communication or a chrome extension.",
   "main": "dist/cjs/index.js",
   "module": "dist/esm/index.js",
-  "unpkg": "dist/walletbeacon.min.js",
+  "unpkg": "dist/octez.connect.min.js",
   "types": "dist/esm/index.d.ts",
   "workspaces": [
     "packages/*"
   ],
   "keywords": [
-    "airgap",
+    "trilitech",
     "beacon",
     "crypto",
     "blockchain",
@@ -18,10 +18,10 @@
     "dapp"
   ],
   "license": "MIT",
-  "homepage": "https://www.airgap.it",
+  "homepage": "https://trilitech.com",
   "repository": {
     "type": "git",
-    "url": "https://github.com/airgap-it/beacon-sdk"
+    "url": "https://github.com/trilitech/octez.connect"
   },
   "engines": {
     "npm": ">=7.0.0",
@@ -32,9 +32,9 @@
     "build": "npm run check-version && lerna run tsc && npm run webpack:all",
     "serve": "static-server examples --port 8080",
     "webpack:all": "npm run webpack:sdk && npm run webpack:dapp && npm run webpack:wallet",
-    "webpack:sdk": "webpack --mode=development --config webpack.config.js --entry=./packages/beacon-sdk/dist/cjs/index.js --output-path ./webpack_builds/sdk && terser --ecma=12 ./webpack_builds/sdk/main.js -o ./packages/beacon-sdk/dist/walletbeacon.min.js && cp ./packages/beacon-sdk/dist/walletbeacon.min.js ./examples/walletbeacon.min.js",
-    "webpack:dapp": "webpack --mode=development --entry=./packages/beacon-dapp/dist/cjs/index.js --output-path ./webpack_builds/dapp && terser --ecma=12 ./webpack_builds/dapp/main.js -o ./packages/beacon-dapp/dist/walletbeacon.dapp.min.js",
-    "webpack:wallet": "webpack --mode=development --entry=./packages/beacon-wallet/dist/cjs/index.js --output-path ./webpack_builds/wallet && terser --ecma=12 ./webpack_builds/wallet/main.js -o ./packages/beacon-wallet/dist/walletbeacon.wallet.min.js",
+    "webpack:sdk": "webpack --mode=development --config webpack.config.js --entry=./packages/octez.connect-sdk/dist/cjs/index.js --output-path ./webpack_builds/sdk && terser --ecma=12 ./webpack_builds/sdk/main.js -o ./packages/octez.connect-sdk/dist/octez.connect.min.js && cp ./packages/octez.connect-sdk/dist/octez.connect.min.js ./examples/octez.connect.min.js",
+    "webpack:dapp": "webpack --mode=development --entry=./packages/octez.connect-dapp/dist/cjs/index.js --output-path ./webpack_builds/dapp && terser --ecma=12 ./webpack_builds/dapp/main.js -o ./packages/octez.connect-dapp/dist/octez.connect.dapp.min.js",
+    "webpack:wallet": "webpack --mode=development --entry=./packages/octez.connect-wallet/dist/cjs/index.js --output-path ./webpack_builds/wallet && terser --ecma=12 ./webpack_builds/wallet/main.js -o ./packages/octez.connect-wallet/dist/octez.connect.wallet.min.js",
     "prettier": "prettier --write 'src/**/*' '**/src/**/*' 'docs/**/*.md' 'example-dapp.html' 'example-wallet.html'",
     "lint": "eslint 'src/**/*.ts'",
     "lint:fix": "eslint 'src/**/*.ts' --fix",
@@ -54,22 +54,22 @@
     "bump:patch": "lerna version --no-git-tag-version patch --exact --yes",
     "bump:alpha": "lerna version --no-git-tag-version prerelease --preid alpha --exact --yes",
     "bump:beta": "lerna version --no-git-tag-version prerelease --preid beta --exact --yes",
-    "build:ui": "cd packages/beacon-ui && npm run tsc && cd ../.. && npm run webpack:sdk"
+    "build:ui": "cd packages/octez.connect-ui && npm run tsc && cd ../.. && npm run webpack:sdk"
   },
   "author": "Papers AG <contact@papers.ch> (https://papers.ch)",
   "dependencies": {
-    "@airgap/beacon-blockchain-substrate": "file:packages/beacon-blockchain-substrate",
-    "@airgap/beacon-blockchain-tezos": "file:packages/beacon-blockchain-tezos",
-    "@airgap/beacon-blockchain-tezos-sapling": "file:packages/beacon-blockchain-tezos-sapling",
-    "@airgap/beacon-core": "file:packages/beacon-core",
-    "@airgap/beacon-dapp": "file:packages/beacon-dapp",
-    "@airgap/beacon-transport-matrix": "file:packages/beacon-transport-matrix",
-    "@airgap/beacon-transport-postmessage": "file:packages/beacon-transport-postmessage",
-    "@airgap/beacon-transport-walletconnect": "file:packages/beacon-transport-walletconnect",
-    "@airgap/beacon-types": "file:packages/beacon-types",
-    "@airgap/beacon-ui": "file:packages/beacon-ui",
-    "@airgap/beacon-utils": "file:packages/beacon-utils",
-    "@airgap/beacon-wallet": "file:packages/beacon-wallet",
+    "@tezos-x/octez.connect-blockchain-substrate": "file:packages/octez.connect-blockchain-substrate",
+    "@tezos-x/octez.connect-blockchain-tezos": "file:packages/octez.connect-blockchain-tezos",
+    "@tezos-x/octez.connect-blockchain-tezos-sapling": "file:packages/octez.connect-blockchain-tezos-sapling",
+    "@tezos-x/octez.connect-core": "file:packages/octez.connect-core",
+    "@tezos-x/octez.connect-dapp": "file:packages/octez.connect-dapp",
+    "@tezos-x/octez.connect-transport-matrix": "file:packages/octez.connect-transport-matrix",
+    "@tezos-x/octez.connect-transport-postmessage": "file:packages/octez.connect-transport-postmessage",
+    "@tezos-x/octez.connect-transport-walletconnect": "file:packages/octez.connect-transport-walletconnect",
+    "@tezos-x/octez.connect-types": "file:packages/octez.connect-types",
+    "@tezos-x/octez.connect-ui": "file:packages/octez.connect-ui",
+    "@tezos-x/octez.connect-utils": "file:packages/octez.connect-utils",
+    "@tezos-x/octez.connect-wallet": "file:packages/octez.connect-wallet",
     "@walletconnect/sign-client": "2.18.0",
     "@walletconnect/types": "2.18.0",
     "@walletconnect/utils": "2.18.0",

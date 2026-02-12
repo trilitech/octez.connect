@@ -1,0 +1,76 @@
+{
+  "name": "@tezos-x/octez.connect-ui",
+  "version": "1.0.0",
+  "description": "This package contains the UI part (alerts and toasts) of the Beacon SDK.",
+  "author": "Andreas Gassmann <a.gassmann@papers.ch>",
+  "homepage": "https://octez-connect.tezos.com",
+  "license": "ISC",
+  "main": "dist/cjs/index.js",
+  "module": "dist/esm/index.js",
+  "types": "dist/esm/index.d.ts",
+  "exports": {
+    ".": {
+      "require": "./dist/cjs/index.js",
+      "import": "./dist/esm/index.js"
+    },
+    "./data/*.json": "./src/data/*.json"
+  },
+  "directories": {
+    "lib": "dist/esm",
+    "test": "__tests__"
+  },
+  "files": [
+    "dist",
+    "src/data"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/trilitech/octez.connect.git"
+  },
+  "scripts": {
+    "tsc": "rollup -c",
+    "test": "jest"
+  },
+  "bugs": {
+    "url": "https://github.com/trilitech/octez.connect/issues"
+  },
+  "dependencies": {
+    "@tezos-x/octez.connect-core": "1.0.0",
+    "@tezos-x/octez.connect-transport-postmessage": "1.0.0",
+    "@tezos-x/octez.connect-types": "1.0.0",
+    "@tezos-x/octez.connect-utils": "1.0.0",
+    "@walletconnect/utils": "2.18.0",
+    "qrcode-svg": "^1.1.0",
+    "react": "^19.1.0",
+    "react-dom": "^19.1.0"
+  },
+  "optionalDependencies": {
+    "@rollup/rollup-linux-x64-gnu": "4.39.0"
+  },
+  "devDependencies": {
+    "@rollup/plugin-babel": "^6.0.4",
+    "@rollup/plugin-commonjs": "^28.0.3",
+    "@rollup/plugin-image": "^3.0.3",
+    "@rollup/plugin-json": "^6.1.0",
+    "@rollup/plugin-node-resolve": "^16.0.1",
+    "@rollup/plugin-terser": "^0.4.4",
+    "@testing-library/dom": "^10.4.0",
+    "@testing-library/jest-dom": "^6.6.3",
+    "@testing-library/react": "^16.3.0",
+    "@types/node": "^22.14.1",
+    "@types/qrcode-svg": "^1.1.5",
+    "@types/react": "^19.1.2",
+    "@types/react-dom": "^19.1.2",
+    "@vitejs/plugin-react": "^4.4.0",
+    "postcss-import": "^16.1.0",
+    "rollup": "4.39.0",
+    "rollup-plugin-postcss": "^4.0.2",
+    "rollup-plugin-string": "^3.0.0",
+    "rollup-plugin-svg": "^2.0.0",
+    "rollup-plugin-typescript2": "^0.36.0",
+    "vite": "^6.2.6"
+  }
+}

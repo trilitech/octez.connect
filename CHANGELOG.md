@@ -1,1 +1,1 @@
-https://docs.walletbeacon.io/CHANGELOG
+https://octez-connect.tezos.com/CHANGELOG

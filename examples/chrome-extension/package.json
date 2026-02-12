@@ -25,8 +25,8 @@
     "webpack-cli": "^5.1.4"
   },
   "dependencies": {
-    "@airgap/beacon-types": "file:../../packages/beacon-types",
-    "@airgap/beacon-wallet": "file:../../packages/beacon-wallet",
+    "@tezos-x/octez.connect-types": "file:../../packages/octez.connect-types",
+    "@tezos-x/octez.connect-wallet": "file:../../packages/octez.connect-wallet",
     "@taquito/signer": "^23.0.1",
     "@taquito/taquito": "^23.0.1",
     "bip39": "^3.1.0",

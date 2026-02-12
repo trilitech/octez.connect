@@ -11,7 +11,7 @@ import {
   type OperationRequestOutput,
   type PermissionScope,
   SigningType
-} from '@airgap/beacon-types'
+} from '@tezos-x/octez.connect-types'
 
 import type {
   UIRequest,
