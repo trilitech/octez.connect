@@ -13,7 +13,7 @@ export class UnknownBeaconError extends BeaconError {
   constructor() {
     super(
       BeaconErrorType.UNKNOWN_ERROR,
-      'An unknown error occured. Please try again or report it to a developer.',
+      'An unknown error occurred. Please try again or report it to a developer.',
       BEACON_ERROR_CODES.UNKNOWN_ERROR
     )
   }

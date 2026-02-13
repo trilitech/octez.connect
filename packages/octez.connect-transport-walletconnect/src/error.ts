@@ -126,7 +126,7 @@ export class InvalidReceivedSessionNamespace extends Error {
   }
 
   get errorCode(): string {
-    return this.data ? 'WC_INCOMPLETE_NAMESPACE' : 'WC_INVALID_NAMESPACE'
+    return this.type === 'incomplete' ? 'WC_INCOMPLETE_NAMESPACE' : 'WC_INVALID_NAMESPACE'
   }
 }
 
@@ -168,7 +168,7 @@ export class MissingRequiredScope extends Error {
   beaconErrorType = BeaconErrorType.NOT_GRANTED_ERROR
 
   constructor(public requiredScopes: PermissionScopeMethods | string) {
-    super(`Required permission scope were not granted for "${requiredScopes}"`)
+    super(`Required permission scopes were not granted for "${requiredScopes}"`)
   }
 }
 

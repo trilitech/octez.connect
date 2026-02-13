@@ -1,4 +1,4 @@
-# `beacon-transport-walletconnect`
+# `@tezos-x/octez.connect-transport-walletconnect`
 
 This package is part of the `@tezos-x/octez.connect-sdk` project. [Read more](https://github.com/trilitech/octez.connect)
 

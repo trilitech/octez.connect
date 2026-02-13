@@ -1,6 +1,6 @@
 # Beacon Wallet Chrome Extension
 
-A sample Chrome extension wallet that demonstrates Beacon SDK integration for Tezos dApps.
+A sample Chrome extension wallet that demonstrates octez.connect SDK integration for Tezos dApps.
 
 > **Warning: Not Production Ready**
 >
@@ -61,7 +61,7 @@ npm install
 npm run build
 
 # Watch mode for development
-npm run watch
+npm run dev
 ```
 
 ### Load in Chrome

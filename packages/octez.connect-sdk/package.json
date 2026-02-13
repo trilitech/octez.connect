@@ -43,6 +43,7 @@
     "@tezos-x/octez.connect-types": "1.0.0",
     "@tezos-x/octez.connect-ui": "1.0.0",
     "@tezos-x/octez.connect-utils": "1.0.0",
+    "@tezos-x/octez.connect-transport-walletconnect": "1.0.0",
     "@tezos-x/octez.connect-wallet": "1.0.0"
   }
 }
