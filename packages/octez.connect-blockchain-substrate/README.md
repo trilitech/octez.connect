@@ -9,8 +9,8 @@ This package adds support for `substrate` based blockchains. It can be used in c
 ## Usage
 
 ```
-import { DAppClient } from '@airga/beacon-dapp'
-import { SubstrateBlockchain } from '@airga/beacon-blockchain-substrate'
+import { DAppClient } from '@tezos-x/octez.connect-dapp'
+import { SubstrateBlockchain } from '@tezos-x/octez.connect-blockchain-substrate'
 
 const client = new DAppClient({
     name: 'Example DApp',

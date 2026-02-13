@@ -156,8 +156,9 @@ export async function buildErrorContext(
   if (error instanceof BeaconError) {
     const errorData = (error as unknown as { data?: unknown }).data
     // Prefer transport-specific error code from errorData if available
-    const errorCode = (errorData && typeof errorData === 'object' && 'errorCode' in errorData && typeof errorData.errorCode === 'string')
-      ? errorData.errorCode
+    const errorDataObj = errorData && typeof errorData === 'object' ? (errorData as Record<string, unknown>) : undefined
+    const errorCode = (errorDataObj && typeof errorDataObj.errorCode === 'string')
+      ? errorDataObj.errorCode
       : error.code
 
     return {

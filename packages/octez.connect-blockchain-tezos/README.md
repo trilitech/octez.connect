@@ -9,8 +9,8 @@ This package adds support for the `tezos` blockchain. It can be used in combinat
 ## Usage
 
 ```
-import { DAppClient } from '@airga/beacon-dapp'
-import { TezosBlockchain } from '@airga/beacon-blockchain-tezos'
+import { DAppClient } from '@tezos-x/octez.connect-dapp'
+import { TezosBlockchain } from '@tezos-x/octez.connect-blockchain-tezos'
 
 const client = new DAppClient({
     name: 'Example DApp',

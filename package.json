@@ -116,6 +116,7 @@
     "static-server": "2.2.1",
     "terser": "^5.39.0",
     "ts-node": "10.9.2",
+    "tsx": "^4.8.1",
     "tslint": "6.1.3",
     "typedoc": "0.28.2",
     "typedoc-plugin-internal-external": "2.2.0",

@@ -282,8 +282,8 @@
       })
 
       // Subscribe to pairing aborted event
-      client.subscribeToEvent(beacon.BeaconEvent.PAIR_ABORTED, (data) => {
-        console.log('PAIR_ABORTED received - reason:', data.reason)
+      client.subscribeToEvent(beacon.BeaconEvent.PAIR_ABORTED, () => {
+        console.log('PAIR_ABORTED received')
       })
 
       // Display the active account in the UI

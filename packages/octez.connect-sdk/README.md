@@ -77,7 +77,7 @@ For a more complete example, take a look at the `example-wallet.html` file.
 
 ## Adding a wallet to octez.connect
 
-Please create a PR and add your wallet [here](https://github.com/trilitech/octez.connect/blob/master/scripts/generate-wallet-list.ts).
+Wallets are managed in the [beacon-wallet-list](https://github.com/airgap-it/beacon-wallet-list) repository. Please create a PR there to add your wallet.
 
 For iOS wallets, the wallet needs to define a custom url scheme to support the same-device functionality.
 

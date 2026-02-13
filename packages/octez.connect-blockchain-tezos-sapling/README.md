@@ -9,8 +9,8 @@ This package adds support for `tezos-sapling`, the sapling integration on the Te
 ## Usage
 
 ```
-import { DAppClient } from '@airga/beacon-dapp'
-import { TezosSaplingBlockchain } from '@airga/beacon-blockchain-tezos-sapling'
+import { DAppClient } from '@tezos-x/octez.connect-dapp'
+import { TezosSaplingBlockchain } from '@tezos-x/octez.connect-blockchain-tezos-sapling'
 
 const client = new DAppClient({
     name: 'Example DApp',
