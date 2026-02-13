@@ -56,6 +56,7 @@ const scheduleConfigUpdate = (config: ToastConfig, delay: number) => {
   configDelayTimer = setTimeout(() => {
     configDelayTimer = undefined
     config$.next(config)
+    show$.next(true)
   }, delay)
 }
 
@@ -93,11 +94,12 @@ const openToast = (config: ToastConfig) => {
 }
 
 const closeToast = () => {
-  if (configDelayTimer) {
-    clearTimeout(configDelayTimer)
-    configDelayTimer = undefined
+  // Don't cancel configDelayTimer here — a pending toast update (e.g., a
+  // success toast scheduled with a delay) must still fire even if the
+  // current toast is closed by its auto-hide timer.
+  if (!configDelayTimer) {
+    config$.next(undefined)
   }
-  config$.next(undefined)
   show$.next(false)
 }
 

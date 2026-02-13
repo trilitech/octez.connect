@@ -44,6 +44,10 @@ test('should send 1 mutez', async () => {
 })
 
 test('should rate limit', async () => {
+  // The rate limit threshold is > 2 requests within 5 seconds.
+  // Send 3 rapid requests to reliably trigger it, regardless of whether
+  // the initial pairing permission request is still in the window.
+  await dapp.click('#sendToSelf')
   await dapp.click('#sendToSelf')
   await dapp.click('#sendToSelf')
 
