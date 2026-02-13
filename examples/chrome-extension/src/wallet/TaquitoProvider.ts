@@ -13,8 +13,8 @@
  * - Integrate with your existing key management system
  */
 
-import { InMemorySigner } from '@taquito/signer'
-import { TezosToolkit, OpKind } from '@taquito/taquito'
+import { InMemorySigner } from '@tezos-x/octez.js-signer'
+import { TezosToolkit, OpKind } from '@tezos-x/octez.js'
 import * as bip39 from 'bip39'
 import type {
   WalletProviderWithSetup,
