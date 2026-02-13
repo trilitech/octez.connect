@@ -17,7 +17,7 @@ export class PermissionValidator {
    *
    * PermissionRequest and BroadcastRequest will always return true.
    *
-   * @param message Beacon Message
+   * @param message octez.connect message
    */
   public static async hasPermission(
     message: BeaconMessage,

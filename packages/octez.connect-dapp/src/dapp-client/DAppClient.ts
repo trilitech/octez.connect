@@ -236,7 +236,7 @@ export class DAppClient extends Client {
   private debounceSetActiveAccount: boolean = false
 
   private multiTabChannel = new MultiTabChannel(
-    'beacon-sdk-channel',
+    'octez.connect-sdk-channel',
     this.onBCMessageHandler.bind(this),
     this.onElectedLeaderhandler.bind(this)
   )
@@ -853,7 +853,7 @@ export class DAppClient extends Client {
           p2pTransport
             .listenForNewPeer((peer) => {
               logger.log('init', 'p2p transport peer connected', peer)
-              this.analytics.track('event', 'DAppClient', 'Beacon Wallet connected', {
+              this.analytics.track('event', 'DAppClient', 'octez.connect Wallet connected', {
                 peerName: peer.name
               })
               this.events
@@ -2456,7 +2456,7 @@ export class DAppClient extends Client {
     }
 
     if (!this.beaconId) {
-      throw await this.sendInternalError('BeaconID not defined')
+      throw await this.sendInternalError('octez.connect ID not defined')
     }
 
     const request: Optional<T, IgnoredRequestInputProperties> &
@@ -2590,7 +2590,7 @@ export class DAppClient extends Client {
     }
 
     if (!this.beaconId) {
-      throw await this.sendInternalError('BeaconID not defined')
+      throw await this.sendInternalError('octez.connect ID not defined')
     }
 
     const request: BeaconMessageWrapper<BlockchainMessage> = {

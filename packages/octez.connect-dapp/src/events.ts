@@ -41,7 +41,7 @@ import {
 import { shortenString } from './utils/shorten-string'
 import { isMobile, isMobileOS } from '@tezos-x/octez.connect-ui'
 
-const logger = new Logger('BeaconEvents')
+const logger = new Logger('octez.connectEvents')
 
 const SUCCESS_TIMER: number = 5 * 1000
 

@@ -75,7 +75,7 @@ describe('P2PCommunicationClient', () => {
   beforeEach(() => {
     jest.clearAllMocks()
 
-    // beacon-utils mocks
+    // octez.connect-utils mocks
     ;(generateGUID as jest.Mock).mockResolvedValue('generated-guid')
     ;(getHexHash as jest.Mock).mockResolvedValue('hex-hash')
     ;(recipientString as jest.Mock).mockReturnValue('@hex-hash:relay.server')

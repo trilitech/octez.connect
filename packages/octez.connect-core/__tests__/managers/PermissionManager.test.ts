@@ -3,7 +3,7 @@ import { PermissionValidator } from '../../src/managers/PermissionValidator'
 import { Storage, StorageKey, PermissionInfo, BeaconMessage } from '@tezos-x/octez.connect-types'
 
 /**
- * A simple in-memory implementation of the Beacon Storage abstract class
+ * A simple in-memory implementation of the octez.connect Storage abstract class
  */
 class MockStorage extends Storage {
   private store: Record<string, any> = {}

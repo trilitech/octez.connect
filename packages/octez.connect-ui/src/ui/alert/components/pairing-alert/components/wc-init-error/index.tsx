@@ -35,7 +35,7 @@ const WCInitError: React.FC<WCInitErrorProps> = ({ title, handleUpdateState }) =
       <h3 style={{ color: '#FF4136', margin: '0.6px' }}>A network error occurred.</h3>
       <h4 className="body-style">
         This issue does not concern your wallet or dApp. If the problem persists, please report it
-        to the Beacon team{' '}
+        to the octez.connect team{' '}
         <span
           style={{ textDecoration: 'underline', color: '#007bff', cursor: 'pointer' }}
           onClick={() => handleUpdateState(AlertState.BUG_REPORT)}

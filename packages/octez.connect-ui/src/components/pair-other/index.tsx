@@ -35,7 +35,7 @@ const PairOther: React.FC<PairOtherProps> = (props: PairOtherProps) => {
           <br />
           {hasBeacon && (
             <button className="wallets-button" onClick={() => buttonClickHandler('p2p')}>
-              Beacon
+              octez.connect
             </button>
           )}
           {hasWalletConnect && (

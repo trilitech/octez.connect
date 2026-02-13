@@ -64,7 +64,7 @@ const QR: React.FC<QRProps> = (props: QRProps) => {
         {props.isMobile && !props.isDeprecated && (
           <span>
             {`Scan QR code with a ${
-              props.isWalletConnect ? 'WalletConnect' : 'Beacon'
+              props.isWalletConnect ? 'WalletConnect' : 'octez.connect'
             }-compatible wallet.`}
           </span>
         )}

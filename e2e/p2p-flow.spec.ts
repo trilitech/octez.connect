@@ -151,7 +151,7 @@ test('should disconnect on tab1 and reconnect on tab2', async () => {
   await dapp2.click('button:has-text("Show QR code")')
   await dapp2.waitForSelector('span.pair-other-info', { state: 'visible', timeout: 30_000 })
 
-  await dapp2.click('button:has-text("Beacon")')
+  await dapp2.click('button:has-text("octez.connect")')
 
   await dapp2.waitForSelector('div.qr-right', { state: 'visible', timeout: 30_000 })
 
@@ -214,7 +214,7 @@ test('should disconnect on tab2 and reconnect on tab3', async () => {
   await dapp3.click('button:has-text("Show QR code")')
   await dapp3.waitForSelector('span.pair-other-info', { state: 'visible', timeout: 30_000 })
 
-  await dapp3.click('button:has-text("Beacon")')
+  await dapp3.click('button:has-text("octez.connect")')
 
   await dapp3.waitForSelector('div.qr-right', { state: 'visible', timeout: 30_000 })
 

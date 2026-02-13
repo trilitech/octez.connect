@@ -18,7 +18,7 @@ export const pairWithBeaconWallet = async (browser: Browser) => {
   await dapp.goto('http://localhost:1234/dapp.html')
   await wallet.goto('http://localhost:1234/wallet.html')
 
-  // --- trigger the Beacon pairing alert ---
+  // --- trigger the octez.connect pairing alert ---
   await dapp.click('#requestPermission')
   await dapp.waitForSelector('div.alert-wrapper-show', { state: 'visible', timeout: 30_000 })
 
@@ -27,7 +27,7 @@ export const pairWithBeaconWallet = async (browser: Browser) => {
   await dapp.click('button:has-text("Show QR code")')
   await dapp.waitForSelector('span.pair-other-info', { state: 'visible', timeout: 30_000 })
 
-  await dapp.click('button:has-text("Beacon")')
+  await dapp.click('button:has-text("octez.connect")')
 
   await dapp.waitForSelector('div.qr-right', { state: 'visible', timeout: 30_000 })
 

@@ -27,17 +27,17 @@ describe('PairOther Component', () => {
     expect(await screen.findByText(/Select QR Type/i)).toBeInTheDocument()
 
     // Wait for both buttons to be rendered.
-    const beaconButton = await screen.findByRole('button', { name: /Beacon/i })
+    const beaconButton = await screen.findByRole('button', { name: /octez\.connect/i })
     const walletConnectButton = await screen.findByRole('button', { name: /WalletConnect/i })
     expect(beaconButton).toBeInTheDocument()
     expect(walletConnectButton).toBeInTheDocument()
   })
 
-  test('clicking the Beacon button shows the QR component with p2p payload', async () => {
+  test('clicking the octez.connect button shows the QR component with p2p payload', async () => {
     render(<PairOther {...defaultProps} />)
 
-    // Wait for the Beacon button to appear.
-    const beaconButton = await screen.findByRole('button', { name: /Beacon/i })
+    // Wait for the octez.connect button to appear.
+    const beaconButton = await screen.findByRole('button', { name: /octez\.connect/i })
     fireEvent.click(beaconButton)
 
     // After clicking, wait for the QR component to render.
@@ -75,7 +75,7 @@ describe('PairOther Component', () => {
     expect(await screen.findByText(/Select QR Type/i)).toBeInTheDocument()
 
     // The buttons should not be rendered if the payloads are empty.
-    expect(screen.queryByRole('button', { name: /Beacon/i })).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: /octez\.connect/i })).not.toBeInTheDocument()
     expect(screen.queryByRole('button', { name: /WalletConnect/i })).not.toBeInTheDocument()
   })
 })

@@ -65,7 +65,7 @@ export abstract class BeaconClient {
     // TODO: This is a temporary "workaround" to prevent users from creating multiple Client instances
     if ((windowRef as any).beaconCreatedClientInstance) {
       console.error(
-        '[BEACON] It looks like you created multiple Beacon SDK Client instances. This can lead to problems. Only create one instance and re-use it everywhere.'
+        '[OCTEZ.CONNECT] It looks like you created multiple octez.connect SDK Client instances. This can lead to problems. Only create one instance and re-use it everywhere.'
       )
     } else {
       ;(windowRef as any).beaconCreatedClientInstance = true

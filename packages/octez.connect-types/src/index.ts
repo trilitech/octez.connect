@@ -258,7 +258,7 @@ export {
   TezosDalPublishCommitmentOperation
 }
 
-// Beacon
+// octez.connect
 export {
   AccountIdentifier,
   AppMetadata,

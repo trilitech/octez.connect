@@ -608,7 +608,7 @@ describe('useConnect hook', () => {
     // --- Return a real anchor element ---
     const fakeAnchor = document.createElement('a')
     const setAttributeSpy = jest.spyOn(fakeAnchor, 'setAttribute')
-    const dispatchEventSpy = jest.spyOn(fakeAnchor, 'dispatchEvent')
+    const dispatchEventSpy = jest.spyOn(fakeAnchor, 'dispatchEvent').mockImplementation(() => true)
     const originalCreateElement = document.createElement.bind(document)
     const createElementSpy = jest
       .spyOn(document, 'createElement')
