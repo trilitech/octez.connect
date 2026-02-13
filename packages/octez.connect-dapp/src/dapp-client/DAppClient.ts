@@ -216,6 +216,7 @@ export class DAppClient extends Client {
 
   private _initPromise: Promise<TransportType> | undefined
   private _initPromiseReject: ((reason?: ErrorResponse | AbortedBeaconError) => void) | undefined
+  private isInitPending: boolean = false
 
   private readonly activeAccountLoaded: Promise<AccountInfo | undefined>
 
@@ -2423,22 +2424,23 @@ export class DAppClient extends Client {
   ) {
     const messageId = otherTabMessageId ?? (await generateGUID())
 
-    if (this._initPromise && this._initPromiseReject) {
-      this._initPromiseReject(new AbortedBeaconError())
+    if (this._initPromise && this.isInitPending) {
+      if (this._initPromiseReject) {
+        this._initPromiseReject(new AbortedBeaconError())
+        this._initPromiseReject = undefined
+      }
       await Promise.all([
         this.postMessageTransport?.disconnect(),
         this.walletConnectTransport?.disconnect()
       ])
       this._initPromise = undefined
-      this._initPromiseReject = undefined
       this.hideUI(['toast'])
     }
 
-    this.postMessageTransport = undefined
-    this.walletConnectTransport = undefined
-
     logger.log('makeRequest', 'starting')
+    this.isInitPending = true
     await this.init()
+    this.isInitPending = false
     logger.log('makeRequest', 'after init')
 
     if (await this.addRequestAndCheckIfRateLimited()) {
@@ -2562,23 +2564,24 @@ export class DAppClient extends Client {
     message: U
     connectionInfo: ConnectionContext
   }> {
-    if (this._initPromise && this._initPromiseReject) {
-      this._initPromiseReject(new AbortedBeaconError())
+    if (this._initPromise && this.isInitPending) {
+      if (this._initPromiseReject) {
+        this._initPromiseReject(new AbortedBeaconError())
+        this._initPromiseReject = undefined
+      }
       await Promise.all([
         this.postMessageTransport?.disconnect(),
         this.walletConnectTransport?.disconnect()
       ])
       this._initPromise = undefined
-      this._initPromiseReject = undefined
       this.hideUI(['toast'])
     }
 
-    this.postMessageTransport = undefined
-    this.walletConnectTransport = undefined
-
     const messageId = otherTabMessageId ?? (await generateGUID())
     logger.log('makeRequest', 'starting')
+    this.isInitPending = true
     await this.init(undefined, true)
+    this.isInitPending = false
     logger.log('makeRequest', 'after init')
 
     if (await this.addRequestAndCheckIfRateLimited()) {
@@ -2777,6 +2780,7 @@ export class DAppClient extends Client {
     await this.setTransport()
     this._initPromise = undefined
     this._initPromiseReject = undefined
+    this.isInitPending = false
     this.sendMetrics('performance-metrics/save', await this.buildPayload('disconnect', 'success'))
   }
 
