@@ -2,7 +2,7 @@
   "name": "@tezos-x/octez.connect-core",
   "version": "1.0.0",
   "description": "This package contains internal methods that are used by both the dApp and wallet client.",
-  "author": "Andreas Gassmann <a.gassmann@papers.ch>",
+  "author": "Blockchain Infra <blockchain.infra@trili.tech>",
   "homepage": "https://octez-connect.tezos.com",
   "license": "ISC",
   "main": "dist/cjs/src/index.js",
