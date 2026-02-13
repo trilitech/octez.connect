@@ -74,6 +74,7 @@
     "@walletconnect/types": "2.18.0",
     "@walletconnect/utils": "2.18.0",
     "@web3modal/standalone": "2.4.3",
+    "cd": "^0.3.3",
     "stream-browserify": "^3.0.0"
   },
   "devDependencies": {
