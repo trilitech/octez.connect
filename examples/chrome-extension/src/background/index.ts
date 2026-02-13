@@ -40,7 +40,7 @@ async function getOrCreateWalletClient(): Promise<WalletClient> {
     const client = new WalletClient({
       name: 'Beacon Example Wallet',
       iconUrl: chrome.runtime.getURL('icons/icon48.png'),
-      appUrl: 'https://github.com/AirGap/beacon-sdk',
+      appUrl: 'https://github.com/trilitech/octez.connect',
       storage
     })
 

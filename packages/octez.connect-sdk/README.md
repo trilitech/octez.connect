@@ -1,4 +1,4 @@
-# Beacon SDK
+# Octez Connect SDK
 
 [![npm](https://img.shields.io/npm/v/@tezos-x/octez.connect-sdk.svg?colorB=brightgreen)](https://www.npmjs.com/package/@tezos-x/octez.connect-sdk)
 [![documentation](https://img.shields.io/badge/documentation-online-brightgreen.svg)](https://octez-connect.tezos.com)
@@ -7,11 +7,11 @@
 
 > Connect Wallets with dApps on Tezos
 
-[Beacon](https://octez.connect.trilitech.com) is the implementation of the wallet interaction standard [tzip-10](https://gitlab.com/tzip/tzip/blob/master/proposals/tzip-10/tzip-10.md) which describes the connnection of a dApp with a wallet.
+[Octez Connect](https://octez-connect.tezos.com) is the implementation of the wallet interaction standard [tzip-10](https://gitlab.com/tzip/tzip/blob/master/proposals/tzip-10/tzip-10.md) which describes the connection of a dApp with a wallet.
 
 ## Intro
 
-The `beacon-sdk` simplifies and abstracts the communication between dApps and wallets over different transport layers.
+The `octez.connect-sdk` simplifies and abstracts the communication between dApps and wallets over different transport layers.
 
 Developers that plan to develop complex smart contract interactions can use [Taquito](https://github.com/ecadlabs/taquito) with the `BeaconWallet`, which uses this SDK under the hood, but provides helpful methods to interact with contracts.
 
@@ -22,7 +22,7 @@ Besides this Typescript SDK, we also provide SDKs for native iOS and Android Wal
 
 ## Documentation
 
-The documentation can be found [here](https://octez-connect.tezos.com/), technical documentation can be found [here](https://typeoctez-connect.tezos.com/).
+The documentation can be found [here](https://octez-connect.tezos.com/), technical documentation can be found [here](https://typedocs.octez-connect.tezos.com/).
 
 ## Installation
 
@@ -75,7 +75,7 @@ client
 
 For a more complete example, take a look at the `example-wallet.html` file.
 
-## Adding a wallet to beacon-sdk
+## Adding a wallet to octez.connect
 
 Please create a PR and add your wallet [here](https://github.com/trilitech/octez.connect/blob/master/scripts/generate-wallet-list.ts).
 

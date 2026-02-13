@@ -1,6 +1,6 @@
 {
   "name": "@tezos-x/octez.connect-sdk",
-  "description": "The beacon-sdk allows you to easily connect DApps with Wallets through P2P communication or a chrome extension.",
+  "description": "The octez.connect-sdk allows you to easily connect DApps with Wallets through P2P communication or a chrome extension.",
   "main": "dist/cjs/index.js",
   "module": "dist/esm/index.js",
   "unpkg": "dist/octez.connect.min.js",
@@ -18,7 +18,7 @@
     "dapp"
   ],
   "license": "MIT",
-  "homepage": "https://trilitech.com",
+  "homepage": "https://octez-connect.tezos.com",
   "repository": {
     "type": "git",
     "url": "https://github.com/trilitech/octez.connect"

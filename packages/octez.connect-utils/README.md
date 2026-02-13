@@ -4,7 +4,7 @@ This package is part of the `@tezos-x/octez.connect-sdk` project. [Read more](ht
 
 ## Introduction
 
-This package contains utility functions that are used throughout the `beacon-sdk`.
+This package contains utility functions that are used throughout the `octez.connect-sdk`.
 
 Unless you need to import types from this package, you probably don't need to add it to your project.
 

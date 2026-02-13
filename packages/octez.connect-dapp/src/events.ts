@@ -56,7 +56,7 @@ type RPCError = {
   }
 }
 /**
- * The different events that can be emitted by the beacon-sdk
+ * The different events that can be emitted by the octez.connect-sdk
  */
 export enum BeaconEvent {
   PERMISSION_REQUEST_SENT = 'PERMISSION_REQUEST_SENT',

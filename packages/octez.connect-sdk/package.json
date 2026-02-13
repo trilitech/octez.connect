@@ -1,7 +1,7 @@
 {
   "name": "@tezos-x/octez.connect-sdk",
   "version": "1.0.0",
-  "description": "The `beacon-sdk` simplifies and abstracts the communication between dApps and wallets over different transport layers.",
+  "description": "The `octez.connect-sdk` simplifies and abstracts the communication between dApps and wallets over different transport layers.",
   "author": "Andreas Gassmann <a.gassmann@papers.ch>",
   "homepage": "https://octez-connect.tezos.com",
   "license": "ISC",

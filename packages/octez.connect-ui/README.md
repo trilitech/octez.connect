@@ -4,7 +4,7 @@ This package is part of the `@tezos-x/octez.connect-sdk` project. [Read more](ht
 
 ## Introduction
 
-This package contains the UI part (alerts and toasts) of the `beacon-sdk`.
+This package contains the UI part (alerts and toasts) of the `octez.connect-sdk`.
 
 Unless you need to import types from this package, you probably don't need to add it to your project.
 
