@@ -4,6 +4,8 @@
     "lib": ["es2015", "es2017.string", "dom"],
     "module": "ESNext",
     "moduleResolution": "node",
+    "resolveJsonModule": true,
+    "esModuleInterop": true,
     "declaration": true,
     "outDir": "./dist/esm",
     "typeRoots": ["./node_modules/@types", "./src/typings", "./node_modules"],
@@ -24,9 +26,8 @@
     "noUnusedParameters": true /* Report errors on unused parameters. */,
     "noImplicitReturns": true /* Report error when not all code paths in function return a value. */,
     "noFallthroughCasesInSwitch": true /* Report errors for fallthrough cases in switch statement. */,
-    "allowSyntheticDefaultImports": true
-  },
-  "paths": {
+    "allowSyntheticDefaultImports": true,
+    "paths": {
     "octez.connect-core": ["packages/octez.connect-core/lib/octez.connect-core", "packages/octez.connect-core/lib"],
     "octez.connect-dapp": ["packages/octez.connect-dapp/lib/octez.connect-dapp", "packages/octez.connect-dapp/lib"],
     "octez.connect-blockchain-substrate": [
@@ -53,5 +54,6 @@
     "octez.connect-ui": ["packages/octez.connect-ui/lib/octez.connect-ui", "packages/octez.connect-ui/lib"],
     "octez.connect-utils": ["packages/octez.connect-utils/lib/octez.connect-utils", "packages/octez.connect-utils/lib"],
     "octez.connect-wallet": ["packages/octez.connect-wallet/lib/octez.connect-wallet", "packages/octez.connect-wallet/lib"]
+    }
   }
 }

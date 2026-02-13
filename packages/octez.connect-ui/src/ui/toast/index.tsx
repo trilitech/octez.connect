@@ -12,6 +12,7 @@ let initDone: boolean = false
 const config$ = new Subject<ToastConfig | undefined>()
 const show$ = new Subject<boolean>()
 let lastTimer: NodeJS.Timeout | undefined
+let configDelayTimer: NodeJS.Timeout | undefined
 
 // Track when openToast was last called and how many consecutive calls were made.
 let lastCallTimestamp = 0
@@ -41,6 +42,24 @@ const createToast = (config: ToastConfig) => {
   initDone = true
 }
 
+const scheduleConfigUpdate = (config: ToastConfig, delay: number) => {
+  if (configDelayTimer) {
+    clearTimeout(configDelayTimer)
+    configDelayTimer = undefined
+  }
+
+  if (delay === 0) {
+    config$.next(config)
+    return
+  }
+
+  configDelayTimer = setTimeout(() => {
+    configDelayTimer = undefined
+    config$.next(config)
+    show$.next(true)
+  }, delay)
+}
+
 const openToast = (config: ToastConfig) => {
   const now = Date.now()
 
@@ -60,7 +79,7 @@ const openToast = (config: ToastConfig) => {
   if (!initDone) {
     createToast(config)
   } else {
-    setTimeout(() => config$.next(config), timeoutDelay)
+    scheduleConfigUpdate(config, timeoutDelay)
   }
 
   // Clear any existing timer for auto-hiding the toast.
@@ -75,7 +94,12 @@ const openToast = (config: ToastConfig) => {
 }
 
 const closeToast = () => {
-  config$.next(undefined)
+  // Don't cancel configDelayTimer here — a pending toast update (e.g., a
+  // success toast scheduled with a delay) must still fire even if the
+  // current toast is closed by its auto-hide timer.
+  if (!configDelayTimer) {
+    config$.next(undefined)
+  }
   show$.next(false)
 }
 

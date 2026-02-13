@@ -15,7 +15,7 @@ import {
   BeaconBaseMessage
   // EncryptPayloadRequestOutput
 } from '@tezos-x/octez.connect-types'
-import { AppMetadataManager, Logger } from '@tezos-x/octez.connect-core'
+import { AppMetadataManager, Logger, usesWrappedMessages } from '@tezos-x/octez.connect-core'
 import { SimulatedProofOfEventChallengeRequestOutput } from '@tezos-x/octez.connect-types/dist/esm/types/beacon/messages/BeaconRequestOutputMessage'
 
 const logger = new Logger('IncomingRequestInterceptor')
@@ -50,7 +50,7 @@ export class IncomingRequestInterceptor {
 
     if (config.message.version === '2') {
       IncomingRequestInterceptor.handleV2Message(config as IncomingRequestInterceptorOptionsV2)
-    } else if (config.message.version === '3') {
+    } else if (usesWrappedMessages(config.message.version)) {
       IncomingRequestInterceptor.handleV3Message(config as IncomingRequestInterceptorOptionsV3)
     }
   }
@@ -169,19 +169,6 @@ export class IncomingRequestInterceptor {
           interceptorCallback(request, connectionInfo)
         }
         break
-      case BeaconMessageType.SimulatedProofOfEventChallengeRequest:
-        {
-          const appMetadata: AppMetadata = await IncomingRequestInterceptor.getAppMetadata(
-            appMetadataManager,
-            message.senderId
-          )
-          const request: SimulatedProofOfEventChallengeRequestOutput = {
-            appMetadata,
-            ...message
-          }
-          interceptorCallback(request, connectionInfo)
-        }
-        break
       default:
         logger.log('intercept', 'Message not handled')
         assertNever(message)
@@ -233,6 +220,7 @@ export class IncomingRequestInterceptor {
     }
   }
 }
+
 function assertNever(_message: never) {
   throw new Error('Function not implemented.')
 }

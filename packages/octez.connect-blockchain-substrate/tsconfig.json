@@ -1,10 +1,13 @@
 {
   "extends": "../../tsconfig.json",
   "compilerOptions": {
+    "rootDir": "./src",
     "outDir": "./dist/esm",
+    "resolveJsonModule": true,
     "baseUrl": ".",
     "paths": {
-      "@tezos-x/octez.connect-blockchain-substrate": ["./src"]
+      "@tezos-x/octez.connect-blockchain-substrate": ["./src"],
+      "@tezos-x/octez.connect-ui/data/*": ["../octez.connect-ui/src/data/*"]
     }
   },
   "include": ["./src"]

@@ -30,4 +30,4 @@
 
 <!--- these standard labels will be added to this issue, leave it as it is --->
 
-/label ~"type::task" ~"proj::trilitech" ~"proj::beacon"
+/label ~"type::task" ~"proj::beacon"

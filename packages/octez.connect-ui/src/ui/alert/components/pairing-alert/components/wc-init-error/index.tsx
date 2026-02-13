@@ -16,7 +16,15 @@ const WCInitError: React.FC<WCInitErrorProps> = ({ title, handleUpdateState }) =
     return getJSXMessage(
       <>
         It looks like your network provider is blocking requests to the WalletConnect relayer. As a
-        workaround try connecting through a VPN.
+        workaround try connecting through a VPN as shown{' '}
+        <a
+          href="https://octez-connect.tezos.com/guides/failed-to-connect"
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          here
+        </a>
+        .
       </>
     )
   }

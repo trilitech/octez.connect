@@ -6,9 +6,14 @@ import {
   App,
   DesktopApp,
   ExtensionApp,
-  WebApp
+  WebApp,
+  Network,
+  PermissionScope
 } from '@tezos-x/octez.connect-types'
-import { desktopList, extensionList, iOSList, webList } from './ui/alert/wallet-lists'
+import bundledTezosRegistry from '@tezos-x/octez.connect-ui/data/tezos.json'
+import { loadWalletLists } from '@tezos-x/octez.connect-utils'
+
+const { desktopList, extensionList, iOSList, webList } = loadWalletLists(bundledTezosRegistry)
 
 export class TezosBlockchain implements Blockchain {
   public readonly identifier: string = 'xtz'
@@ -41,7 +46,19 @@ export class TezosBlockchain implements Blockchain {
 
   async getAccountInfosFromPermissionResponse(
     _permissionResponse: PermissionResponseV3<'tezos'>
-  ): Promise<{ accountId: string; address: string; publicKey: string }[]> {
-    return [{ accountId: '', address: '', publicKey: '' }]
+  ): Promise<{
+    accountId: string;
+    address: string;
+    publicKey: string;
+    network?: Network;
+    scopes: PermissionScope[];
+  }[]> {
+    return [{
+      accountId: '',
+      address: '',
+      publicKey: '',
+      network: undefined,
+      scopes: []
+    }]
   }
 }

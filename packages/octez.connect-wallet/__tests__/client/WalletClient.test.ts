@@ -8,7 +8,7 @@ import { WalletP2PTransport } from '../../src/transports/WalletP2PTransport'
 
 jest.mock('axios')
 
-// Stub out all of octez.connect-utils, including generateGUID
+// Stub out all of beacon-utils, including generateGUID
 jest.mock('@tezos-x/octez.connect-utils', () => ({
   ExposedPromise: class {
     public promise = new Promise<boolean>(() => {})
@@ -18,7 +18,7 @@ jest.mock('@tezos-x/octez.connect-utils', () => ({
   generateGUID: jest.fn().mockReturnValue('guid-123')
 }))
 
-// Stub everything from octez.connect-core *except* Client, so subclassing still works
+// Stub everything from beacon-core *except* Client, so subclassing still works
 jest.mock('@tezos-x/octez.connect-core', () => {
   const actual = jest.requireActual('@tezos-x/octez.connect-core')
   return {

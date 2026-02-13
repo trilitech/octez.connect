@@ -32,9 +32,10 @@ jobs:
         run: |
           npm run typedoc
           cd docs
+          echo 'typedocs.octez-connect.tezos.com' > CNAME
           git config --global user.email "support+actions@github.com"
           git config --global user.name "github-actions-bot"
           git init
           git add -A
           git commit -m 'chore(docs): including latest changes'
-          git push -f https://git:${GITHUB_TOKEN}@github.com/trilitech/beacon-sdk.git master:gh-pages
+          git push -f https://git:${GITHUB_TOKEN}@github.com/trilitech/octez.connect.git master:gh-pages

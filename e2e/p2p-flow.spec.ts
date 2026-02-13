@@ -44,6 +44,12 @@ test('should send 1 mutez', async () => {
 })
 
 test('should rate limit', async () => {
+  // The rate limit threshold is > 2 requests within 5 seconds.
+  // Pairing triggers a permissions request which can count towards the limit.
+  // Wait out the window to make this deterministic, then send 3 rapid requests.
+  await dapp.waitForTimeout(5500)
+
+  await dapp.click('#sendToSelf')
   await dapp.click('#sendToSelf')
   await dapp.click('#sendToSelf')
 
@@ -146,7 +152,7 @@ test('should disconnect on tab1 and reconnect on tab2', async () => {
   await dapp2.click('#requestPermission')
   await dapp2.waitForSelector('div.alert-wrapper-show', { state: 'visible', timeout: 30_000 })
 
-
+  // --- trigger the octez.connect pairing alert and wait for QR display ---
   await dapp2.click('div.alert-footer')
   await dapp2.click('button:has-text("Show QR code")')
   await dapp2.waitForSelector('span.pair-other-info', { state: 'visible', timeout: 30_000 })
@@ -209,7 +215,7 @@ test('should disconnect on tab2 and reconnect on tab3', async () => {
   await dapp3.click('#requestPermission')
   await dapp3.waitForSelector('div.alert-wrapper-show', { state: 'visible', timeout: 30_000 })
 
-
+  // --- trigger the octez.connect pairing alert and wait for QR display ---
   await dapp3.click('div.alert-footer')
   await dapp3.click('button:has-text("Show QR code")')
   await dapp3.waitForSelector('span.pair-other-info', { state: 'visible', timeout: 30_000 })

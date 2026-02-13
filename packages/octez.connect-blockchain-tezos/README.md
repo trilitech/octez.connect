@@ -19,3 +19,5 @@ const client = new DAppClient({
 const tezosBlockchain = new TezosBlockchain()
 client.addBlockchain(tezosBlockchain)
 ```
+
+Check our documentation for more information. [Documentation](https://octez-connect.tezos.com)

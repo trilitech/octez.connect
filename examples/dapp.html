@@ -208,7 +208,8 @@
       // Initiate DAppClient
       const client = beacon.getDAppClientInstance({
         name: 'Example DApp', // Name of the DApp,
-        disclaimerText: 'This is an optional <b>disclaimer</b>.',
+        termsAndConditionsUrl: 'https://example.com/terms',
+        privacyPolicyUrl: 'https://example.com/privacy',
         appUrl: 'http://localhost:8080',
         errorMessages: {
           KT1RPW5kTX6WFxg8JK34rGEU24gqEEudyfvz: {
@@ -221,14 +222,14 @@
         },
         matrixNodes: {
           [beacon.Regions.EUROPE_WEST]: [
-          'beacon-node-1.octez.io',
-          'beacon-node-2.octez.io',
-          'beacon-node-3.octez.io',
-          'beacon-node-4.octez.io',
-          'beacon-node-5.octez.io',
-          'beacon-node-6.octez.io',
-          'beacon-node-7.octez.io',
-          'beacon-node-8.octez.io'
+            'beacon-node-3.octez.io',
+            'beacon-node-1.octez.io',
+            'beacon-node-2.octez.io',
+            'beacon-node-1.hope.papers.tech',
+            'beacon-node-1.hope-2.papers.tech',
+            'beacon-node-1.hope-3.papers.tech',
+            'beacon-node-1.hope-4.papers.tech',
+            'beacon-node-1.hope-5.papers.tech'
           ],
           [beacon.Regions.NORTH_AMERICA_EAST]: []
         },
@@ -278,6 +279,11 @@
       client.subscribeToEvent('ACTIVE_ACCOUNT_SET', (account) => {
         console.log('ACTIVE_ACCOUNT_SET received', account)
         updateActiveAccount()
+      })
+
+      // Subscribe to pairing aborted event
+      client.subscribeToEvent(beacon.BeaconEvent.PAIR_ABORTED, () => {
+        console.log('PAIR_ABORTED received')
       })
 
       // Display the active account in the UI
@@ -359,6 +365,11 @@
             updateActiveAccount()
           })
           .catch((error) => {
+            if (error.errorType === beacon.BeaconErrorType.ABORTED_ERROR) {
+              console.log('User closed the modal - connection aborted')
+              // User can retry by clicking the button again
+              return
+            }
             console.log('error during permission request', error)
           })
       }
@@ -383,6 +394,11 @@
             console.log('signature:', signature)
           })
           .catch((error) => {
+            // Check if user closed the modal (aborted)
+            if (error.errorType === beacon.BeaconErrorType.ABORTED_ERROR) {
+              console.log('User closed the modal - connection aborted')
+              return
+            }
             console.log('error during permission request', error)
           })
       }

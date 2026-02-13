@@ -1,8 +1,9 @@
 {
   "name": "@tezos-x/octez.connect-transport-matrix",
   "version": "1.0.0",
-  "description": "This package contains methods to facilitate communication over the octez.connect network, a decentralised P2P network that is based on the matrix protocol.",
-  "author": "Andreas Gassmann <a.gassmann@papers.ch>",
+  "description": "This package contains methods to facilitate communication over the Beacon network, a decentralised P2P network that is based on the matrix protocol.",
+  "author": "Blockchain Infra <blockchain.infra@trili.tech>",
+  "homepage": "https://octez-connect.tezos.com",
   "license": "ISC",
   "main": "dist/cjs/index.js",
   "module": "dist/esm/index.js",
@@ -23,14 +24,14 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/trilitech/octez.connect-sdk.git"
+    "url": "git+https://github.com/trilitech/octez.connect.git"
   },
   "scripts": {
     "tsc": "tsc -p tsconfig.json && tsc -p tsconfig-cjs.json",
     "test": "jest"
   },
   "bugs": {
-    "url": "https://github.com/trilitech/octez.connect-sdk/issues"
+    "url": "https://github.com/trilitech/octez.connect/issues"
   },
   "dependencies": {
     "@tezos-x/octez.connect-core": "1.0.0",

@@ -18,17 +18,19 @@
     "dapp"
   ],
   "license": "MIT",
+  "homepage": "https://octez-connect.tezos.com",
   "repository": {
     "type": "git",
-    "url": "https://github.com/trilitech/octez.connect-sdk"
+    "url": "https://github.com/trilitech/octez.connect"
   },
   "engines": {
     "npm": ">=7.0.0",
     "node": ">=18.0.0"
   },
   "scripts": {
-    "prebuild": "ts-node --project tsconfig-cjs.json scripts/generate-wallet-list.ts",
+    "prebuild": "npx tsx scripts/download-wallet-lists.ts",
     "build": "npm run check-version && lerna run tsc && npm run webpack:all",
+    "serve": "static-server examples --port 8080",
     "webpack:all": "npm run webpack:sdk && npm run webpack:dapp && npm run webpack:wallet",
     "webpack:sdk": "webpack --mode=development --config webpack.config.js --entry=./packages/octez.connect-sdk/dist/cjs/index.js --output-path ./webpack_builds/sdk && terser --ecma=12 ./webpack_builds/sdk/main.js -o ./packages/octez.connect-sdk/dist/octez.connect.min.js && cp ./packages/octez.connect-sdk/dist/octez.connect.min.js ./examples/octez.connect.min.js",
     "webpack:dapp": "webpack --mode=development --entry=./packages/octez.connect-dapp/dist/cjs/index.js --output-path ./webpack_builds/dapp && terser --ecma=12 ./webpack_builds/dapp/main.js -o ./packages/octez.connect-dapp/dist/octez.connect.dapp.min.js",
@@ -50,6 +52,7 @@
     "bump:major": "lerna version --no-git-tag-version major --exact --yes",
     "bump:minor": "lerna version --no-git-tag-version minor --exact --yes",
     "bump:patch": "lerna version --no-git-tag-version patch --exact --yes",
+    "bump:alpha": "lerna version --no-git-tag-version prerelease --preid alpha --exact --yes",
     "bump:beta": "lerna version --no-git-tag-version prerelease --preid beta --exact --yes",
     "build:ui": "cd packages/octez.connect-ui && npm run tsc && cd ../.. && npm run webpack:sdk"
   },
@@ -71,6 +74,7 @@
     "@walletconnect/types": "2.18.0",
     "@walletconnect/utils": "2.18.0",
     "@web3modal/standalone": "2.4.3",
+    "cd": "^0.3.3",
     "stream-browserify": "^3.0.0"
   },
   "devDependencies": {
@@ -112,6 +116,7 @@
     "static-server": "2.2.1",
     "terser": "^5.39.0",
     "ts-node": "10.9.2",
+    "tsx": "^4.8.1",
     "tslint": "6.1.3",
     "typedoc": "0.28.2",
     "typedoc-plugin-internal-external": "2.2.0",

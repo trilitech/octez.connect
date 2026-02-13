@@ -35,8 +35,9 @@
     <script>
       // Initiate DAppClient
       const client = new beacon.DAppClient({
-        name: 'octez.connect Events', // Name of the DApp,
-        disclaimerText: 'This is an optional <b>disclaimer</b>.'
+        name: 'Beacon Events', // Name of the DApp,
+        termsAndConditionsUrl: 'https://example.com/terms',
+        privacyPolicyUrl: 'https://example.com/privacy'
       })
 
       const events = client.events.callbackMap

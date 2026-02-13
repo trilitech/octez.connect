@@ -2,14 +2,15 @@
   "name": "@tezos-x/octez.connect-core",
   "version": "1.0.0",
   "description": "This package contains internal methods that are used by both the dApp and wallet client.",
-  "author": "Andreas Gassmann <a.gassmann@papers.ch>",
+  "author": "Blockchain Infra <blockchain.infra@trili.tech>",
+  "homepage": "https://octez-connect.tezos.com",
   "license": "ISC",
-  "main": "dist/cjs/index.js",
-  "module": "dist/esm/index.js",
-  "types": "dist/esm/index.d.ts",
+  "main": "dist/cjs/src/index.js",
+  "module": "dist/esm/src/index.js",
+  "types": "dist/esm/src/index.d.ts",
   "exports": {
-    "require": "./dist/cjs/index.js",
-    "import": "./dist/esm/index.js"
+    "require": "./dist/cjs/src/index.js",
+    "import": "./dist/esm/src/index.js"
   },
   "directories": {
     "lib": "dist/esm",
@@ -23,14 +24,14 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/trilitech/octez.connect-sdk.git"
+    "url": "git+https://github.com/trilitech/octez.connect.git"
   },
   "scripts": {
     "tsc": "tsc -p tsconfig.json && tsc -p tsconfig-cjs.json",
     "test": "jest"
   },
   "bugs": {
-    "url": "https://github.com/trilitech/octez.connect-sdk/issues"
+    "url": "https://github.com/trilitech/octez.connect/issues"
   },
   "dependencies": {
     "@tezos-x/octez.connect-types": "1.0.0",

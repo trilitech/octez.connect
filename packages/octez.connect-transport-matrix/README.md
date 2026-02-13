@@ -4,6 +4,8 @@ This package is part of the `@tezos-x/octez.connect-sdk` project. [Read more](ht
 
 ## Introduction
 
-This package contains methods to facilitate communication over the octez.connect network, a decentralised P2P network that is based on the matrix protocol.
+This package contains methods to facilitate communication over the Beacon network, a decentralised P2P network that is based on the matrix protocol.
 
 Unless you need to import types from this package, you probably don't need to add it to your project.
+
+Check our documentation for more information. [Documentation](https://octez-connect.tezos.com)

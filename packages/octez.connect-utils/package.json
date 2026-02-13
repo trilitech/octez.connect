@@ -2,7 +2,8 @@
   "name": "@tezos-x/octez.connect-utils",
   "version": "1.0.0",
   "description": "This package contains utility functions that are used throughout the octez.connect-sdk",
-  "author": "Andreas Gassmann <a.gassmann@papers.ch>",
+  "author": "Blockchain Infra <blockchain.infra@trili.tech>",
+  "homepage": "https://octez-connect.tezos.com",
   "license": "ISC",
   "main": "dist/cjs/index.js",
   "module": "dist/esm/index.js",
@@ -23,16 +24,16 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/trilitech/octez.connect-sdk.git"
+    "url": "git+https://github.com/trilitech/octez.connect.git"
   },
   "scripts": {
-    "tsc": "tsc -p tsconfig.json && tsc -p tsconfig-cjs.json",
-    "test": "jest"
+    "tsc": "tsc -p tsconfig.json && tsc -p tsconfig-cjs.json"
   },
   "bugs": {
-    "url": "https://github.com/trilitech/octez.connect-sdk/issues"
+    "url": "https://github.com/trilitech/octez.connect/issues"
   },
   "dependencies": {
+    "@tezos-x/octez.connect-types": "1.0.0",
     "@stablelib/ed25519": "^2.0.2",
     "@stablelib/nacl": "^2.0.1",
     "@stablelib/random": "^2.0.1",
