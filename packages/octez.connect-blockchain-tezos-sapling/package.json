@@ -1,6 +1,6 @@
 {
   "name": "@tezos-x/octez.connect-blockchain-tezos-sapling",
-  "version": "4.8.1",
+  "version": "4.8.2",
   "description": "This package adds support for `tezos-sapling`, the sapling integration on the Tezos blockchain. It can be used in combination with the `@tezos-x/octez.connect-dapp` or `@tezos-x/octez.connect-wallet` packages.",
   "author": "Andreas Gassmann <a.gassmann@papers.ch>",
   "license": "ISC",
@@ -32,7 +32,7 @@
     "url": "https://github.com/trilitech/octez.connect-sdk/issues"
   },
   "dependencies": {
-    "@tezos-x/octez.connect-types": "4.8.1",
-    "@tezos-x/octez.connect-ui": "4.8.1"
+    "@tezos-x/octez.connect-types": "4.8.2",
+    "@tezos-x/octez.connect-ui": "4.8.2"
   }
 }

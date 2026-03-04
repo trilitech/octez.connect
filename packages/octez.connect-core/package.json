@@ -1,6 +1,6 @@
 {
   "name": "@tezos-x/octez.connect-core",
-  "version": "4.8.1",
+  "version": "4.8.2",
   "description": "This package contains internal methods that are used by both the dApp and wallet client.",
   "author": "Andreas Gassmann <a.gassmann@papers.ch>",
   "license": "ISC",
@@ -37,8 +37,8 @@
     "@stablelib/nacl": "^2.0.1",
     "@stablelib/utf8": "^2.0.1",
     "@stablelib/x25519-session": "^2.0.1",
-    "@tezos-x/octez.connect-types": "4.8.1",
-    "@tezos-x/octez.connect-utils": "4.8.1",
+    "@tezos-x/octez.connect-types": "4.8.2",
+    "@tezos-x/octez.connect-utils": "4.8.2",
     "broadcast-channel": "^7.1.0",
     "bs58check": "4.0.0"
   }

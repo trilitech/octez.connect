@@ -5,31 +5,8 @@ jest.mock('axios')
 jest.mock('@tezos-x/octez.connect-utils', () => {
   const actual = jest.requireActual('@tezos-x/octez.connect-utils')
 
-  class ExposedPromise<T> {
-    public promise: Promise<T>
-    private _resolve!: (value: T) => void
-    private _reject!: (reason?: any) => void
-
-    constructor() {
-      this.promise = new Promise<T>((res, rej) => {
-        this._resolve = res
-        this._reject = rej
-      })
-    }
-    resolve(value: T) {
-      this._resolve(value)
-    }
-    reject(reason?: any) {
-      this._reject(reason)
-    }
-    isResolved(): boolean {
-      return true
-    }
-  }
-
   return {
     ...actual,
-    ExposedPromise,
     generateGUID: jest.fn(),
     getHexHash: jest.fn(),
     recipientString: jest.fn(),
@@ -50,6 +27,7 @@ jest.mock('../../src/matrix-client/MatrixClient', () => ({
 // Imports
 import axios from 'axios'
 import {
+  ExposedPromise,
   generateGUID,
   getHexHash,
   recipientString,
@@ -142,7 +120,8 @@ describe('P2PCommunicationClient', () => {
 
   describe('getBeaconInfo', () => {
     it('fetches /_synapse/client/beacon/info and maps the response', async () => {
-      ;(axios.get as jest.Mock).mockResolvedValue({
+      const axiosGetMock = axios.get as jest.Mock
+      axiosGetMock.mockResolvedValue({
         data: {
           region: 'eu',
           known_servers: ['a', 'b'],
@@ -150,12 +129,224 @@ describe('P2PCommunicationClient', () => {
         }
       })
       const info = await client.getBeaconInfo('relay.test')
-      expect(axios.get).toHaveBeenCalledWith('https://relay.test/_synapse/client/beacon/info')
+      expect(axios.get).toHaveBeenCalledWith('https://relay.test/_synapse/client/beacon/info', {
+        timeout: 10_000
+      })
       expect(info).toEqual({
         region: 'eu',
         known_servers: ['a', 'b'],
         timestamp: 9876
       })
+    })
+  })
+
+  describe('getRelayServer (dead node recovery)', () => {
+    let freshClient: P2PCommunicationClient
+    type RelayServerRecord = { server: string; timestamp: number; localTimestamp: number }
+    type Deferred<T> = {
+      promise: Promise<T>
+      resolve: (value: T) => void
+      reject: (reason?: unknown) => void
+    }
+
+    beforeEach(() => {
+      freshClient = new P2PCommunicationClient('MyApp', fakeKeyPair as any, 2, mockStorage as any)
+    })
+
+    const createDeferred = <T>(): Deferred<T> => {
+      let resolve!: (value: T) => void
+      let reject!: (reason?: unknown) => void
+      const promise = new Promise<T>((res, rej) => {
+        resolve = res
+        reject = rej
+      })
+
+      return { promise, resolve, reject }
+    }
+
+    const setCachedRelay = (relay: RelayServerRecord): void => {
+      ;(freshClient as any).relayServer = ExposedPromise.resolve(relay)
+    }
+
+    it('returns in-memory relay server when cache is fresh', async () => {
+      const now = Date.now()
+      setCachedRelay({ server: 'cached-node.papers.tech', timestamp: 1234, localTimestamp: now })
+
+      const beaconInfoSpy = jest.spyOn(freshClient, 'getBeaconInfo')
+      const discoverySpy = jest.spyOn(freshClient as any, 'findBestRegionAndGetServer')
+      mockStorage.get.mockResolvedValue('should-not-be-read')
+
+      const result = await freshClient.getRelayServer()
+
+      expect(result).toEqual({ server: 'cached-node.papers.tech', timestamp: 1234 })
+      expect(beaconInfoSpy).not.toHaveBeenCalled()
+      expect(discoverySpy).not.toHaveBeenCalled()
+      expect(mockStorage.get).not.toHaveBeenCalled()
+    })
+
+    it('refreshes stale in-memory relay server when cached server is reachable', async () => {
+      setCachedRelay({ server: 'cached-node.papers.tech', timestamp: 1000, localTimestamp: 0 })
+
+      const beaconInfoSpy = jest
+        .spyOn(freshClient, 'getBeaconInfo')
+        .mockResolvedValue({ region: 'eu', known_servers: [], timestamp: 2222 })
+      const discoverySpy = jest.spyOn(freshClient as any, 'findBestRegionAndGetServer')
+
+      const result = await freshClient.getRelayServer()
+
+      expect(result).toEqual({ server: 'cached-node.papers.tech', timestamp: 2222 })
+      expect(beaconInfoSpy).toHaveBeenCalledWith('cached-node.papers.tech')
+      expect(discoverySpy).not.toHaveBeenCalled()
+      expect(mockStorage.delete).not.toHaveBeenCalled()
+    })
+
+    it('falls through to discovery when stale cached server is unreachable', async () => {
+      setCachedRelay({ server: 'cached-node.papers.tech', timestamp: 1000, localTimestamp: 0 })
+      mockStorage.delete.mockResolvedValue(undefined)
+      mockStorage.set.mockResolvedValue(undefined)
+      mockStorage.get.mockResolvedValue('')
+
+      const beaconInfoSpy = jest
+        .spyOn(freshClient, 'getBeaconInfo')
+        .mockRejectedValueOnce(new Error('ETIMEDOUT'))
+      const discoverySpy = jest.spyOn(freshClient as any, 'findBestRegionAndGetServer').mockResolvedValue({
+        server: 'discovered-node.papers.tech',
+        timestamp: 5000
+      })
+
+      const result = await freshClient.getRelayServer()
+
+      expect(result).toEqual({ server: 'discovered-node.papers.tech', timestamp: 5000 })
+      expect(beaconInfoSpy).toHaveBeenCalledWith('cached-node.papers.tech')
+      expect(discoverySpy).toHaveBeenCalledTimes(1)
+      expect(mockStorage.delete).toHaveBeenCalledWith(StorageKey.MATRIX_SELECTED_NODE)
+    })
+
+    it('uses stored node when it is reachable', async () => {
+      mockStorage.get.mockResolvedValue('healthy-node.papers.tech')
+      mockStorage.set.mockResolvedValue(undefined)
+
+      const beaconInfoSpy = jest
+        .spyOn(freshClient, 'getBeaconInfo')
+        .mockResolvedValue({ region: 'eu', known_servers: [], timestamp: 7777 })
+      const discoverySpy = jest.spyOn(freshClient as any, 'findBestRegionAndGetServer')
+
+      const result = await freshClient.getRelayServer()
+
+      expect(result).toEqual({ server: 'healthy-node.papers.tech', timestamp: 7777 })
+      expect(beaconInfoSpy).toHaveBeenCalledWith('healthy-node.papers.tech')
+      expect(discoverySpy).not.toHaveBeenCalled()
+      expect(mockStorage.delete).not.toHaveBeenCalledWith(StorageKey.MATRIX_SELECTED_NODE)
+    })
+
+    it('falls through to discovery when stored node is unreachable', async () => {
+      mockStorage.get.mockResolvedValue('dead-node.papers.tech')
+      mockStorage.delete.mockResolvedValue(undefined)
+      mockStorage.set.mockResolvedValue(undefined)
+
+      const beaconInfoSpy = jest
+        .spyOn(freshClient, 'getBeaconInfo')
+        .mockRejectedValueOnce(new Error('ECONNREFUSED'))
+      const discoverySpy = jest.spyOn(freshClient as any, 'findBestRegionAndGetServer').mockResolvedValue({
+        server: 'discovered-node.papers.tech',
+        timestamp: 5000
+      })
+
+      const result = await freshClient.getRelayServer()
+
+      expect(result).toEqual({ server: 'discovered-node.papers.tech', timestamp: 5000 })
+      expect(beaconInfoSpy).toHaveBeenCalledWith('dead-node.papers.tech')
+      expect(discoverySpy).toHaveBeenCalledTimes(1)
+      expect(mockStorage.delete).toHaveBeenCalledWith(StorageKey.MATRIX_SELECTED_NODE)
+    })
+
+    it('clears in-flight relay promise when discovery fails', async () => {
+      const storageGet = createDeferred<string>()
+      mockStorage.get.mockReturnValue(storageGet.promise)
+      mockStorage.delete.mockResolvedValue(undefined)
+
+      jest.spyOn(freshClient as any, 'findBestRegionAndGetServer').mockImplementation(() => {
+        throw new Error('offline')
+      })
+
+      const relayCall = freshClient.getRelayServer()
+      await Promise.resolve()
+      const internalRelayPromise = (freshClient as any).relayServer?.promise
+      internalRelayPromise?.catch(() => undefined)
+      storageGet.resolve('')
+
+      await expect(relayCall).rejects.toThrow('offline')
+
+      expect((freshClient as any).relayServer).toBeUndefined()
+    })
+
+    it('reuses a single in-flight discovery for concurrent callers', async () => {
+      mockStorage.get.mockResolvedValue('')
+      mockStorage.set.mockResolvedValue(undefined)
+      const discoverySpy = jest.spyOn(freshClient as any, 'findBestRegionAndGetServer').mockResolvedValue({
+        server: 'discovered-node.papers.tech',
+        timestamp: 3000
+      })
+
+      const [resultA, resultB] = await Promise.all([freshClient.getRelayServer(), freshClient.getRelayServer()])
+
+      expect(resultA).toEqual({ server: 'discovered-node.papers.tech', timestamp: 3000 })
+      expect(resultB).toEqual({ server: 'discovered-node.papers.tech', timestamp: 3000 })
+      expect(discoverySpy).toHaveBeenCalledTimes(1)
+    })
+
+    it('preserves successful cache when concurrent stale refresh has mixed success/failure', async () => {
+      setCachedRelay({ server: 'cached-node.papers.tech', timestamp: 1000, localTimestamp: 0 })
+      mockStorage.get.mockResolvedValue('')
+      mockStorage.set.mockResolvedValue(undefined)
+      mockStorage.delete.mockResolvedValue(undefined)
+
+      let callCount = 0
+      let resolveSecond!: (value: { region: string; known_servers: string[]; timestamp: number }) => void
+      let rejectFirst!: (reason?: unknown) => void
+
+      const firstRefresh = new Promise<{ region: string; known_servers: string[]; timestamp: number }>(
+        (_, reject) => {
+          rejectFirst = reject
+        }
+      )
+      const secondRefresh = new Promise<{ region: string; known_servers: string[]; timestamp: number }>(
+        (resolve) => {
+          resolveSecond = resolve
+        }
+      )
+
+      jest.spyOn(freshClient, 'getBeaconInfo').mockImplementation(async () => {
+        callCount += 1
+        if (callCount === 1) {
+          return firstRefresh
+        }
+        if (callCount === 2) {
+          return secondRefresh
+        }
+        throw new Error(`Unexpected getBeaconInfo call #${callCount}`)
+      })
+
+      const discoverySpy = jest
+        .spyOn(freshClient as any, 'findBestRegionAndGetServer')
+        .mockResolvedValue({ server: 'unexpected-discovery.papers.tech', timestamp: 9999 })
+
+      const call1 = freshClient.getRelayServer().catch((error) => error)
+      const call2 = freshClient.getRelayServer()
+      await Promise.resolve()
+      const internalRelayPromise = (freshClient as any).relayServer?.promise
+      internalRelayPromise?.catch(() => undefined)
+
+      resolveSecond({ region: 'us', known_servers: [], timestamp: 2000 })
+      const secondResult = await call2
+      expect(secondResult).toEqual({ server: 'cached-node.papers.tech', timestamp: 2000 })
+
+      rejectFirst(new Error('stale refresh failed in one caller'))
+      await call1
+
+      const thirdResult = await freshClient.getRelayServer()
+      expect(thirdResult).toEqual({ server: 'cached-node.papers.tech', timestamp: 2000 })
+      expect(discoverySpy).not.toHaveBeenCalled()
     })
   })
 

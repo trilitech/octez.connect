@@ -1,6 +1,6 @@
 {
   "name": "@tezos-x/octez.connect-transport-postmessage",
-  "version": "4.8.1",
+  "version": "4.8.2",
   "description": "This package contains methods to facilitate communication over the postmessage interface of the browser to talk to browser extensions.",
   "author": "Andreas Gassmann <a.gassmann@papers.ch>",
   "license": "ISC",
@@ -33,8 +33,8 @@
     "url": "https://github.com/trilitech/octez.connect-sdk/issues"
   },
   "dependencies": {
-    "@tezos-x/octez.connect-core": "4.8.1",
-    "@tezos-x/octez.connect-types": "4.8.1",
-    "@tezos-x/octez.connect-utils": "4.8.1"
+    "@tezos-x/octez.connect-core": "4.8.2",
+    "@tezos-x/octez.connect-types": "4.8.2",
+    "@tezos-x/octez.connect-utils": "4.8.2"
   }
 }

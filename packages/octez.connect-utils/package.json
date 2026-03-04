@@ -1,6 +1,6 @@
 {
   "name": "@tezos-x/octez.connect-utils",
-  "version": "4.8.1",
+  "version": "4.8.2",
   "description": "This package contains utility functions that are used throughout the octez.connect-sdk",
   "author": "Andreas Gassmann <a.gassmann@papers.ch>",
   "license": "ISC",

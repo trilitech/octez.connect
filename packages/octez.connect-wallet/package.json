@@ -1,6 +1,6 @@
 {
   "name": "@tezos-x/octez.connect-wallet",
-  "version": "4.8.1",
+  "version": "4.8.2",
   "description": "Use this package in your wallet to instanciate a WalletClient object and communicate to dApps.",
   "author": "Andreas Gassmann <a.gassmann@papers.ch>",
   "license": "ISC",
@@ -34,8 +34,8 @@
     "url": "https://github.com/trilitech/octez.connect-sdk/issues"
   },
   "dependencies": {
-    "@tezos-x/octez.connect-core": "4.8.1",
-    "@tezos-x/octez.connect-transport-matrix": "4.8.1",
-    "@tezos-x/octez.connect-transport-postmessage": "4.8.1"
+    "@tezos-x/octez.connect-core": "4.8.2",
+    "@tezos-x/octez.connect-transport-matrix": "4.8.2",
+    "@tezos-x/octez.connect-transport-postmessage": "4.8.2"
   }
 }

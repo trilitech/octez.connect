@@ -1,6 +1,6 @@
 {
   "name": "@tezos-x/octez.connect-transport-walletconnect",
-  "version": "4.8.1",
+  "version": "4.8.2",
   "description": "This package contains methods to facilitate communication over the WalletConnect network.",
   "author": "Papers AG",
   "license": "ISC",
@@ -33,9 +33,9 @@
     "url": "https://github.com/trilitech/octez.connect-sdk/issues"
   },
   "dependencies": {
-    "@tezos-x/octez.connect-core": "4.8.1",
-    "@tezos-x/octez.connect-types": "4.8.1",
-    "@tezos-x/octez.connect-utils": "4.8.1",
+    "@tezos-x/octez.connect-core": "4.8.2",
+    "@tezos-x/octez.connect-types": "4.8.2",
+    "@tezos-x/octez.connect-utils": "4.8.2",
     "@walletconnect/sign-client": "2.18.0",
     "elliptic": "^6.6.1"
   },
