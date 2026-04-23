@@ -1,5 +1,4 @@
 import bs58check from 'bs58check'
-import { BeaconEvent, BeaconEventHandlerFunction, BeaconEventType } from '../events'
 import {
   ConnectionContext,
   AccountInfo,
@@ -105,11 +104,11 @@ import {
   getKeypairFromSeed
 } from '@tezos-x/octez.connect-utils'
 import { messageEvents } from '../beacon-message-events'
+import { BeaconEvent, BeaconEventHandlerFunction, BeaconEventType, BeaconEventHandler } from '../events'
 import { BlockExplorer } from '../utils/block-explorer'
 import { TzktBlockExplorer } from '../utils/tzkt-blockexplorer'
 
 import { DAppClientOptions } from './DAppClientOptions'
-import { BeaconEventHandler } from '../events'
 import { DappPostMessageTransport } from '../transports/DappPostMessageTransport'
 import { DappP2PTransport } from '../transports/DappP2PTransport'
 import { DappWalletConnectTransport } from '../transports/DappWalletConnectTransport'

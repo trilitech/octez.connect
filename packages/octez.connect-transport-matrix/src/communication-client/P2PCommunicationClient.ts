@@ -327,6 +327,7 @@ export class P2PCommunicationClient extends CommunicationClient {
       throw new Error(`getBeaconInfo ${server} failed: ${response.status} ${response.statusText}`)
     }
     const data = (await response.json()) as BeaconInfoResponse
+
     return {
       region: data.region,
       known_servers: data.known_servers,

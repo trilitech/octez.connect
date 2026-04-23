@@ -76,7 +76,7 @@ export class MatrixHttpClient {
       headers['Content-Type'] = 'application/json'
     }
     if (config?.accessToken) {
-      headers['Authorization'] = `Bearer ${config.accessToken}`
+      headers.Authorization = `Bearer ${config.accessToken}`
     }
 
     const params = requestParams ? this.getParams(requestParams) : undefined
@@ -131,6 +131,7 @@ export class MatrixHttpClient {
       }
       url += `?${search.toString()}`
     }
+
     return url
   }
 
