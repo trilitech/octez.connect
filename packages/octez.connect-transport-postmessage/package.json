@@ -1,6 +1,6 @@
 {
   "name": "@tezos-x/octez.connect-transport-postmessage",
-  "version": "5.0.0-beta.4",
+  "version": "5.0.0-beta.5",
   "description": "This package contains methods to facilitate communication over the postmessage interface of the browser to talk to browser extensions.",
   "author": "Blockchain Infra <blockchain.infra@trili.tech>",
   "homepage": "https://octez-connect.tezos.com",
@@ -34,8 +34,8 @@
     "url": "https://github.com/trilitech/octez.connect/issues"
   },
   "dependencies": {
-    "@tezos-x/octez.connect-core": "5.0.0-beta.4",
-    "@tezos-x/octez.connect-types": "5.0.0-beta.4",
-    "@tezos-x/octez.connect-utils": "5.0.0-beta.4"
+    "@tezos-x/octez.connect-core": "5.0.0-beta.5",
+    "@tezos-x/octez.connect-types": "5.0.0-beta.5",
+    "@tezos-x/octez.connect-utils": "5.0.0-beta.5"
   }
 }

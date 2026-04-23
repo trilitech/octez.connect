@@ -1,6 +1,6 @@
 {
   "name": "beacon-wallet-extension",
-  "version": "5.0.0-beta.4",
+  "version": "5.0.0-beta.5",
   "private": true,
   "description": "Reference Chrome extension wallet for Beacon SDK - a blueprint for wallet developers",
   "scripts": {

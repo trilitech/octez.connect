@@ -1,6 +1,6 @@
 {
   "name": "@tezos-x/octez.connect-blockchain-tezos",
-  "version": "5.0.0-beta.4",
+  "version": "5.0.0-beta.5",
   "description": "This package adds support for the `tezos` blockchain. It can be used in combination with the `@tezos-x/octez.connect-dapp` or `@tezos-x/octez.connect-wallet` packages.",
   "author": "Blockchain Infra <blockchain.infra@trili.tech>",
   "homepage": "https://octez-connect.tezos.com",
@@ -33,7 +33,7 @@
     "url": "https://github.com/trilitech/octez.connect/issues"
   },
   "dependencies": {
-    "@tezos-x/octez.connect-types": "5.0.0-beta.4",
-    "@tezos-x/octez.connect-ui": "5.0.0-beta.4"
+    "@tezos-x/octez.connect-types": "5.0.0-beta.5",
+    "@tezos-x/octez.connect-ui": "5.0.0-beta.5"
   }
 }

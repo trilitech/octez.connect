@@ -1,6 +1,6 @@
 {
   "name": "@tezos-x/octez.connect-sdk",
-  "version": "5.0.0-beta.4",
+  "version": "5.0.0-beta.5",
   "description": "The `octez.connect-sdk` simplifies and abstracts the communication between dApps and wallets over different transport layers.",
   "author": "Blockchain Infra <blockchain.infra@trili.tech>",
   "homepage": "https://octez-connect.tezos.com",
@@ -34,16 +34,16 @@
     "url": "https://github.com/trilitech/octez.connect/issues"
   },
   "dependencies": {
-    "@tezos-x/octez.connect-blockchain-substrate": "5.0.0-beta.4",
-    "@tezos-x/octez.connect-blockchain-tezos": "5.0.0-beta.4",
-    "@tezos-x/octez.connect-core": "5.0.0-beta.4",
-    "@tezos-x/octez.connect-dapp": "5.0.0-beta.4",
-    "@tezos-x/octez.connect-transport-matrix": "5.0.0-beta.4",
-    "@tezos-x/octez.connect-transport-postmessage": "5.0.0-beta.4",
-    "@tezos-x/octez.connect-transport-walletconnect": "5.0.0-beta.4",
-    "@tezos-x/octez.connect-types": "5.0.0-beta.4",
-    "@tezos-x/octez.connect-ui": "5.0.0-beta.4",
-    "@tezos-x/octez.connect-utils": "5.0.0-beta.4",
-    "@tezos-x/octez.connect-wallet": "5.0.0-beta.4"
+    "@tezos-x/octez.connect-blockchain-substrate": "5.0.0-beta.5",
+    "@tezos-x/octez.connect-blockchain-tezos": "5.0.0-beta.5",
+    "@tezos-x/octez.connect-core": "5.0.0-beta.5",
+    "@tezos-x/octez.connect-dapp": "5.0.0-beta.5",
+    "@tezos-x/octez.connect-transport-matrix": "5.0.0-beta.5",
+    "@tezos-x/octez.connect-transport-postmessage": "5.0.0-beta.5",
+    "@tezos-x/octez.connect-transport-walletconnect": "5.0.0-beta.5",
+    "@tezos-x/octez.connect-types": "5.0.0-beta.5",
+    "@tezos-x/octez.connect-ui": "5.0.0-beta.5",
+    "@tezos-x/octez.connect-utils": "5.0.0-beta.5",
+    "@tezos-x/octez.connect-wallet": "5.0.0-beta.5"
   }
 }
