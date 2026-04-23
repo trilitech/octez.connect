@@ -21,7 +21,7 @@
     "type": "git",
     "url": "https://github.com/trilitech/octez.connect.git"
   },
-  "packageManager": "npm@11.12.1",
+  "packageManager": "npm@11.13.0",
   "engines": {
     "npm": ">=11.0.0",
     "node": ">=22.12.0"

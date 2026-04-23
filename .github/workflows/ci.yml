@@ -63,19 +63,17 @@ jobs:
           node-version: 22
           cache: npm
 
-      - name: Activate npm 11
-        run: |
-          corepack enable
-          corepack prepare npm@11.0.0 --activate
+      - name: Verify npm 11 runner
+        run: ./scripts/npm11.sh --version
 
       - name: Install dependencies
-        run: npm ci --include=optional
+        run: ./scripts/npm11.sh ci --include=optional
 
       - name: Check workspace versions
-        run: npm run check:versions
+        run: ./scripts/npm11.sh run check:versions
 
       - name: Build packages
-        run: npm run build
+        run: ./scripts/npm11.sh run build
 
       - name: Install Playwright browsers
         run: npx playwright install --with-deps chromium
