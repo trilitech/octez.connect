@@ -12,7 +12,7 @@
 // Caveat: if you modify a line that already had a finding, it counts as new.
 // That's intentional — if you touched the line, you own it.
 //
-// Base ref comes from LINT_BASE_REF, else a resolvable remote default.
+// Base ref comes from LINT_BASE_REF, then known remote branches, then origin/HEAD.
 
 import { execFileSync, spawnSync } from 'node:child_process'
 import { existsSync } from 'node:fs'
@@ -30,7 +30,6 @@ function git(args, { allowFail = false } = {}) {
 }
 
 let mergeBase
-let baseRefUsed
 function refExists(ref) {
   return git(['rev-parse', '--verify', '--quiet', ref], { allowFail: true }).trim().length > 0
 }
@@ -57,7 +56,6 @@ if (!baseRef) {
 }
 
 try {
-  baseRefUsed = baseRef
   mergeBase = git(['merge-base', baseRef, 'HEAD']).trim()
 } catch (err) {
   console.error(`Could not resolve merge-base with ${baseRef}: ${err.message}`)
@@ -85,7 +83,7 @@ const changed = [...candidates]
   .sort()
 
 if (changed.length === 0) {
-  console.log(`No changed .ts files under packages/*/src vs ${baseRefUsed}. Skipping lint.`)
+  console.log(`No changed .ts files under packages/*/src vs ${baseRef}. Skipping lint.`)
   process.exit(0)
 }
 
@@ -114,7 +112,7 @@ function touchedLines(file) {
 const touchedByFile = new Map()
 for (const f of changed) touchedByFile.set(f, touchedLines(f))
 
-console.log(`Checking ${changed.length} changed file(s) vs ${baseRefUsed} for new lint findings.`)
+console.log(`Checking ${changed.length} changed file(s) vs ${baseRef} for new lint findings.`)
 
 // Run eslint on the changed files, JSON output.
 const eslintResult = spawnSync('npx', ['eslint', '-f', 'json', ...changed], {
@@ -158,7 +156,7 @@ for (const fileReport of report) {
 }
 
 if (newErrors + newWarnings === 0) {
-  console.log(`No new lint findings on touched lines vs ${baseRefUsed}.`)
+  console.log(`No new lint findings on touched lines vs ${baseRef}.`)
   process.exit(0)
 }
 
