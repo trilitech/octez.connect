@@ -39,8 +39,8 @@ function resolveBaseRef() {
   const envBaseRef = process.env.LINT_BASE_REF?.trim()
   const candidates = [
     envBaseRef,
-    'origin/4.8-stable',
     'origin/master',
+    'origin/4.8-stable',
     git(['symbolic-ref', '--quiet', '--short', 'refs/remotes/origin/HEAD'], { allowFail: true }).trim()
   ].filter((ref) => ref && ref.length > 0)
 
