@@ -35,8 +35,14 @@ jobs:
       - name: Gate new lint findings
         env:
           PR_BASE_REF: ${{ github.event.pull_request.base.ref }}
+          PR_BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          PUSH_BEFORE_SHA: ${{ github.event.before }}
         run: |
-          if [ -n "$PR_BASE_REF" ]; then
+          if [ -n "$PR_BASE_SHA" ]; then
+            export LINT_BASE_REF="$PR_BASE_SHA"
+          elif [ -n "$PUSH_BEFORE_SHA" ] && [ "$PUSH_BEFORE_SHA" != "0000000000000000000000000000000000000000" ]; then
+            export LINT_BASE_REF="$PUSH_BEFORE_SHA"
+          elif [ -n "$PR_BASE_REF" ]; then
             export LINT_BASE_REF="origin/$PR_BASE_REF"
           fi
           ./scripts/npm11.sh run lint:new
