@@ -178,6 +178,13 @@ export async function getAddressFromPublicKey(publicKey: string): Promise<string
     BLpk: {
       length: 76,
       prefix: Buffer.from(new Uint8Array([6, 161, 166]))
+    },
+    // tz5... (ML-DSA-44, Ushuaia U025). Constants from octez src/lib_crypto/base58.ml:
+    // mdpk public key prefix [13,7,237,67] (encoded length 1802); tz5 address prefix [6,161,169].
+    // The 4-byte mdpk prefix is stripped by decoded.slice(key.length) just like the other types.
+    mdpk: {
+      length: 1802,
+      prefix: Buffer.from(new Uint8Array([6, 161, 169]))
     }
   }
 
@@ -275,7 +282,7 @@ export const signMessage = async (
 }
 
 export const isValidAddress = (address: string): boolean => {
-  const prefixes = ['tz1', 'tz2', 'tz3', 'tz4', 'KT1', 'txr1', 'sr1']
+  const prefixes = ['tz1', 'tz2', 'tz3', 'tz4', 'tz5', 'KT1', 'txr1', 'sr1']
 
   if (!prefixes.some((p) => address.toLowerCase().startsWith(p.toLowerCase()))) {
     return false
@@ -316,7 +323,8 @@ export function isPublicKeySC(publicKey: string): boolean {
     publicKey.startsWith('edpk') ||
     publicKey.startsWith('sppk') ||
     publicKey.startsWith('p2pk') ||
-    publicKey.startsWith('BLpk')
+    publicKey.startsWith('BLpk') ||
+    publicKey.startsWith('mdpk')
   )
 }
 
