@@ -380,6 +380,60 @@ describe('P2PCommunicationClient', () => {
       expect(mockStorage.delete).toHaveBeenCalledWith(StorageKey.MATRIX_SELECTED_NODE)
     })
 
+    describe('offline guard', () => {
+      const setOnline = (value: boolean): void => {
+        Object.defineProperty(window.navigator, 'onLine', { configurable: true, get: () => value })
+      }
+
+      afterEach(() => {
+        // Restore the jsdom default so other suites see a normal navigator.
+        setOnline(true)
+      })
+
+      it('retains the stored node and skips discovery when the device is offline', async () => {
+        setOnline(false)
+        const storageGet = createDeferred<string>()
+        mockStorage.get.mockReturnValue(storageGet.promise)
+        mockStorage.delete.mockResolvedValue(undefined)
+
+        const beaconInfoSpy = jest
+          .spyOn(freshClient, 'getBeaconInfo')
+          .mockRejectedValueOnce(new Error('offline'))
+        const discoverySpy = jest.spyOn(freshClient as any, 'findBestRegionAndGetServer')
+
+        const relayCall = freshClient.getRelayServer()
+        await Promise.resolve()
+        // Swallow the internal relay promise's rejection so it is not flagged unhandled.
+        ;(freshClient as any).relayServer?.promise?.catch(() => undefined)
+        storageGet.resolve('cached-node.papers.tech')
+
+        // The call rejects (we could not reach the node) but the node must survive.
+        await expect(relayCall).rejects.toBeDefined()
+
+        expect(beaconInfoSpy).toHaveBeenCalledWith('cached-node.papers.tech')
+        expect(discoverySpy).not.toHaveBeenCalled()
+        expect(mockStorage.delete).not.toHaveBeenCalledWith(StorageKey.MATRIX_SELECTED_NODE)
+      })
+
+      it('still deletes the stale node and rediscovers when online (guard does not fire)', async () => {
+        setOnline(true)
+        mockStorage.get.mockResolvedValue('dead-node.papers.tech')
+        mockStorage.delete.mockResolvedValue(undefined)
+        mockStorage.set.mockResolvedValue(undefined)
+
+        jest.spyOn(freshClient, 'getBeaconInfo').mockRejectedValueOnce(new Error('ECONNREFUSED'))
+        const discoverySpy = jest
+          .spyOn(freshClient as any, 'findBestRegionAndGetServer')
+          .mockResolvedValue({ server: 'discovered-node.papers.tech', timestamp: 5000 })
+
+        const result = await freshClient.getRelayServer()
+
+        expect(result).toEqual({ server: 'discovered-node.papers.tech', timestamp: 5000 })
+        expect(discoverySpy).toHaveBeenCalledTimes(1)
+        expect(mockStorage.delete).toHaveBeenCalledWith(StorageKey.MATRIX_SELECTED_NODE)
+      })
+    })
+
     it('clears in-flight relay promise when discovery fails', async () => {
       const storageGet = createDeferred<string>()
       mockStorage.get.mockReturnValue(storageGet.promise)

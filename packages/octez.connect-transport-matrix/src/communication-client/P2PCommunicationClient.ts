@@ -309,6 +309,16 @@ export class P2PCommunicationClient extends CommunicationClient {
           })
           return { server: node, timestamp: info.timestamp }
         } catch (error) {
+          // A transient offline state (common on mobile) makes any node look
+          // unreachable. Deleting the stored node here would needlessly drop a
+          // still-valid pairing, and discovery would fail too. So when the device
+          // reports offline, keep the node and surface the error for a later retry;
+          // only delete and fall through to discovery when we are actually online.
+          if (typeof navigator !== 'undefined' && navigator.onLine === false) {
+            logger.log('getRelayServer', `device offline; retaining stored node ${node}`)
+            throw error
+          }
+
           logger.log(
             'getRelayServer',
             `stored node ${node} is unreachable, falling through to discovery`
