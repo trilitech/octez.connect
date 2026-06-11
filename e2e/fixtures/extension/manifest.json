@@ -1,0 +1,13 @@
+{
+  "manifest_version": 3,
+  "name": "octez.connect e2e extension harness",
+  "version": "1.0.0",
+  "description": "Loads the octez.connect SDK inside a content script to exercise the Firefox/Chromium content-script pairing path.",
+  "content_scripts": [
+    {
+      "matches": ["http://localhost:1234/extension-host.html"],
+      "js": ["octez.connect.min.js", "content.js"],
+      "run_at": "document_idle"
+    }
+  ]
+}

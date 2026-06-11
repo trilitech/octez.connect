@@ -80,3 +80,34 @@ jobs:
 
       - name: Run end-to-end tests
         run: ./scripts/npm11.sh run e2e:smoke
+
+  extension-e2e:
+    name: extension-e2e
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    # Non-blocking: the content-script extension harness needs headed Chromium
+    # (via xvfb) and is more environment-sensitive than the core suite.
+    continue-on-error: true
+
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Verify npm 11 runner
+        run: ./scripts/npm11.sh --version
+
+      - name: Install dependencies
+        run: ./scripts/npm11.sh ci --include=optional
+
+      - name: Build packages
+        run: ./scripts/npm11.sh run build
+
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps chromium
+
+      - name: Run content-script extension harness (Chromium, headed via xvfb)
+        run: xvfb-run -a ./scripts/npm11.sh run e2e:ext
