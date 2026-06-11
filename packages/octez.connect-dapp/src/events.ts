@@ -238,7 +238,8 @@ export interface BeaconEventType {
   [BeaconEvent.PAIR_INIT]: {
     p2pPeerInfo: Promise<string>
     postmessagePeerInfo: Promise<string>
-    walletConnectPeerInfo: PromiseLike<string>
+    // Optional: omitted when the WalletConnect transport is disabled (disableWalletConnect).
+    walletConnectPeerInfo?: PromiseLike<string>
     networkType: NetworkType
     abortedHandler?(): void
     disclaimerText?: string

@@ -170,6 +170,19 @@ jest.mock('@tezos-x/octez.connect-transport-walletconnect', () => ({
   WalletConnectTransport: class {}
 }))
 
+// Inert transport stubs so initInternalTransports() can run without real transports.
+jest.mock('../../src/transports/DappPostMessageTransport', () => ({
+  DappPostMessageTransport: class {}
+}))
+jest.mock('../../src/transports/DappP2PTransport', () => ({
+  DappP2PTransport: class {}
+}))
+jest.mock('../../src/transports/DappWalletConnectTransport', () => ({
+  DappWalletConnectTransport: class {
+    setEventHandler() {}
+  }
+}))
+
 const { DAppClient } = require('../../src/dapp-client/DAppClient')
 
 describe('DAppClient — basic unit tests', () => {
@@ -2418,5 +2431,53 @@ describe('DAppClient — basic unit tests', () => {
       ;(timeoutClient as any).clearOpenRequest('session_update')
       jest.useRealTimers()
     }
+  })
+})
+
+describe('DAppClient — disableWalletConnect', () => {
+  beforeEach(() => {
+    ;(window as any).beaconCreatedClientInstance = false
+  })
+
+  const make = (opts: Record<string, unknown> = {}) =>
+    new DAppClient({
+      name: 'TestApp',
+      storage: new LocalStorage(),
+      preferredNetwork: NetworkType.MAINNET,
+      ...opts
+    })
+
+  it('defaults to WalletConnect enabled and applies the default projectId', () => {
+    const client: any = make()
+    expect(client.disableWalletConnect).toBe(false)
+    expect(client.wcProjectId).toBeTruthy()
+  })
+
+  it('disableWalletConnect:true leaves wcProjectId unset', () => {
+    const client: any = make({ disableWalletConnect: true })
+    expect(client.disableWalletConnect).toBe(true)
+    expect(client.wcProjectId).toBeUndefined()
+  })
+
+  it('initInternalTransports builds the WalletConnect transport by default', async () => {
+    const client: any = make()
+    jest.spyOn(client, 'getOrCreateSDKSecretSeed').mockResolvedValue('seed')
+    jest.spyOn(client, 'addListener').mockResolvedValue(undefined)
+    await client.initInternalTransports()
+    expect(client.postMessageTransport).toBeDefined()
+    expect(client.p2pTransport).toBeDefined()
+    expect(client.walletConnectTransport).toBeDefined()
+  })
+
+  it('initInternalTransports skips WalletConnect when disabled, keeping postMessage + P2P', async () => {
+    const client: any = make({ disableWalletConnect: true })
+    jest.spyOn(client, 'getOrCreateSDKSecretSeed').mockResolvedValue('seed')
+    const addListener = jest.spyOn(client, 'addListener').mockResolvedValue(undefined)
+    await client.initInternalTransports()
+    expect(client.postMessageTransport).toBeDefined()
+    expect(client.p2pTransport).toBeDefined()
+    expect(client.walletConnectTransport).toBeUndefined()
+    // WC transport must never be registered as a listener when disabled.
+    expect(addListener).toHaveBeenCalledTimes(2)
   })
 })

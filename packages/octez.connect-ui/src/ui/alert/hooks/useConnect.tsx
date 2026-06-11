@@ -12,7 +12,8 @@ const logger = new Logger('useConnect')
 
 const useConnect = (
   isMobile: boolean,
-  wcPayload: PromiseLike<string>,
+  // Optional: undefined when the dApp disabled the WalletConnect transport.
+  wcPayload: PromiseLike<string> | undefined,
   p2pPayload: Promise<string>,
   postPayload: Promise<string>,
   wallets: Map<string, MergedWallet>,
@@ -24,7 +25,8 @@ const useConnect = (
   const [state, setState] = useState<AlertState>(AlertState.TOP_WALLETS)
   const [displayQRExtra, setDisplayQRExtra] = useState(false)
   const [showMoreContent, setShowMoreContent] = useState(false)
-  const [isWCWorking, setIsWCWorking] = useState(true)
+  // When WalletConnect is disabled there is no WC sync code, so WC starts as "not working".
+  const [isWCWorking, setIsWCWorking] = useState(Boolean(wcPayload))
 
   const setInstallState = (wallet?: MergedWallet) => {
     if (
@@ -64,7 +66,7 @@ const useConnect = (
       selectedWallet &&
       selectedWallet.supportedInteractionStandards?.includes('wallet_connect')
     ) {
-      const payload = await wcPayload
+      const payload = (await wcPayload) ?? ''
       const isValid = hasWalletConnectSymKey(payload)
       setIsWCWorking(isValid)
 
@@ -162,7 +164,7 @@ const useConnect = (
       wallet.supportedInteractionStandards?.includes('wallet_connect') &&
       !wallet.name.toLowerCase().includes('kukai')
     ) {
-      const payload = await wcPayload
+      const payload = (await wcPayload) ?? ''
       const isValid = hasWalletConnectSymKey(payload)
       setIsWCWorking(isValid)
 
@@ -205,9 +207,10 @@ const useConnect = (
       })
     )
 
-    const syncCode = await (wallet?.supportedInteractionStandards?.includes('wallet_connect')
-      ? wcPayload
-      : p2pPayload)
+    const syncCode =
+      (await (wallet?.supportedInteractionStandards?.includes('wallet_connect')
+        ? wcPayload
+        : p2pPayload)) ?? ''
 
     if (!wallet?.links[OSLink.IOS]?.length) {
       if (!syncCode.length) {

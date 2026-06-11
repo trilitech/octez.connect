@@ -246,6 +246,12 @@ export class DAppClient extends Client {
   protected wcProjectId?: string
   protected wcRelayUrl?: string
 
+  /**
+   * When true, the WalletConnect transport is not built or listened to. See
+   * DAppClientOptions.disableWalletConnect.
+   */
+  protected disableWalletConnect: boolean
+
   private isGetActiveAccountHandled: boolean = false
 
   private readonly openRequestsOtherTabs = new Set<string>()
@@ -337,8 +343,11 @@ export class DAppClient extends Client {
       ...config
     })
     this.description = config.description
-    this.wcProjectId = config.walletConnectOptions?.projectId || '24469fd0a06df227b6e5f7dc7de0ff4f'
-    this.wcRelayUrl = config.walletConnectOptions?.relayUrl
+    this.disableWalletConnect = config.disableWalletConnect ?? false
+    if (!this.disableWalletConnect) {
+      this.wcProjectId = config.walletConnectOptions?.projectId || '24469fd0a06df227b6e5f7dc7de0ff4f'
+      this.wcRelayUrl = config.walletConnectOptions?.relayUrl
+    }
 
     this.featuredWallets = config.featuredWallets
 
@@ -813,6 +822,12 @@ export class DAppClient extends Client {
 
     await this.addListener(this.p2pTransport)
 
+    // Skip WalletConnect entirely when disabled (e.g. inside a Firefox MV3 content-script
+    // compartment where the WC provider cannot run). postMessage + P2P are unaffected.
+    if (this.disableWalletConnect) {
+      return
+    }
+
     const wcOptions = {
       projectId: this.wcProjectId,
       relayUrl: this.wcRelayUrl,
@@ -1102,10 +1117,15 @@ export class DAppClient extends Client {
 
           await this.initInternalTransports()
 
-          if (!this.postMessageTransport || !this.p2pTransport || !this.walletConnectTransport) {
+          if (
+            !this.postMessageTransport ||
+            !this.p2pTransport ||
+            (!this.disableWalletConnect && !this.walletConnectTransport)
+          ) {
             // Bare return here used to strand the promise forever -- no UI is
             // emitted, no peer ever pairs, no abort path fires. Reject explicitly
-            // so callers see a deterministic error.
+            // so callers see a deterministic error. (WalletConnect is exempt when
+            // disableWalletConnect is set -- its transport is intentionally absent.)
             const noTransportError: ErrorResponse = {
               type: BeaconMessageType.Error,
               id: '',
@@ -1127,7 +1147,7 @@ export class DAppClient extends Client {
             resolve(await super.init(this.postMessageTransport))
           } else if (origin === Origin.P2P) {
             resolve(await super.init(this.p2pTransport))
-          } else if (origin === Origin.WALLETCONNECT) {
+          } else if (origin === Origin.WALLETCONNECT && this.walletConnectTransport) {
             resolve(await super.init(this.walletConnectTransport))
           }
         } else {
@@ -1170,7 +1190,7 @@ export class DAppClient extends Client {
             .catch(console.error)
 
           walletConnectTransport
-            .listenForNewPeer((peer) => {
+            ?.listenForNewPeer((peer) => {
               logger.log('init', 'walletconnect transport peer connected', peer)
               this.analytics.track('event', 'DAppClient', 'WalletConnect Wallet connected', {
                 peerName: peer.name
@@ -1204,7 +1224,7 @@ export class DAppClient extends Client {
             await Promise.all([
               postMessageTransport.disconnect(),
               // p2pTransport.disconnect(), do not abort connection manually
-              walletConnectTransport.disconnect()
+              walletConnectTransport?.disconnect()
             ])
             this.postMessageTransport = this.walletConnectTransport = this.p2pTransport = undefined
             this._activeAccount.isResolved() && this.clearActiveAccount()
@@ -1229,16 +1249,18 @@ export class DAppClient extends Client {
             resolve(await serializer.serialize(await p2pTransport.getPairingRequestInfo()))
           })
 
-          const walletConnectPeerInfo = createLazyPromise(() =>
-            walletConnectTransport
-              .getPairingRequestInfo()
-              .then((pairingRequestInfo) => pairingRequestInfo.uri)
-              .catch((error) => {
-                logger.warn('init', 'walletconnect pairing request failed', error)
+          const walletConnectPeerInfo = walletConnectTransport
+            ? createLazyPromise(() =>
+                walletConnectTransport
+                  .getPairingRequestInfo()
+                  .then((pairingRequestInfo) => pairingRequestInfo.uri)
+                  .catch((error) => {
+                    logger.warn('init', 'walletconnect pairing request failed', error)
 
-                return ''
-              })
-          )
+                    return ''
+                  })
+              )
+            : undefined
 
           const postmessagePeerInfo = new Promise<string>(async (resolve) => {
             resolve(await serializer.serialize(await postMessageTransport.getPairingRequestInfo()))
@@ -1248,7 +1270,9 @@ export class DAppClient extends Client {
             .emit(BeaconEvent.PAIR_INIT, {
               p2pPeerInfo,
               postmessagePeerInfo,
-              walletConnectPeerInfo,
+              // Omitted entirely when WalletConnect is disabled, so the pairing UI
+              // never tries to read a peer-info promise for a transport that isn't there.
+              ...(walletConnectPeerInfo ? { walletConnectPeerInfo } : {}),
               networkType: this.network.type,
               abortedHandler: abortHandler.bind(this),
               disclaimerText: this.disclaimerText,

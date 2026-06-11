@@ -124,6 +124,19 @@ export interface DAppClientOptions {
   }>
 
   /**
+   * Disable the WalletConnect transport entirely (Enabled by Default).
+   *
+   * When `true`, the WalletConnect transport is neither constructed nor listened to, and
+   * `walletConnectPeerInfo` is omitted from the pairing (`PAIR_INIT`) event. Use this in
+   * environments where the WalletConnect provider cannot run — notably a Firefox MV3
+   * content-script compartment, where cross-compartment ("Xray") wrappers break the
+   * provider (`this.provider.request is not a function`, `a.entries() is not iterable`).
+   *
+   * Leaving this unset preserves the default behavior (WalletConnect enabled).
+   */
+  disableWalletConnect?: boolean
+
+  /**
    * The analytics instance that will be used by the SDK
    */
   analytics?: AnalyticsInterface

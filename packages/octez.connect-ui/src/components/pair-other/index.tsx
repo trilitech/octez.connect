@@ -21,7 +21,9 @@ const PairOther: React.FC<PairOtherProps> = (props: PairOtherProps) => {
   }, [])
 
   const buttonClickHandler = async (state: 'p2p' | 'walletconnect') => {
-    state === 'p2p' ? setQrData(await props.p2pPayload) : setQrData(await props.wcPayload)
+    state === 'p2p'
+      ? setQrData(await props.p2pPayload)
+      : setQrData((await props.wcPayload) ?? '')
     setUiState(state)
   }
 
