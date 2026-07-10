@@ -106,6 +106,7 @@ import {
   normalizeTezosCaip2,
   isValidTezosCaip2,
   networkFromTezosCaip2,
+  networkTypeFromTezosCaip2,
   resolveRequiredMinimumVersion,
   negotiateEnvelopeVersion,
   wrapBeaconMessage
@@ -239,6 +240,13 @@ export class DAppClient extends Client {
   private _initPromise: Promise<TransportType> | undefined
   private _initPromiseReject: ((reason?: ErrorResponse | AbortedBeaconError) => void) | undefined
   private isInitPending: boolean = false
+
+  /**
+   * Networks mapped for the next WalletConnect session proposal when
+   * `requestPermissions` runs before the WalletConnect transport exists (it
+   * is created lazily in `init`). Applied and cleared right after creation.
+   */
+  private pendingWcProposalNetworks: NetworkType[] | undefined
 
   private readonly activeAccountLoaded: Promise<AccountInfo | undefined>
 
@@ -762,6 +770,13 @@ export class DAppClient extends Client {
         },
         this.checkIfBCLeaderExists.bind(this)
       )
+
+      // Apply proposal networks requested before the transport existed
+      // (requestPermissions runs before init creates the transport).
+      if (this.pendingWcProposalNetworks) {
+        this.walletConnectTransport.setProposalNetworks(this.pendingWcProposalNetworks)
+        this.pendingWcProposalNetworks = undefined
+      }
 
       this.initEvents()
 
@@ -1743,6 +1758,34 @@ export class DAppClient extends Client {
         ).values()
       )
       request.networks = dedupedNetworks
+
+      // Multi-network over WalletConnect travels via the session proposal,
+      // not the wire payload (WC peers have no beacon version handshake).
+      // Map each requested chain id to its named network for the proposal;
+      // ids without a static genesis mapping are skipped here (the
+      // NetworksUnsupportedBeaconError guard above reports them when the
+      // dApp opted into requiredMinimumVersion '4').
+      const proposalNetworkTypes: NetworkType[] = []
+      for (const { chainId } of dedupedNetworks) {
+        const networkType = networkTypeFromTezosCaip2(chainId)
+        if (networkType === undefined) {
+          logger.debug(
+            'requestPermissions',
+            `No static network mapping for "${chainId}"; excluded from the WalletConnect proposal`
+          )
+          continue
+        }
+        proposalNetworkTypes.push(networkType)
+      }
+
+      if (this.walletConnectTransport) {
+        this.walletConnectTransport.setProposalNetworks(proposalNetworkTypes)
+      } else {
+        // The WalletConnect transport is created lazily inside init() (run
+        // by makeRequest below, before the pairing proposal is built); stash
+        // the networks and apply them right after creation.
+        this.pendingWcProposalNetworks = proposalNetworkTypes
+      }
     }
 
     this.analytics.track('event', 'DAppClient', 'Permission requested')

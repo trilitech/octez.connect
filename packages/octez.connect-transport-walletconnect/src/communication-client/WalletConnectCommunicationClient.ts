@@ -6,7 +6,12 @@ import {
   ClientEvents,
   Logger,
   WCStorage,
-  SDK_VERSION
+  SDK_VERSION,
+  wrapBeaconMessage,
+  unwrapBeaconMessage,
+  networkFromTezosCaip2,
+  tezosCaip2FromNetworkType,
+  networkTypeFromTezosCaip2
 } from '@tezos-x/octez.connect-core'
 import Client from '@walletconnect/sign-client'
 import { ProposalTypes, SessionTypes, SignClientTypes } from '@walletconnect/types'
@@ -22,29 +27,18 @@ import {
   mapWCErrorToBeaconError
 } from '../error'
 import {
-  AcknowledgeResponseInput,
-  BeaconBaseMessage,
+  AppMetadata,
   BeaconErrorType,
   BeaconMessageType,
-  BeaconResponseInputMessage,
-  ChangeAccountRequest,
-  DisconnectMessage,
-  ErrorResponse,
-  ErrorResponseInput,
   ExtendedWalletConnectPairingRequest,
   ExtendedWalletConnectPairingResponse,
-  IgnoredResponseInputProperties,
   Network,
   NetworkType,
-  OperationRequest,
-  OperationResponseInput,
-  Optional,
-  PermissionRequest,
-  PermissionResponseInput,
+  PartialTezosOperation,
+  PermissionResponseAccounts,
   PermissionScope,
-  SignPayloadRequest,
-  SignPayloadResponse,
-  SignPayloadResponseInput,
+  RequestPermissionNetwork,
+  SigningType,
   StorageKey,
   TransportType
 } from '@tezos-x/octez.connect-types'
@@ -71,10 +65,89 @@ export enum PermissionScopeEvents {
   REQUEST_ACKNOWLEDGED = 'requestAcknowledged'
 }
 
-type BeaconInputMessage =
-  | BeaconResponseInputMessage
-  | Optional<DisconnectMessage, IgnoredResponseInputProperties>
-  | Optional<ChangeAccountRequest, IgnoredResponseInputProperties>
+/**
+ * SDK-internal wrapped-message synthesis. WalletConnect wallets never parse
+ * beacon envelopes — the shapes below only feed the dApp's own
+ * `handleResponse` fanout, so they must be byte-identical to what the
+ * wallet-side OutgoingResponseInterceptor emits. The `blockchainData.type`
+ * discriminators mirror `octez.connect-blockchain-tezos`'s TezosMessageType
+ * wire strings (the transport package does not depend on that package).
+ */
+interface WrappedTezosPermissionResponse {
+  blockchainIdentifier: typeof TEZOS_PLACEHOLDER
+  type: BeaconMessageType.PermissionResponse
+  blockchainData: {
+    appMetadata: AppMetadata
+    scopes: PermissionScope[]
+    publicKey?: string
+    address?: string
+    network?: Network
+    accounts?: PermissionResponseAccounts
+    walletType?: 'implicit' | 'abstracted_account'
+  }
+}
+
+interface WrappedTezosChangeAccountRequest {
+  blockchainIdentifier: typeof TEZOS_PLACEHOLDER
+  type: BeaconMessageType.ChangeAccountRequest
+  blockchainData: WrappedTezosPermissionResponse['blockchainData']
+}
+
+interface WrappedTezosBlockchainResponse {
+  blockchainIdentifier: typeof TEZOS_PLACEHOLDER
+  type: BeaconMessageType.BlockchainResponse
+  blockchainData:
+    | { type: 'operation_response'; transactionHash: string }
+    | { type: 'sign_payload_response'; signingType: SigningType; signature: string }
+}
+
+interface WrappedTezosError {
+  blockchainIdentifier: typeof TEZOS_PLACEHOLDER
+  type: BeaconMessageType.Error
+  error: { type: BeaconErrorType; data?: unknown }
+  description?: string
+}
+
+/** Every wrapped inner message this client synthesizes toward the dApp. */
+type WrappedWalletConnectMessage =
+  | WrappedTezosPermissionResponse
+  | WrappedTezosChangeAccountRequest
+  | WrappedTezosBlockchainResponse
+  | WrappedTezosError
+  | { type: BeaconMessageType.Acknowledge }
+  | { type: BeaconMessageType.Disconnect }
+
+/** Inbound wrapped Tezos permission request (dApp → this client). */
+interface InboundPermissionRequest {
+  type: BeaconMessageType.PermissionRequest
+  blockchainIdentifier?: string
+  blockchainData?: {
+    appMetadata?: AppMetadata
+    scopes?: PermissionScope[]
+    network?: Network
+    networks?: RequestPermissionNetwork[]
+  }
+}
+
+/** Inbound wrapped Tezos blockchain request (dApp → this client). */
+interface InboundBlockchainRequest {
+  type: BeaconMessageType.BlockchainRequest
+  blockchainIdentifier?: string
+  accountId?: string
+  blockchainData?: {
+    type?: string
+    network?: Network | string
+    operationDetails?: PartialTezosOperation[]
+    signingType?: SigningType
+    payload?: string
+    sourceAddress?: string
+  }
+}
+
+type InboundWrappedMessage =
+  | InboundPermissionRequest
+  | InboundBlockchainRequest
+  | { type: unknown }
 
 function getStringBetween(str: string | undefined, startChar: string, endChar: string): string {
   if (!str || !startChar || !endChar) {
@@ -115,6 +188,15 @@ export class WalletConnectCommunicationClient extends CommunicationClient {
    * [length - 1] oldest message
    */
   private messageIds: string[] = []
+
+  /**
+   * Extra networks the dApp asked to include in the next session proposal
+   * (set via `setProposalNetworks`, consumed and cleared by `init` when the
+   * proposal is built). The preferred `wcOptions.network` always stays in
+   * `requiredNamespaces`; these go to `optionalNamespaces` so single-network
+   * wallets can safely ignore them.
+   */
+  private proposalNetworks: NetworkType[] = []
 
   /**
    * Tracks the last time session extension was attempted (Unix timestamp in seconds)
@@ -304,28 +386,90 @@ export class WalletConnectCommunicationClient extends CommunicationClient {
     }, 30000)
   }
 
+  /**
+   * Networks the dApp wants in the next session proposal. Stored on the
+   * instance and consumed by `init` when the proposal is built (the pairing
+   * URI is requested lazily, after the dApp's `requestPermissions` call).
+   */
+  public setProposalNetworks(types: NetworkType[]): void {
+    this.proposalNetworks = [...types]
+  }
+
   async sendMessage(_message: string, _peer?: any): Promise<void> {
     const serializer = new Serializer()
-    const message = (await serializer.deserialize(_message)) as any
+    const candidate = (await serializer.deserialize(_message)) as
+      | { id?: string; version?: string; message?: InboundWrappedMessage }
+      | undefined
 
-    if (!message) {
+    if (!candidate) {
       return
     }
 
-    this.messageIds.unshift(message.id)
+    // Wrapped-only wire: every dApp request arrives as a BeaconMessageWrapper
+    // envelope. A flat (non-wrapped) arrival is stray pre-fork traffic — drop.
+    const inner = unwrapBeaconMessage<InboundWrappedMessage>(candidate)
 
-    switch (message.type) {
+    if (!inner || typeof candidate.id !== 'string') {
+      logger.warn(
+        'sendMessage',
+        `Dropping non-wrapped message (version ${JSON.stringify(candidate.version)})`
+      )
+      return
+    }
+
+    // The dApp keys its openRequests on the WRAPPER id.
+    this.messageIds.unshift(candidate.id)
+
+    switch (inner.type) {
       case BeaconMessageType.PermissionRequest:
-        this.requestPermissions(message)
+        this.requestPermissions((inner as InboundPermissionRequest).blockchainData).catch(
+          (error: Error) => logger.error(`requestPermissions failed: ${error.message}`)
+        )
         break
-      case BeaconMessageType.OperationRequest:
-        this.sendOperations(message)
+      case BeaconMessageType.BlockchainRequest: {
+        const payload = (inner as InboundBlockchainRequest).blockchainData
+        switch (payload?.type) {
+          case 'operation_request':
+            this.sendOperations({
+              operationDetails: payload.operationDetails ?? [],
+              network: payload.network,
+              sourceAddress: payload.sourceAddress
+            }).catch((error: Error) => logger.error(`sendOperations failed: ${error.message}`))
+            break
+          case 'sign_payload_request':
+            this.signPayload({
+              signingType: payload.signingType ?? SigningType.RAW,
+              payload: payload.payload ?? '',
+              sourceAddress: payload.sourceAddress
+            }).catch((error: Error) => logger.error(`signPayload failed: ${error.message}`))
+            break
+          default: {
+            // broadcast / proof-of-event payloads have no WalletConnect RPC.
+            // Reply with a wrapped Error instead of dropping silently.
+            this.messageIds.shift()
+            const topic = this.session?.topic
+            if (topic === undefined) {
+              logger.warn(
+                'sendMessage',
+                `Cannot reply to unsupported "${String(payload?.type)}" request: no session`
+              )
+
+              return
+            }
+            await this.notifyListenersWithError(
+              topic,
+              candidate.id,
+              BeaconErrorType.UNKNOWN_ERROR,
+              undefined,
+              `The "${String(payload?.type)}" request is not supported over WalletConnect`
+            )
+          }
+        }
         break
-      case BeaconMessageType.SignPayloadRequest:
-        this.signPayload(message)
-        break
+      }
       default:
-        return
+        this.messageIds.shift()
+        logger.debug('sendMessage', `No WalletConnect route for message type "${String(inner.type)}"`)
     }
   }
 
@@ -352,72 +496,148 @@ export class WalletConnectCommunicationClient extends CommunicationClient {
     })
   }
 
-  private async notifyListenersWithPermissionResponse(
-    session: SessionTypes.Struct,
-    network: Network,
-    sessionEventId?: string
-  ) {
-    let publicKey: string | undefined
-    if (
-      session.sessionProperties?.pubkey &&
-      session.sessionProperties?.algo &&
-      session.sessionProperties?.address
-    ) {
-      publicKey = session.sessionProperties?.pubkey
-      logger.log(
-        '[requestPermissions]: Have pubkey in sessionProperties, skipping "get_accounts" call',
-        session.sessionProperties
-      )
-    } else {
-      const accounts = this.getTezosNamespace(session.namespaces).accounts
-      const addressOrPbk = accounts[0].split(':', 3)[2]
-
-      if (isPublicKeySC(addressOrPbk)) {
-        publicKey = addressOrPbk
-      } else {
-        if (network.type !== this.wcOptions.network) {
-          throw new Error('Network in permission request is not the same as preferred network!')
-        }
-
-        const result = await this.fetchAccounts(
-          session.topic,
-          `${TEZOS_PLACEHOLDER}:${network.type}`
-        )
-
-        if (!result || result.length < 1) {
-          throw new Error('No account shared by wallet')
-        }
-
-        if (result.some((account) => !account.pubkey)) {
-          throw new Error('Public Key in `tezos_getAccounts` is empty!')
-        }
-
-        publicKey = result[0]?.pubkey
+  /**
+   * Resolve the multi-network accounts fanout for a session: one entry per
+   * distinct chain of the session's `tezos` namespace accounts, keyed by the
+   * genesis CAIP-2 chain id. Chains whose name has no static genesis mapping
+   * or whose public key cannot be resolved are dropped with a warning; the
+   * permission only fails when NO chain resolves.
+   */
+  private async resolveAccountsFanout(
+    session: SessionTypes.Struct
+  ): Promise<Record<string, { address: string; publicKey: string }>> {
+    // Group by chain name, first account segment per chain. The WC wire uses
+    // network NAMES ('tezos:mainnet:tz1…'); the genesis-id mapping applies
+    // only here, at the beacon⇄WC boundary.
+    const byChain = new Map<string, string>()
+    for (const account of this.getTezosNamespace(session.namespaces).accounts) {
+      const [namespace, chainName, addressOrPbk] = account.split(':', 3)
+      if (namespace !== TEZOS_PLACEHOLDER || !chainName || !addressOrPbk) {
+        continue
+      }
+      if (!byChain.has(chainName)) {
+        byChain.set(chainName, addressOrPbk)
       }
     }
 
-    if (!publicKey) {
-      throw new Error('Public Key in `tezos_getAccounts` is empty!')
+    const fanout: Record<string, { address: string; publicKey: string }> = {}
+    const pending: { chainName: string; chainId: string; address: string }[] = []
+
+    for (const [chainName, addressOrPbk] of byChain) {
+      const chainId = tezosCaip2FromNetworkType(chainName as NetworkType)
+      if (chainId === undefined) {
+        logger.warn(
+          'resolveAccountsFanout',
+          `No static genesis mapping for WalletConnect chain "${chainName}"; dropping it from the permission fanout`
+        )
+        continue
+      }
+
+      if (isPublicKeySC(addressOrPbk)) {
+        // (a) The account segment already is a public key.
+        fanout[chainId] = {
+          address: await getAddressFromPublicKey(addressOrPbk),
+          publicKey: addressOrPbk
+        }
+      } else if (
+        session.sessionProperties?.pubkey &&
+        session.sessionProperties?.algo &&
+        session.sessionProperties?.address === addressOrPbk
+      ) {
+        // (b) sessionProperties fast path (covers the one matching account).
+        logger.log(
+          '[resolveAccountsFanout]: Have pubkey in sessionProperties, skipping "get_accounts" call',
+          session.sessionProperties
+        )
+        fanout[chainId] = {
+          address: addressOrPbk,
+          publicKey: session.sessionProperties.pubkey
+        }
+      } else {
+        // (c) Ask the wallet, per remaining chain, in parallel below.
+        pending.push({ chainName, chainId, address: addressOrPbk })
+      }
     }
 
-    const permissionResponse: PermissionResponseInput = {
-      type: BeaconMessageType.PermissionResponse,
-      appMetadata: {
-        senderId: this.getTopicFromSession(session),
-        name: session.peer.metadata.name,
-        icon: session.peer.metadata.icons[0]
-      },
-      publicKey,
-      network,
-      scopes: [PermissionScope.SIGN, PermissionScope.OPERATION_REQUEST],
-      id: sessionEventId ?? this.messageIds.pop() ?? '',
-      walletType: 'implicit'
+    await Promise.all(
+      pending.map(async ({ chainName, chainId, address }) => {
+        try {
+          const result = await this.fetchAccounts(session.topic, `${TEZOS_PLACEHOLDER}:${chainName}`)
+          const entry = result?.find((account) => account.address === address) ?? result?.[0]
+
+          if (!entry) {
+            throw new Error('No account shared by wallet')
+          }
+          if (!entry.pubkey) {
+            throw new Error('Public Key in `tezos_getAccounts` is empty!')
+          }
+
+          fanout[chainId] = { address: entry.address ?? address, publicKey: entry.pubkey }
+        } catch (error: unknown) {
+          logger.warn(
+            'resolveAccountsFanout',
+            `Failed to resolve an account for chain "${chainName}"; dropping it from the permission fanout`,
+            error instanceof Error ? error.message : error
+          )
+        }
+      })
+    )
+
+    if (Object.keys(fanout).length === 0) {
+      throw new Error('No account shared by wallet')
     }
 
-    this.notifyListeners(this.getTopicFromSession(session), permissionResponse)
+    return fanout
   }
 
-  async requestPermissions(message: PermissionRequest) {
+  private async notifyListenersWithPermissionResponse(
+    session: SessionTypes.Struct,
+    scopes: PermissionScope[] = [PermissionScope.SIGN, PermissionScope.OPERATION_REQUEST],
+    sessionEventId?: string
+  ) {
+    const accounts = await this.resolveAccountsFanout(session)
+
+    // Top-level publicKey/address/network echo the preferred chain's entry
+    // (legacy single-account consumers), falling back to the first resolved
+    // chain when the preferred network is not part of the session.
+    const preferredChainId = tezosCaip2FromNetworkType(this.wcOptions.network)
+    const topChainId =
+      preferredChainId !== undefined && accounts[preferredChainId] !== undefined
+        ? preferredChainId
+        : Object.keys(accounts)[0]
+    const topAccount = accounts[topChainId]
+
+    const message: WrappedTezosPermissionResponse = {
+      blockchainIdentifier: TEZOS_PLACEHOLDER,
+      type: BeaconMessageType.PermissionResponse,
+      blockchainData: {
+        appMetadata: {
+          senderId: this.getTopicFromSession(session),
+          name: session.peer.metadata.name,
+          icon: session.peer.metadata.icons[0]
+        },
+        scopes,
+        publicKey: topAccount.publicKey,
+        address: topAccount.address,
+        network: networkFromTezosCaip2(topChainId),
+        accounts,
+        walletType: 'implicit'
+      }
+    }
+
+    await this.notifyListeners(
+      this.getTopicFromSession(session),
+      sessionEventId ?? this.messageIds.pop() ?? '',
+      message
+    )
+  }
+
+  public async requestPermissions(request?: {
+    appMetadata?: AppMetadata
+    scopes?: PermissionScope[]
+    network?: Network
+    networks?: RequestPermissionNetwork[]
+  }) {
     logger.log('#### Requesting permissions')
 
     if (!this.getPermittedMethods().includes(PermissionScopeMethods.GET_ACCOUNTS)) {
@@ -434,14 +654,50 @@ export class WalletConnectCommunicationClient extends CommunicationClient {
     }
 
     this.setDefaultAccountAndNetwork()
-    this.notifyListenersWithPermissionResponse(this.getSession(), message.network)
+    await this.notifyListenersWithPermissionResponse(this.getSession(), request?.scopes)
+  }
+
+  /**
+   * Map a request's network to the WalletConnect chain NAME used as the RPC
+   * `chainId` suffix. CAIP-2 strings (v4 envelopes) map through the static
+   * genesis table; `Network` objects prefer their CAIP-2 `chainId` (fanout
+   * accounts carry `type: 'custom'`) and fall back to their `.type` name; an
+   * absent network falls back to the active network.
+   */
+  private resolveRequestNetworkName(network: Network | string | undefined): string {
+    if (typeof network === 'string') {
+      const mapped = networkTypeFromTezosCaip2(network)
+      if (mapped !== undefined) {
+        return mapped
+      }
+      logger.warn(
+        'resolveRequestNetworkName',
+        `No static network mapping for chain id "${network}"; falling back to the active network`
+      )
+
+      return this.getActiveNetwork()
+    }
+
+    if (network !== undefined) {
+      const mapped =
+        network.chainId !== undefined ? networkTypeFromTezosCaip2(network.chainId) : undefined
+
+      return mapped ?? network.type
+    }
+
+    return this.getActiveNetwork()
   }
 
   /**
    * @description Once the session is establish, send payload to be approved and signed by the wallet.
    * @error MissingRequiredScope is thrown if permission to sign payload was not granted
    */
-  async signPayload(signPayloadRequest: SignPayloadRequest) {
+  public async signPayload(signPayloadRequest: {
+    signingType: SigningType
+    payload: string
+    sourceAddress?: string
+    network?: Network | string
+  }) {
     const signClient = await this.getSignClient()
 
     if (!signClient) {
@@ -456,13 +712,12 @@ export class WalletConnectCommunicationClient extends CommunicationClient {
     // Extend session if needed before making request
     await this.checkAndExtendSession()
 
-    const network = this.getActiveNetwork()
+    const network = this.resolveRequestNetworkName(signPayloadRequest.network)
     const account = await this.getAccountOrPK()
     this.validateNetworkAndAccount(network, account)
 
     this.checkWalletReadiness(this.getTopicFromSession(session))
 
-    // TODO: Type
     signClient
       .request<{ signature: string }>({
         topic: session.topic,
@@ -475,15 +730,20 @@ export class WalletConnectCommunicationClient extends CommunicationClient {
           }
         }
       })
-      .then((response) => {
-        const signPayloadResponse: SignPayloadResponseInput = {
-          type: BeaconMessageType.SignPayloadResponse,
-          signingType: signPayloadRequest.signingType,
-          signature: response?.signature,
-          id: this.messageIds.pop()
-        } as SignPayloadResponse
-
-        this.notifyListeners(this.getTopicFromSession(session), signPayloadResponse)
+      .then(async (response) => {
+        await this.notifyListeners(
+          this.getTopicFromSession(session),
+          this.messageIds.pop() ?? '',
+          {
+            blockchainIdentifier: TEZOS_PLACEHOLDER,
+            type: BeaconMessageType.BlockchainResponse,
+            blockchainData: {
+              type: 'sign_payload_response',
+              signingType: signPayloadRequest.signingType,
+              signature: response?.signature
+            }
+          }
+        )
         if (this.session && this.messageIds.length) {
           this.checkWalletReadiness(this.getTopicFromSession(session))
         }
@@ -491,14 +751,12 @@ export class WalletConnectCommunicationClient extends CommunicationClient {
       .catch(async (error: Error) => {
         const { errorType, errorData, errorCode } = mapWCErrorToBeaconError(error)
 
-        const errorResponse: ErrorResponseInput = {
-          type: BeaconMessageType.Error,
-          id: this.messageIds.pop(),
+        await this.notifyListenersWithError(
+          this.getTopicFromSession(session),
+          this.messageIds.pop() ?? '',
           errorType,
-          errorData: typeof errorData === 'object' ? { ...errorData as object, errorCode } : { errorCode }
-        } as ErrorResponse
-
-        this.notifyListeners(this.getTopicFromSession(session), errorResponse)
+          typeof errorData === 'object' ? { ...(errorData as object), errorCode } : { errorCode }
+        )
         if (this.session && this.messageIds.length) {
           this.checkWalletReadiness(this.getTopicFromSession(session))
         }
@@ -509,7 +767,11 @@ export class WalletConnectCommunicationClient extends CommunicationClient {
    * @description Once the session is established, send Tezos operations to be approved, signed and inject by the wallet.
    * @error MissingRequiredScope is thrown if permission to send operation was not granted
    */
-  async sendOperations(operationRequest: OperationRequest) {
+  public async sendOperations(operationRequest: {
+    operationDetails: PartialTezosOperation[]
+    network?: Network | string
+    sourceAddress?: string
+  }) {
     const signClient = await this.getSignClient()
 
     if (!signClient) {
@@ -525,7 +787,7 @@ export class WalletConnectCommunicationClient extends CommunicationClient {
     // Extend session if needed before making request
     await this.checkAndExtendSession()
 
-    const network = this.getActiveNetwork()
+    const network = this.resolveRequestNetworkName(operationRequest.network)
     const account = await this.getAccountOrPK()
     this.validateNetworkAndAccount(network, account)
     this.checkWalletReadiness(this.getTopicFromSession(session))
@@ -548,15 +810,20 @@ export class WalletConnectCommunicationClient extends CommunicationClient {
           }
         }
       })
-      .then((response) => {
-        const sendOperationResponse: OperationResponseInput = {
-          type: BeaconMessageType.OperationResponse,
-          transactionHash:
-            response.operationHash ?? response.transactionHash ?? response.hash ?? '',
-          id: this.messageIds.pop() ?? ''
-        }
-
-        this.notifyListeners(this.getTopicFromSession(session), sendOperationResponse)
+      .then(async (response) => {
+        await this.notifyListeners(
+          this.getTopicFromSession(session),
+          this.messageIds.pop() ?? '',
+          {
+            blockchainIdentifier: TEZOS_PLACEHOLDER,
+            type: BeaconMessageType.BlockchainResponse,
+            blockchainData: {
+              type: 'operation_response',
+              transactionHash:
+                response.operationHash ?? response.transactionHash ?? response.hash ?? ''
+            }
+          }
+        )
 
         if (this.session && this.messageIds.length) {
           this.checkWalletReadiness(this.getTopicFromSession(session))
@@ -565,14 +832,12 @@ export class WalletConnectCommunicationClient extends CommunicationClient {
       .catch(async (error: Error) => {
         const { errorType, errorData, errorCode } = mapWCErrorToBeaconError(error)
 
-        const errorResponse: ErrorResponseInput = {
-          type: BeaconMessageType.Error,
-          id: this.messageIds.pop(),
+        await this.notifyListenersWithError(
+          this.getTopicFromSession(session),
+          this.messageIds.pop() ?? '',
           errorType,
-          errorData: typeof errorData === 'object' ? { ...errorData as object, errorCode } : { errorCode }
-        } as ErrorResponse
-
-        this.notifyListeners(this.getTopicFromSession(session), errorResponse)
+          typeof errorData === 'object' ? { ...(errorData as object), errorCode } : { errorCode }
+        )
 
         if (this.session && this.messageIds.length) {
           this.checkWalletReadiness(this.getTopicFromSession(session))
@@ -649,6 +914,29 @@ export class WalletConnectCommunicationClient extends CommunicationClient {
 
     logger.warn('before create')
 
+    // Consume the networks the dApp asked for (setProposalNetworks). The
+    // preferred network stays alone in requiredNamespaces (unchanged for
+    // deployed single-network wallets); extras go to optionalNamespaces so
+    // wallets that ignore optionals (e.g. Kukai) keep pairing. Networks
+    // without a static genesis mapping could never be keyed in the fanout,
+    // so they are excluded from the proposal.
+    const requestedNetworks = this.proposalNetworks
+    this.proposalNetworks = []
+    const extraNetworks: NetworkType[] = []
+    for (const networkType of requestedNetworks) {
+      if (networkType === this.wcOptions.network || extraNetworks.includes(networkType)) {
+        continue
+      }
+      if (tezosCaip2FromNetworkType(networkType) === undefined) {
+        logger.warn(
+          'init',
+          `Network "${networkType}" has no static genesis mapping; excluding it from the WalletConnect proposal`
+        )
+        continue
+      }
+      extraNetworks.push(networkType)
+    }
+
     const permissionScopeParams: PermissionScopeParam = {
       networks: [this.wcOptions.network],
       events: [],
@@ -659,7 +947,7 @@ export class WalletConnectCommunicationClient extends CommunicationClient {
       ]
     }
     const optionalPermissionScopeParams: PermissionScopeParam = {
-      networks: [this.wcOptions.network],
+      networks: [this.wcOptions.network, ...extraNetworks],
       events: [PermissionScopeEvents.REQUEST_ACKNOWLEDGED],
       methods: []
     }
@@ -785,14 +1073,12 @@ export class WalletConnectCommunicationClient extends CommunicationClient {
 
           const { errorType, errorData, errorCode } = mapWCErrorToBeaconError(error)
 
-          const errorResponse: ErrorResponseInput = {
-            type: BeaconMessageType.Error,
-            id: this.messageIds.pop(),
+          await this.notifyListenersWithError(
+            _pairingTopic,
+            this.messageIds.pop() ?? '',
             errorType,
-            errorData: typeof errorData === 'object' ? { ...errorData as object, errorCode } : { errorCode }
-          } as ErrorResponse
-
-          this.notifyListeners(_pairingTopic, errorResponse)
+            typeof errorData === 'object' ? { ...(errorData as object), errorCode } : { errorCode }
+          )
         }
       })
       .then(async () => {
@@ -894,12 +1180,10 @@ export class WalletConnectCommunicationClient extends CommunicationClient {
 
   private async acknowledgeRequest(id: string) {
     const session = this.getSession()
-    const acknowledgeResponse: AcknowledgeResponseInput = {
-      type: BeaconMessageType.Acknowledge,
-      id
-    }
 
-    this.notifyListeners(this.getTopicFromSession(session), acknowledgeResponse)
+    await this.notifyListeners(this.getTopicFromSession(session), id, {
+      type: BeaconMessageType.Acknowledge
+    })
   }
 
   private async updateActiveAccount(accounts: string[], session: SessionTypes.Struct) {
@@ -931,22 +1215,38 @@ export class WalletConnectCommunicationClient extends CommunicationClient {
           throw new Error('Public key for the new account not provided')
         }
 
-        this.notifyListeners(this.getTopicFromSession(session), {
-          id: await generateGUID(),
+        // Map the WC chain NAME to its genesis CAIP-2 network so the account
+        // identifier derived by the dApp matches the fanout-created accounts.
+        const caip2ChainId = tezosCaip2FromNetworkType(chainId as NetworkType)
+        if (caip2ChainId === undefined) {
+          logger.warn(
+            'updateActiveAccount',
+            `No static genesis mapping for WalletConnect chain "${chainId}"; skipping change-account notification`
+          )
+
+          return
+        }
+
+        await this.notifyListeners(this.getTopicFromSession(session), await generateGUID(), {
+          blockchainIdentifier: TEZOS_PLACEHOLDER,
           type: BeaconMessageType.ChangeAccountRequest,
-          publicKey,
-          network: { type: chainId as NetworkType },
-          scopes: [PermissionScope.SIGN, PermissionScope.OPERATION_REQUEST],
-          walletType: 'implicit'
+          blockchainData: {
+            appMetadata: {
+              senderId: this.getTopicFromSession(session),
+              name: session.peer.metadata.name,
+              icon: session.peer.metadata.icons[0]
+            },
+            scopes: [PermissionScope.SIGN, PermissionScope.OPERATION_REQUEST],
+            publicKey,
+            address: isPublicKeySC(addressOrPbk)
+              ? await getAddressFromPublicKey(publicKey)
+              : addressOrPbk,
+            network: networkFromTezosCaip2(caip2ChainId),
+            walletType: 'implicit'
+          }
         })
       } else {
-        this.notifyListenersWithPermissionResponse(
-          session,
-          {
-            type: this.wcOptions.network
-          },
-          'session_update'
-        )
+        await this.notifyListenersWithPermissionResponse(session, undefined, 'session_update')
       }
     } catch {}
   }
@@ -963,8 +1263,7 @@ export class WalletConnectCommunicationClient extends CommunicationClient {
       return
     }
 
-    this.notifyListeners(this.getTopicFromSession(session), {
-      id: await generateGUID(),
+    await this.notifyListeners(this.getTopicFromSession(session), await generateGUID(), {
       type: BeaconMessageType.Disconnect
     })
     this.clearState()
@@ -1152,13 +1451,11 @@ export class WalletConnectCommunicationClient extends CommunicationClient {
         } else {
           logger.debug('New pairing topic?', [pairingTopic])
 
-          const errorResponse: ErrorResponseInput = {
-            type: BeaconMessageType.Error,
-            id: this.messageIds.pop(),
-            errorType: BeaconErrorType.ABORTED_ERROR
-          } as ErrorResponse
-
-          this.notifyListeners(pairingTopic, errorResponse)
+          await this.notifyListenersWithError(
+            pairingTopic,
+            this.messageIds.pop() ?? '',
+            BeaconErrorType.ABORTED_ERROR
+          )
         }
       }
     }
@@ -1315,13 +1612,9 @@ export class WalletConnectCommunicationClient extends CommunicationClient {
     const session = this.getSession()
 
     if (notify && this.messageIds.length) {
-      const errorResponse: any = {
-        type: BeaconMessageType.Disconnect,
-        id: this.messageIds.pop(),
-        errorType: BeaconErrorType.ABORTED_ERROR
-      }
-
-      this.notifyListeners(this.getTopicFromSession(session), errorResponse)
+      await this.notifyListeners(this.getTopicFromSession(session), this.messageIds.pop() ?? '', {
+        type: BeaconMessageType.Disconnect
+      })
       this.messageIds = [] // reset
     }
 
@@ -1392,8 +1685,31 @@ export class WalletConnectCommunicationClient extends CommunicationClient {
     return this.getTezosRequiredNamespace().methods
   }
 
-  private getPermittedNetwork() {
-    return this.getTezosRequiredNamespace().chains.map((chain) => chain.split(':')[1])
+  /**
+   * The distinct WalletConnect chain names actually granted by the wallet
+   * (derived from the session's account entries). Before a session exists
+   * this falls back to the preferred network, so pre-session scope checks
+   * keep working.
+   */
+  private getPermittedNetwork(): string[] {
+    if (!this.session) {
+      return [this.wcOptions.network]
+    }
+
+    const distinct = new Set<string>()
+    for (const account of this.getTezosNamespace().accounts) {
+      const chain = account.split(':')[1]
+      if (chain) {
+        distinct.add(chain)
+      }
+    }
+
+    const networks = Array.from(distinct)
+
+    // Keep the preferred network first so it stays the default active one.
+    return networks.includes(this.wcOptions.network)
+      ? [this.wcOptions.network, ...networks.filter((network) => network !== this.wcOptions.network)]
+      : networks
   }
 
   private getTezosRequiredNamespace(): {
@@ -1402,27 +1718,25 @@ export class WalletConnectCommunicationClient extends CommunicationClient {
     events: string[]
   } {
     return {
-      chains: [`${TEZOS_PLACEHOLDER}:${this.wcOptions.network}`],
+      chains: this.getPermittedNetwork().map((network) => `${TEZOS_PLACEHOLDER}:${network}`),
       events: [],
       methods: ['tezos_getAccounts', 'tezos_send', 'tezos_sign']
     }
-    // if (TEZOS_PLACEHOLDER in this.getSession().requiredNamespaces) {
-    //   return this.getSession().requiredNamespaces[TEZOS_PLACEHOLDER] as {
-    //     chains: string[]
-    //     methods: string[]
-    //     events: string[]
-    //   }
-    // } else {
-    //   throw new InvalidSession('Tezos not found in requiredNamespaces')
-    // }
   }
 
-  private async notifyListeners(topic: string, partialResponse: BeaconInputMessage) {
-    const response: BeaconBaseMessage = {
-      ...partialResponse,
-      version: '2',
-      senderId: topic
-    }
+  /**
+   * Wrap a synthesized inner message into the beacon envelope and fan it out
+   * to the dApp's listeners. WalletConnect wallets never see these envelopes;
+   * they exist purely SDK-internally. The envelope is always stamped with
+   * BEACON_VERSION ('4'): the synthesized fanout shape IS v4 and capability
+   * is carried by the message content, not the version.
+   */
+  private async notifyListeners(
+    topic: string,
+    id: string,
+    message: WrappedWalletConnectMessage
+  ): Promise<void> {
+    const response = wrapBeaconMessage({ id, version: BEACON_VERSION, senderId: topic }, message)
 
     for (const [publicKey, listener] of this.activeListeners.entries()) {
       const protocolVersion = Number(this.peerProtocolVersions.get(publicKey)) || 1
@@ -1430,6 +1744,31 @@ export class WalletConnectCommunicationClient extends CommunicationClient {
       const serialized = await serializer.serialize(response)
       listener(serialized)
     }
+  }
+
+  /** Synthesize a wrapped Tezos error toward the dApp. */
+  private async notifyListenersWithError(
+    topic: string,
+    id: string,
+    errorType: BeaconErrorType,
+    errorData?: unknown,
+    description?: string
+  ): Promise<void> {
+    const error: WrappedTezosError['error'] = { type: errorType }
+    if (errorData !== undefined) {
+      error.data = errorData
+    }
+
+    const message: WrappedTezosError = {
+      blockchainIdentifier: TEZOS_PLACEHOLDER,
+      type: BeaconMessageType.Error,
+      error
+    }
+    if (description !== undefined) {
+      message.description = description
+    }
+
+    await this.notifyListeners(topic, id, message)
   }
 
   public currentSession(): SessionTypes.Struct | undefined {

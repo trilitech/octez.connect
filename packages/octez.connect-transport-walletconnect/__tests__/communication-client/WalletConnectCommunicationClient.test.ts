@@ -1,12 +1,7 @@
 // __tests__/WalletConnectCommunicationClient.test.ts
 
 import { SessionTypes, SignClientTypes } from '@walletconnect/types'
-import {
-  BeaconMessageType,
-  SignPayloadRequest,
-  NetworkType,
-  SigningType
-} from '@tezos-x/octez.connect-types'
+import { BeaconMessageType, NetworkType, SigningType } from '@tezos-x/octez.connect-types'
 import { WalletConnectCommunicationClient } from '../../src/communication-client/WalletConnectCommunicationClient'
 
 jest.mock('@tezos-x/octez.connect-core', () => {
@@ -153,35 +148,66 @@ describe('String message dispatching', () => {
     client = new WalletConnectCommunicationClient(wcOptions, isLeader)
   })
 
-  it('sendMessage no-op on unknown type', async () => {
-    const raw = JSON.stringify({ id: '1', type: 'Foo' })
+  it('sendMessage no-op on unknown inner type', async () => {
+    const raw = JSON.stringify({
+      id: '1',
+      version: '4',
+      senderId: 'dapp',
+      message: { type: 'Foo' }
+    })
     await client.sendMessage(raw)
     // no errors
   })
 
-  it('sendMessage dispatches PermissionRequest', async () => {
-    const msg = { id: '1', type: BeaconMessageType.PermissionRequest, network: 'mainnet' }
+  it('sendMessage dispatches a wrapped PermissionRequest', async () => {
+    const msg = {
+      id: '1',
+      version: '4',
+      senderId: 'dapp',
+      message: {
+        blockchainIdentifier: 'tezos',
+        type: BeaconMessageType.PermissionRequest,
+        blockchainData: { scopes: [], network: { type: 'mainnet' as NetworkType } }
+      }
+    }
     jest.spyOn(client, 'requestPermissions').mockImplementationOnce(() => Promise.resolve())
     await client.sendMessage(JSON.stringify(msg))
     expect(client.requestPermissions).toHaveBeenCalled()
   })
 
-  it('sendMessage dispatches OperationRequest', async () => {
-    const msg = { id: '2', type: BeaconMessageType.OperationRequest, operationDetails: [] }
+  it('sendMessage dispatches a wrapped operation_request', async () => {
+    const msg = {
+      id: '2',
+      version: '4',
+      senderId: 'dapp',
+      message: {
+        blockchainIdentifier: 'tezos',
+        type: BeaconMessageType.BlockchainRequest,
+        accountId: 'account',
+        blockchainData: { type: 'operation_request', operationDetails: [] }
+      }
+    }
     jest.spyOn(client, 'sendOperations').mockImplementationOnce(() => Promise.resolve())
     await client.sendMessage(JSON.stringify(msg))
     expect(client.sendOperations).toHaveBeenCalled()
   })
 
-  it('sendMessage dispatches SignPayloadRequest', async () => {
-    const msg: SignPayloadRequest = {
+  it('sendMessage dispatches a wrapped sign_payload_request', async () => {
+    const msg = {
       id: '3',
-      type: BeaconMessageType.SignPayloadRequest,
-      payload: 'p',
-      signingType: SigningType.RAW,
-      senderId: '',
-      sourceAddress: 'tz1test',
-      version: '3'
+      version: '4',
+      senderId: 'dapp',
+      message: {
+        blockchainIdentifier: 'tezos',
+        type: BeaconMessageType.BlockchainRequest,
+        accountId: 'account',
+        blockchainData: {
+          type: 'sign_payload_request',
+          payload: 'p',
+          signingType: SigningType.RAW,
+          sourceAddress: 'tz1test'
+        }
+      }
     }
     jest.spyOn(client, 'signPayload').mockImplementationOnce(() => Promise.resolve())
     await client.sendMessage(JSON.stringify(msg))

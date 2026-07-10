@@ -48,6 +48,14 @@ export class WalletConnectTransport<
   }
 
   /**
+   * Forward the networks the dApp wants in the next session proposal to the
+   * communication client (consumed when the proposal is built in `init`).
+   */
+  public setProposalNetworks(networks: NetworkType[]): void {
+    this.client.setProposalNetworks(networks)
+  }
+
+  /**
    * Returns a promise that blocks the execution flow when awaited if the transport hasn't resolved yet; otherwise, it returns true.
    */
   waitForResolution(): Promise<boolean> {
