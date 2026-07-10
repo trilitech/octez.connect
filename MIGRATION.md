@@ -5,12 +5,17 @@ accounts on several Tezos networks at once (e.g. mainnet + ghostnet), and
 operations can target a specific network by its CAIP‑2 chain id. This is the
 main reason to upgrade.
 
-**Compatibility promise:** v5 is designed to be **as backward compatible as
-possible**. A v5 dApp and a v4.8.6 wallet (and vice‑versa) still talk to each
-other; multi-network is negotiated via a **peer‑version handshake** and is
-opt‑in, so nothing regresses for peers that don't support it. Existing paired
-sessions survive the upgrade — persisted account identifiers are unchanged for
-single‑network (legacy) accounts.
+**Protocol hard fork:** v5 removes the legacy flat "v2" wire format. The wire
+is now **wrapped v3/v4 only** — every message ships as a
+`{ id, version, senderId, message }` envelope, stamped with the version
+negotiated against the peer (`min(peer.version, '4')`, floor `'3'`).
+**Your code does not change**: the dApp API (`requestPermissions()`,
+`requestOperation()`, …) and the wallet API (`newMessageCallback` payloads,
+`respond()` inputs) keep their exact flat shapes — both SDK boundaries
+normalize to and from the wire internally, and version numbers never appear in
+integrator code. The break is only **against pre‑fork SDK peers** (see the
+matrix below). Existing paired sessions survive the upgrade — persisted
+account identifiers are unchanged for single‑network (legacy) accounts.
 
 > The package names did **not** change (`@tezos-x/octez.connect-*` in both
 > v4.8.6 and v5). This is **not** a rename migration — your imports stay the
@@ -23,23 +28,26 @@ single‑network (legacy) accounts.
 
 | dApp | Wallet | Result |
 |------|--------|--------|
-| **v4.8.6** | **v5** | ✅ Works. The v5 wallet routes on the incoming message version and serves the old dApp with the classic single‑account flow. |
-| **v5** | **v4.8.6** | ✅ Works. The v5 dApp detects the wallet is pre‑v4 (via `peer.version`) and transparently uses the legacy single‑network flow. |
-| **v5** | **v5** | ✅ Full multi-network. |
-| **v4.8.6** | **v4.8.6** | ✅ Unchanged. |
+| **v4.8.6 (flat v2)** | **v5** | ❌ Rejected fast with a typed error: the v5 wallet answers the legacy request with a flat `ErrorResponse` tombstone (`UNKNOWN_ERROR` + "protocol version 2 is no longer supported…"), so the old dApp fails cleanly instead of hanging. |
+| **v5** | **v4.8.6** | ❌ Rejected at request time with `VersionUnsupportedBeaconError` — the default `requiredMinimumVersion` is now `'3'`, below which no shared wire dialect exists. |
+| **v5 (wrapped‑capable peer, `peer.version >= 3`)** | **v5** | ✅ Wrapped v3/v4. A v3 peer receives `'3'` envelopes and never sees v4 fields. |
+| **v5** | **v5** | ✅ Full multi-network over wrapped v4. |
+| any dApp | any **WalletConnect** wallet | ✅ Unaffected by the beacon fork — WC wallets never parsed beacon envelopes (the SDK synthesizes them internally). Multi-network over WC needs a wallet that approves multi‑chain session namespaces (see §3). |
 
 **How the handshake works:** each peer advertises its protocol version at
-pairing time (`peer.version`). The dApp only uses multi-network features when
-the wallet advertises version ≥ 4; otherwise it silently falls back. Malformed
-or absent versions are always treated as "below v4", so a hostile or legacy
-peer can never trip the new code paths.
+pairing time (`peer.version`); the outgoing envelope is stamped with
+`min(peer.version, '4')`, floor `'3'`. The dApp only uses multi-network
+features when the wallet advertises version ≥ 4. Malformed or absent versions
+are treated as "below v4" (and served the `'3'` floor), so a hostile or legacy
+peer can never trip the new code paths. WalletConnect peers carry **no**
+beacon version (never fabricated); their multi-network capability is
+negotiated via session namespaces instead.
 
 **Graceful degradation (important nuance):** by default a v5 dApp that requests
-multiple networks from a **v4.8.6 wallet** receives a **single** account (the
-wallet's configured network) with **no error** — best‑effort. If your dApp
-*requires* multi-network, set `requiredMinimumVersion: '4'` (see §3) so an old
-wallet is rejected cleanly with `VersionUnsupportedBeaconError` instead of
-silently degrading.
+multiple networks from a single‑network wallet receives a **single** account
+with **no error** — best‑effort. If your dApp *requires* multi-network, set
+`requiredMinimumVersion: '4'` (see §3) so a non‑v4 wallet is rejected cleanly
+with `VersionUnsupportedBeaconError` instead of silently degrading.
 
 ---
 
@@ -107,14 +115,14 @@ const client = new DAppClient({
   requiredMinimumVersion: '4'
 })
 
-// REQUIRED for the multi-network response parser:
-client.addBlockchain(new TezosBlockchain())
+// TezosBlockchain is registered by DEFAULT since the hard fork — no
+// addBlockchain call needed (calling it again to override is still allowed).
 
 // Ask for several networks at once (CAIP-2 chain ids):
 await client.requestPermissions({
   networks: [
-    { chainId: 'tezos:NetXdQprcVkpaWU7' }, // mainnet
-    { chainId: 'tezos:NetXnHfVqm9iesp9' }  // ghostnet
+    { chainId: 'tezos:NetXdQprcVkpaWU' }, // mainnet
+    { chainId: 'tezos:NetXnHfVqm9iesp' }  // ghostnet
   ]
 })
 
@@ -123,15 +131,24 @@ const accounts = await client.getAccounts()
 
 // Target a specific network on an operation:
 await client.requestOperation({
-  network: 'tezos:NetXnHfVqm9iesp9',
+  network: 'tezos:NetXnHfVqm9iesp',
   operationDetails: [ /* ... */ ]
 })
 ```
 
 Key points:
-- **`addBlockchain(new TezosBlockchain())` is required** before requesting
-  multi-network permissions — the fanout parser throws without it. (The
-  single-network flow does not need it.)
+- **No registration needed:** `DAppClient` and `WalletClient` register
+  `TezosBlockchain` by default. `addBlockchain` remains public for other
+  chains or overrides.
+- **Over WalletConnect**, `requestPermissions({ networks })` drives the WC
+  **session proposal**: your preferred network stays in
+  `requiredNamespaces`, the extra networks go to `optionalNamespaces` — a
+  single-network wallet (e.g. Kukai iOS today) simply ignores the optionals
+  and keeps working with one network; a multi-network wallet approves
+  accounts per chain. Networks must map to a known genesis id (see the
+  table in §5) — unmapped ids are excluded from the WC proposal. The
+  proposal is fixed at pairing time: widening the network set on a live WC
+  session requires re-pairing.
 - `requestPermissions({ networks })` is **additive** — omit `networks` and
   behaviour is exactly as before (one account).
 - `requestOperation({ network })` takes a **CAIP‑2 string**
@@ -220,7 +237,24 @@ returns a single account and the dApp treats the session as single-network.
 ## 5. Quick reference
 
 **New `DAppClientOptions`:** `requiredMinimumVersion?: string` (decimal‑integer
-string in `[1, BEACON_VERSION]`; default `'2'` = accept any wallet).
+string in `[3, BEACON_VERSION]`; default `'3'` = accept any wallet the SDK can
+still talk to — the flat v2 wire was removed by the hard fork, so `'2'` is no
+longer a legal value).
+
+**NetworkType ↔ genesis chain id table** (used at the WalletConnect boundary;
+RPC‑sourced and locked by unit test):
+
+| NetworkType | Genesis (CAIP‑2 reference) |
+|---|---|
+| `mainnet` | `NetXdQprcVkpaWU` |
+| `ghostnet` | `NetXnHfVqm9iesp` |
+| `shadownet` | `NetXsqzbfFenSTS` |
+| `ushuaianet` | `NetXpX8WSZkAZZA` |
+
+`weeklynet`/`dailynet` (rotating genesis), `custom`, and networks without a
+public RPC (`tallinnnet`, `seoulnet`, `tezlink-shadownet`,
+`tezosx-previewnet`) are not statically mappable — multi-network requests for
+them travel over P2P/postmessage only (chain ids pass through opaquely).
 `disableWalletConnect?: boolean` **already existed in v4.8.6** — it is not new;
 only its interaction with the WC opt‑in default changed (see §2.1).
 
@@ -236,8 +270,14 @@ only its interaction with the WC opt‑in default changed (see §2.1).
 `WalletClient.subscribeToDisconnect` / `unsubscribeFromDisconnect`.
 
 **Changed defaults/behaviour:** WalletConnect opt‑in; `BEACON_VERSION` `3` → `4`;
-Tezos identifier `'xtz'` → `'tezos'`; no built‑in request timeout;
-WalletConnect `2.18.0` → `2.23.6`.
+Tezos identifier `'xtz'` → `'tezos'` (with a `'xtz'` legacy registry alias);
+no built‑in request timeout; WalletConnect `2.18.0` → `2.23.6`;
+`requiredMinimumVersion` default `'2'` → `'3'`.
+
+**Removed by the hard fork:** the flat v2 wire format (the flat message types
+remain as the public API shapes; a v5 wallet answers legacy v2 requests with a
+typed error tombstone); the `dapp-v2.html`/`wallet-v2.html` examples (use
+`dapp.html`/`wallet.html`).
 
 > Note: passing `network` to `requestPermissions()` already threw in v4.8.6
 > (set `network` on the `DAppClient` constructor) — unchanged in v5, listed
