@@ -1,5 +1,6 @@
 import { AccountInfo } from '../AccountInfo'
 import { AppMetadata } from '../beacon/AppMetadata'
+import { BeaconErrorType } from '../BeaconErrorType'
 import { BeaconMessageType } from '../beacon/BeaconMessageType'
 import { ConnectionContext } from '../ConnectionContext'
 import { WalletInfo } from '../WalletInfo'
@@ -26,6 +27,13 @@ export interface Blockchain {
    */
   readonly legacyIdentifiers?: readonly string[]
   validateRequest(input: BlockchainMessage): Promise<void>
+  /**
+   * Wallet-side validation of an outgoing response payload before it is
+   * wrapped and sent (e.g. Tezos rejects permission responses without a
+   * usable address/publicKey, invalid addresses, and abstracted accounts
+   * whose address is not a contract). Throwing aborts the send.
+   */
+  validateResponse?(message: BlockchainMessage): Promise<void>
   handleResponse(input: ResponseInput): Promise<void>
 
   getWalletLists(): Promise<{
@@ -112,10 +120,22 @@ export interface BlockchainErrorResponse<T extends string = string> extends Bloc
   blockchainIdentifier: T
   type: BeaconMessageType.Error
   error: {
-    type: unknown
+    type: BeaconErrorType
     data?: unknown
   }
   description?: string
+}
+
+/**
+ * Wallet-initiated account switch, wrapped form. The payload is
+ * shape-identical to the chain's permission-response `blockchainData`, so
+ * receivers materialize accounts through the same registry parser as a
+ * permission response.
+ */
+export interface ChangeAccountRequestV3<T extends string = string> extends BlockchainMessage<T> {
+  blockchainIdentifier: T
+  type: BeaconMessageType.ChangeAccountRequest
+  blockchainData: unknown
 }
 
 // Acknowledge

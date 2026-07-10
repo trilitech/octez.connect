@@ -33,6 +33,21 @@ export class PermissionManager {
     )
   }
 
+  /**
+   * Persist several permissions in one read-modify-write cycle. Required for
+   * the v4 multi-network fanout (N permissions from one response): N
+   * concurrent `addPermission` calls race on the shared permission list and
+   * the last write clobbers the others.
+   */
+  public async addPermissions(permissionInfos: PermissionInfo[]): Promise<void> {
+    return this.storageManager.addMany(
+      permissionInfos,
+      (stored: PermissionInfo, incoming: PermissionInfo) =>
+        stored.accountIdentifier === incoming.accountIdentifier &&
+        stored.senderId === incoming.senderId
+    )
+  }
+
   public async removePermission(accountIdentifier: string, senderId: string): Promise<void> {
     return this.storageManager.remove(
       (permission: PermissionInfo) =>

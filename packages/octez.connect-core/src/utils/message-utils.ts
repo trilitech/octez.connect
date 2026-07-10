@@ -1,3 +1,5 @@
+import { BeaconBaseMessage, BeaconMessageWrapper } from '@tezos-x/octez.connect-types'
+import { BEACON_VERSION } from '../constants'
 import { InvalidBeaconVersionError } from '../errors/InvalidBeaconVersionError'
 
 export const MESSAGE_WRAPPED_FROM_VERSION = 3
@@ -88,3 +90,55 @@ export const usesWrappedMessages = (version?: string): boolean => {
 
   return parsed !== null && parsed >= MESSAGE_WRAPPED_FROM_VERSION
 }
+
+/**
+ * The envelope version to stamp on an outgoing wrapped message for a peer
+ * that declared `peerVersion` at pairing: `min(peerVersion, BEACON_VERSION)`
+ * with a hard floor at the wrapped-message baseline ('3').
+ *
+ * The floor means an unknown, absent, or malformed peer version (including
+ * WalletConnect peers, which have no beacon-level version handshake) is
+ * served the lowest wrapped dialect — never the removed flat v2 wire. A v3
+ * peer receives '3' envelopes, so version-gated payload fields (the v4
+ * multi-network `networks`/`accounts`) must be gated by callers on
+ * `isMultiNetworkVersion(negotiated)`.
+ *
+ * @category Utility
+ */
+export const negotiateEnvelopeVersion = (peerVersion: string | undefined): string => {
+  const floor = String(MESSAGE_WRAPPED_FROM_VERSION)
+  if (!isAtLeastVersion(peerVersion, floor)) {
+    return floor
+  }
+
+  return isAtLeastVersion(peerVersion, BEACON_VERSION) ? BEACON_VERSION : (peerVersion as string)
+}
+
+/**
+ * Build a wrapped beacon envelope. Single source of truth for the
+ * `{ id, version, senderId, message }` wire shape so senders cannot drift.
+ *
+ * @category Utility
+ */
+export const wrapBeaconMessage = <T extends BeaconBaseMessage>(
+  envelope: { id: string; version: string; senderId: string },
+  message: T
+): BeaconMessageWrapper<T> => ({
+  id: envelope.id,
+  version: envelope.version,
+  senderId: envelope.senderId,
+  message
+})
+
+/**
+ * Extract the inner payload of a wrapped beacon envelope, or `undefined`
+ * when the candidate's version does not follow the wrapped (v3+) contract.
+ * Callers must treat `undefined` as "not a wrapped message" and drop or
+ * tombstone it — never fall back to reading flat fields.
+ *
+ * @category Utility
+ */
+export const unwrapBeaconMessage = <T extends BeaconBaseMessage>(candidate: {
+  version?: string
+  message?: T
+}): T | undefined => (usesWrappedMessages(candidate.version) ? candidate.message : undefined)

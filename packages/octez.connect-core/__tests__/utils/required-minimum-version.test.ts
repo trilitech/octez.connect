@@ -5,13 +5,14 @@ import {
 import { InvalidRequiredMinimumVersionError } from '../../src/errors/InvalidRequiredMinimumVersionError'
 
 describe('resolveRequiredMinimumVersion', () => {
-  it('defaults to the permissive lowest version when undefined', () => {
+  it('defaults to the wrapped-message baseline when undefined', () => {
     expect(resolveRequiredMinimumVersion(undefined)).toBe(DEFAULT_REQUIRED_MINIMUM_VERSION)
-    expect(DEFAULT_REQUIRED_MINIMUM_VERSION).toBe('2')
+    // Hard fork: the flat v2 wire was removed, so the permissive default is
+    // the lowest wrapped dialect, not '2'.
+    expect(DEFAULT_REQUIRED_MINIMUM_VERSION).toBe('3')
   })
 
   it('returns a valid in-range value unchanged', () => {
-    expect(resolveRequiredMinimumVersion('2')).toBe('2')
     expect(resolveRequiredMinimumVersion('3')).toBe('3')
     expect(resolveRequiredMinimumVersion('4')).toBe('4')
   })
@@ -26,7 +27,9 @@ describe('resolveRequiredMinimumVersion', () => {
     ['decimal', '4.5'],
     ['non-numeric', 'four'],
     ['empty', ''],
-    ['below 1', '0'],
+    ['zero', '0'],
+    ['removed flat v2 wire', '2'],
+    ['pre-wrapped version', '1'],
     ['above BEACON_VERSION', '5']
   ])('throws InvalidRequiredMinimumVersionError for %s', (_label, value) => {
     expect(() => resolveRequiredMinimumVersion(value)).toThrow(InvalidRequiredMinimumVersionError)

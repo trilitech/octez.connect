@@ -1,7 +1,10 @@
 import {
   compareBeaconVersion,
   isAtLeastVersion,
-  isMultiNetworkVersion
+  isMultiNetworkVersion,
+  negotiateEnvelopeVersion,
+  wrapBeaconMessage,
+  unwrapBeaconMessage
 } from '../../src/utils/message-utils'
 import { InvalidBeaconVersionError } from '../../src/errors/InvalidBeaconVersionError'
 
@@ -22,6 +25,43 @@ describe('isAtLeastVersion / isMultiNetworkVersion', () => {
     expect(isMultiNetworkVersion('2')).toBe(false)
     expect(isMultiNetworkVersion(undefined)).toBe(false)
     expect(isMultiNetworkVersion('<script>')).toBe(false)
+  })
+})
+
+describe('negotiateEnvelopeVersion', () => {
+  // min(peer.version, BEACON_VERSION) with a hard floor at the wrapped
+  // baseline '3'. The removed flat v2 wire must be unreachable from here.
+  it.each([
+    ['unknown peer (WalletConnect)', undefined, '3'],
+    ['legacy v2 peer', '2', '3'],
+    ['v3 peer', '3', '3'],
+    ['v4 peer', '4', '4'],
+    ['future peer capped at own version', '5', '4'],
+    ['malformed version', '4.1', '3'],
+    ['hostile version', '<script>', '3']
+  ])('%s: %p → %p', (_label, peerVersion, expected) => {
+    expect(negotiateEnvelopeVersion(peerVersion as string | undefined)).toBe(expected)
+  })
+})
+
+describe('wrapBeaconMessage / unwrapBeaconMessage', () => {
+  const inner = { type: 'permission_request' } as any
+
+  it('wrap builds the canonical envelope shape', () => {
+    expect(wrapBeaconMessage({ id: 'id1', version: '4', senderId: 's1' }, inner)).toEqual({
+      id: 'id1',
+      version: '4',
+      senderId: 's1',
+      message: inner
+    })
+  })
+
+  it('unwrap returns the payload only for wrapped (v3+) versions', () => {
+    expect(unwrapBeaconMessage({ version: '4', message: inner })).toBe(inner)
+    expect(unwrapBeaconMessage({ version: '3', message: inner })).toBe(inner)
+    expect(unwrapBeaconMessage({ version: '2', message: inner })).toBeUndefined()
+    expect(unwrapBeaconMessage({ version: '3.0', message: inner })).toBeUndefined()
+    expect(unwrapBeaconMessage({ message: inner })).toBeUndefined()
   })
 })
 

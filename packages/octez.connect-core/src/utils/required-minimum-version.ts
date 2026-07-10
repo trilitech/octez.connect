@@ -1,22 +1,29 @@
 import { BEACON_VERSION } from '../constants'
 import { InvalidRequiredMinimumVersionError } from '../errors/InvalidRequiredMinimumVersionError'
-import { compareBeaconVersion, parseStrictDecimalInteger } from './message-utils'
+import {
+  compareBeaconVersion,
+  MESSAGE_WRAPPED_FROM_VERSION,
+  parseStrictDecimalInteger
+} from './message-utils'
 
 /**
  * Default minimum wallet version the dApp accepts when the option is omitted.
  *
- * Deliberately the lowest protocol version still supported, so the gate is
- * effectively opt-in: by default every wallet the SDK can talk to (v2/v3/v4)
- * is accepted, preserving backward compatibility. A dApp that needs the v4
- * multi-network protocol sets `requiredMinimumVersion: '4'` explicitly.
+ * The lowest protocol version the SDK still speaks: the wrapped-message
+ * baseline ('3'). The flat v2 wire was removed in the protocol hard fork, so
+ * a v2-only wallet is rejected at request time with
+ * `VersionUnsupportedBeaconError` rather than silently failing mid-flow. A
+ * dApp that needs the v4 multi-network protocol sets
+ * `requiredMinimumVersion: '4'` explicitly.
  */
-export const DEFAULT_REQUIRED_MINIMUM_VERSION = '2'
+export const DEFAULT_REQUIRED_MINIMUM_VERSION = '3'
 
 /**
  * Resolve a dApp's `requiredMinimumVersion` option against the SDK's
  * `BEACON_VERSION`. Returns {@link DEFAULT_REQUIRED_MINIMUM_VERSION} when
  * undefined; otherwise validates the supplied value is a decimal-integer
- * string in `[1, BEACON_VERSION]` and returns it unchanged.
+ * string in `[MESSAGE_WRAPPED_FROM_VERSION, BEACON_VERSION]` and returns it
+ * unchanged.
  *
  * Throws `InvalidRequiredMinimumVersionError` for any malformed,
  * out-of-range, or future-version input.
@@ -42,11 +49,11 @@ export const resolveRequiredMinimumVersion = (
     )
   }
 
-  if (parsed < 1) {
+  if (parsed < MESSAGE_WRAPPED_FROM_VERSION) {
     throw new InvalidRequiredMinimumVersionError(
       providedValue,
       BEACON_VERSION,
-      'value must be >= 1'
+      `value must be >= ${MESSAGE_WRAPPED_FROM_VERSION} (the flat v2 wire was removed; the SDK only speaks wrapped v3+)`
     )
   }
 

@@ -214,6 +214,38 @@ describe('PermissionManager', () => {
     })
   })
 
+  describe('addPermissions (batched multi-network fanout persistence)', () => {
+    const perm = (accountIdentifier: string): PermissionInfo =>
+      ({
+        accountIdentifier,
+        senderId: 's1',
+        scopes: [],
+        blockchainIdentifier: 'tezos'
+      }) as unknown as PermissionInfo
+
+    it('persists N permissions in one write with no lost updates', async () => {
+      const setSpy = jest.spyOn(storage, 'set')
+      await manager.addPermissions([perm('acc-mainnet'), perm('acc-ghostnet')])
+
+      const stored = await manager.getPermissions()
+      expect(stored.map((p) => p.accountIdentifier).sort()).toEqual(['acc-ghostnet', 'acc-mainnet'])
+      // Single read-modify-write cycle: exactly one storage.set for the batch.
+      expect(setSpy).toHaveBeenCalledTimes(1)
+      setSpy.mockRestore()
+    })
+
+    it('overwrites an existing permission with the same account/sender identity', async () => {
+      await manager.addPermissions([perm('acc-mainnet')])
+      await manager.addPermissions([
+        { ...perm('acc-mainnet'), scopes: ['sign'] } as unknown as PermissionInfo
+      ])
+
+      const stored = await manager.getPermissions()
+      expect(stored).toHaveLength(1)
+      expect((stored[0] as unknown as { scopes: string[] }).scopes).toEqual(['sign'])
+    })
+  })
+
   describe('hasPermission', () => {
     it('delegates to PermissionValidator.hasPermission and returns its result', async () => {
       const dummyMessage = { type: 'DUMMY' } as unknown as BeaconMessage

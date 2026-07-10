@@ -422,15 +422,16 @@ describe('DAppClient — requiredMinimumVersion', () => {
     ).toThrow(/InvalidRequiredMinimumVersionError|requiredMinimumVersion/i)
   })
 
-  it('defaults requiredMinimumVersion to the permissive lowest version when omitted', () => {
-    // The gate is opt-in: by default every wallet the SDK can talk to is
-    // accepted, so upgrading the SDK never rejects existing v2/v3 wallets.
+  it('defaults requiredMinimumVersion to the wrapped-message baseline when omitted', () => {
+    // Hard fork: the flat v2 wire was removed, so the permissive default is
+    // the lowest wrapped dialect ('3') — every wallet the SDK can still talk
+    // to is accepted, and v2-only wallets are rejected with a typed error.
     const client = new DAppClient({
       name: 'TestApp',
       storage: new LocalStorage(),
       preferredNetwork: NetworkType.MAINNET
     })
-    expect((client as any).requiredMinimumVersion).toBe('2')
+    expect((client as any).requiredMinimumVersion).toBe('3')
   })
 
   it('assertWalletVersionMeetsMinimum allows a peer that reported no version', () => {

@@ -117,9 +117,19 @@ export {
   MULTI_NETWORK_FROM_VERSION,
   compareBeaconVersion,
   isAtLeastVersion,
-  isMultiNetworkVersion
+  isMultiNetworkVersion,
+  negotiateEnvelopeVersion,
+  wrapBeaconMessage,
+  unwrapBeaconMessage
 } from './utils/message-utils'
-export { normalizeTezosCaip2, isValidTezosCaip2, networkFromTezosCaip2 } from './utils/caip2'
+export {
+  normalizeTezosCaip2,
+  isValidTezosCaip2,
+  networkFromTezosCaip2,
+  TEZOS_NETWORK_GENESIS_IDS,
+  tezosCaip2FromNetworkType,
+  networkTypeFromTezosCaip2
+} from './utils/caip2'
 export { assertNever } from './utils/assert-never'
 export { resolveRequiredMinimumVersion } from './utils/required-minimum-version'
 
