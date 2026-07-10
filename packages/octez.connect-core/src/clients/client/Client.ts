@@ -7,7 +7,6 @@ import {
   AccountInfo,
   PeerInfo,
   BeaconMessageType,
-  DisconnectMessage,
   AppMetadata,
   BeaconRequestMessage,
   BeaconMessageWrapper,
@@ -22,7 +21,7 @@ import { Logger } from '../../utils/Logger'
 import { ClientOptions } from './ClientOptions'
 import { Transport } from '../../transports/Transport'
 import { Serializer } from '../../Serializer'
-import { usesWrappedMessages } from '../../utils/message-utils'
+import { negotiateEnvelopeVersion } from '../../utils/message-utils'
 import { getPreferredMessageProtocolVersion } from '../../message-protocol'
 
 const logger = new Logger('Client')
@@ -287,29 +286,16 @@ export abstract class Client extends BeaconClient {
     const id = await generateGUID()
     const senderId = await getSenderId(await this.beaconId)
 
-    // Peers with an unknown version (WalletConnect pairings) get the legacy
-    // '2' stamp: with no negotiated version there is no basis for the wrapped
-    // (v3+) envelope, and every wallet accepts the legacy shape.
-    const peerVersion = peer.version ?? '2'
-
-    const disconnectMessage: DisconnectMessage = {
+    // Wrapped-only wire: the disconnect always ships as a wrapped envelope
+    // stamped with the negotiated version (unknown/WC peers get the '3' floor).
+    const request = {
       id,
-      version: peerVersion,
+      version: negotiateEnvelopeVersion(peer.version),
       senderId,
-      type: BeaconMessageType.Disconnect
+      message: {
+        type: BeaconMessageType.Disconnect
+      }
     }
-
-    const request =
-      usesWrappedMessages(peerVersion)
-        ? {
-            id,
-            version: peerVersion,
-            senderId,
-            message: {
-              type: disconnectMessage.type
-            }
-          }
-        : disconnectMessage
 
     const protocolVersion = this.getPeerProtocolVersion(peer)
     const payload = await new Serializer(protocolVersion).serialize(request)

@@ -35,6 +35,7 @@
     "url": "https://github.com/trilitech/octez.connect/issues"
   },
   "dependencies": {
+    "@tezos-x/octez.connect-blockchain-tezos": "5.0.0-beta.7",
     "@tezos-x/octez.connect-core": "5.0.0-beta.7",
     "@tezos-x/octez.connect-transport-matrix": "5.0.0-beta.7",
     "@tezos-x/octez.connect-transport-postmessage": "5.0.0-beta.7",
