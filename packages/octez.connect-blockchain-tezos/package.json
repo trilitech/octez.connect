@@ -27,7 +27,8 @@
     "url": "git+https://github.com/trilitech/octez.connect.git"
   },
   "scripts": {
-    "tsc": "tsc -p tsconfig.json && tsc -p tsconfig-cjs.json"
+    "tsc": "tsc -p tsconfig.json && tsc -p tsconfig-cjs.json",
+    "test": "jest"
   },
   "bugs": {
     "url": "https://github.com/trilitech/octez.connect/issues"
@@ -35,6 +36,7 @@
   "dependencies": {
     "@tezos-x/octez.connect-core": "5.0.0-beta.7",
     "@tezos-x/octez.connect-types": "5.0.0-beta.7",
-    "@tezos-x/octez.connect-ui": "5.0.0-beta.7"
+    "@tezos-x/octez.connect-ui": "5.0.0-beta.7",
+    "@tezos-x/octez.connect-utils": "5.0.0-beta.7"
   }
 }

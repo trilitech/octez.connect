@@ -108,6 +108,7 @@ import {
 import { PermissionInfo } from './types/PermissionInfo'
 import { ConnectionContext } from './types/ConnectionContext'
 import { Threshold } from './types/beacon/Threshold'
+import { Notification } from './types/Notification'
 import {
   PartialTezosTransactionOperation,
   PartialTezosOperation,
@@ -288,6 +289,7 @@ export {
   Origin,
   AccountInfo,
   Threshold,
+  Notification,
   SigningType,
   // EncryptionType,
   // EncryptionOperation,
