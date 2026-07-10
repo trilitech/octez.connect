@@ -14,9 +14,11 @@ export interface PermissionRequest extends BeaconBaseMessage {
   network: Network // Default network on which the permissions are requested. To request permissions on multiple networks in a single call, use the `networks` field below (v4+ wallets); legacy wallets only honor this single network per request.
 
   /**
-   * Optional multi-network permission request. When non-empty, an upgraded
-   * wallet (`peer.version >= '4'`) returns an `accounts` map keyed by
-   * chainId; legacy wallets ignore the field.
+   * Optional multi-network permission request. When non-empty, a v4 wallet
+   * returns an `accounts` map keyed by chainId. On the wire this field
+   * travels inside the wrapped payload (`blockchainData.networks`) and is
+   * stripped for peers negotiated below v4; this flat shape is the
+   * normalized API view on both the dApp and wallet side.
    */
   networks?: RequestPermissionNetwork[]
   scopes: PermissionScope[] // The permission scopes that the DApp is asking for
