@@ -117,46 +117,41 @@
         const { requiredNamespaces, optionalNamespaces, relays } = params
 
         try {
-          // Build the namespaces object so the dApp knows what methods/events/chains we support
+          // Build the namespaces object so the dApp knows what methods/events/chains we support.
+          // Merge REQUIRED and OPTIONAL namespaces per key: the multi-network
+          // dApp proposal keeps the preferred chain in requiredNamespaces and
+          // puts the extra chains in optionalNamespaces, and this mock wallet
+          // supports every proposed chain. Approve with one CAIP account
+          // ('tezos:<name>:<address>') per proposed chain.
           const namespaces = {}
-          for (const [key, namespace] of Object.entries(requiredNamespaces)) {
-            if (key === 'tezos') {
-              namespaces[key] = {
-                accounts: [`tezos:ghostnet:${walletData.address}`],
-                methods: namespace.methods || ['tezos_getAccounts', 'tezos_send', 'tezos_sign'],
-                events: namespace.events || [],
-                chains: namespace.chains || ['tezos:ghostnet']
-              }
-            } else {
-              // Fallback for any other namespace
-              namespaces[key] = {
-                accounts: [`${key}:ghostnet:${walletData.address}`],
-                methods: namespace.methods,
-                events: namespace.events,
-                chains: namespace.chains || [`${key}:ghostnet`]
-              }
+          const namespaceKeys = new Set([
+            ...Object.keys(requiredNamespaces || {}),
+            ...Object.keys(optionalNamespaces || {})
+          ])
+          for (const key of namespaceKeys) {
+            const required = (requiredNamespaces || {})[key] || {}
+            const optional = (optionalNamespaces || {})[key] || {}
+            const chains = [
+              ...new Set([...(required.chains || []), ...(optional.chains || [])])
+            ]
+            if (chains.length === 0) {
+              chains.push(`${key}:ghostnet`)
             }
-          }
-          // If there are optionalNamespaces, mirror them here
-          if (optionalNamespaces) {
-            for (const [key, namespace] of Object.entries(optionalNamespaces)) {
-              if (!namespaces[key]) {
-                if (key === 'tezos') {
-                  namespaces[key] = {
-                    accounts: [`tezos:ghostnet:${walletData.address}`],
-                    methods: namespace.methods || ['tezos_getAccounts', 'tezos_send', 'tezos_sign'],
-                    events: namespace.events || [],
-                    chains: namespace.chains || ['tezos:ghostnet']
-                  }
-                } else {
-                  namespaces[key] = {
-                    accounts: [`${key}:ghostnet:${walletData.address}`],
-                    methods: namespace.methods,
-                    events: namespace.events,
-                    chains: namespace.chains || [`${key}:ghostnet`]
-                  }
-                }
-              }
+            const methods = [
+              ...new Set([...(required.methods || []), ...(optional.methods || [])])
+            ]
+            const events = [
+              ...new Set([...(required.events || []), ...(optional.events || [])])
+            ]
+
+            namespaces[key] = {
+              accounts: chains.map((chain) => `${chain}:${walletData.address}`),
+              methods:
+                methods.length > 0 || key !== 'tezos'
+                  ? methods
+                  : ['tezos_getAccounts', 'tezos_send', 'tezos_sign'],
+              events,
+              chains
             }
           }
 
@@ -188,15 +183,31 @@
         try {
           let result
           switch (request.method) {
-            case 'tezos_getAccounts':
-              result = [
-                {
+            case 'tezos_getAccounts': {
+              // Serve accounts PER CHAIN: the dApp resolves its multi-network
+              // fanout with one tezos_getAccounts call per approved chain
+              // (params.chainId is 'tezos:<name>'), so only return the
+              // accounts this session approved on that chain.
+              const session = signClient.session.get(topic)
+              const chainId = params.chainId
+              const chainAccounts = (session?.namespaces?.tezos?.accounts || [])
+                .filter((account) => !chainId || account.startsWith(`${chainId}:`))
+                .map((account) => ({
                   algo: 'ed25519',
-                  address: walletData.address,
+                  address: account.split(':')[2],
                   pubkey: walletData.publicKey
-                }
-              ]
+                }))
+              result = chainAccounts.length
+                ? chainAccounts
+                : [
+                    {
+                      algo: 'ed25519',
+                      address: walletData.address,
+                      pubkey: walletData.publicKey
+                    }
+                  ]
               break
+            }
             case 'tezos_send':
               const operations = request.params?.operations || request.params
               result = {

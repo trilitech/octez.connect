@@ -8,8 +8,8 @@ import { test, expect, BrowserContext, Page } from '@playwright/test'
 //
 // Requires reachable Beacon relay nodes (matrixNodes). Run with `npm run e2e`.
 
-const L1 = 'tezos:NetXdQprcVkpaWU7' // mainnet
-const L2 = 'tezos:NetXnHfVqm9iesp9' // ghostnet
+const L1 = 'tezos:NetXdQprcVkpaWU' // mainnet
+const L2 = 'tezos:NetXnHfVqm9iesp' // ghostnet
 
 let dapp: Page
 let dappCtx: BrowserContext

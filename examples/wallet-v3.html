@@ -98,7 +98,12 @@
 
             console.log('message', message)
 
-            if (message.version === '3') {
+            // Non-tezos (generic API) messages arrive as wrapped envelopes
+            // ({ id, version, senderId, message: { blockchainIdentifier, ... } }).
+            // Tezos messages are normalized by the SDK and arrive FLAT
+            // ({ type, id, network, ... }), so we branch on the envelope, not
+            // on the version (both shapes carry version '3' or '4' now).
+            if (message.message !== undefined) {
               // Example: Handle PermissionRequest. A wallet should handle all request types
               if (message.message.type === beacon.BeaconMessageType.PermissionRequest) {
                 if (message.message.blockchainIdentifier !== 'substrate') {
@@ -141,6 +146,8 @@
                 client.respond(response)
               }
             } else {
+              // Flat tezos message (WalletClient registers TezosBlockchain by
+              // default and normalizes tezos requests to the flat shape).
               // Example: Handle PermissionRequest. A wallet should handle all request types
               if (message.type === beacon.BeaconMessageType.PermissionRequest) {
                 // Show a UI to the user where he can confirm sharing an account with the DApp

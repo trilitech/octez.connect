@@ -311,6 +311,45 @@ describe('DAppClient — V3 message without payload (#33)', () => {
   })
 })
 
+describe('DAppClient — multi-tab RESPONSE relay (wrapped-only wire)', () => {
+  it('relays the ORIGINAL wrapped envelope to other tabs, not the normalized flat message', async () => {
+    const client = new DAppClient({
+      name: 'MultiTabApp',
+      storage: new LocalStorage(),
+      preferredNetwork: NetworkType.MAINNET
+    })
+
+    const postMessage = jest.fn()
+    ;(client as any).multiTabChannel = { postMessage }
+    ;(client as any).openRequestsOtherTabs.add('req-other-tab')
+
+    // A wrapped tezos operation response for a request opened by another tab.
+    const wireMessage = {
+      id: 'req-other-tab',
+      version: '4',
+      senderId: 'wallet-sender',
+      message: {
+        blockchainIdentifier: 'tezos',
+        type: BeaconMessageType.BlockchainResponse,
+        blockchainData: { type: 'operation_response', transactionHash: 'op123' }
+      }
+    } as any
+
+    await (client as any).handleResponse(wireMessage, { origin: 'walletconnect', id: 'conn-1' })
+
+    expect(postMessage).toHaveBeenCalledTimes(1)
+    const relayed = postMessage.mock.calls[0][0]
+    expect(relayed.type).toBe('RESPONSE')
+    // The receiving tab funnels data.message straight back into its own
+    // handleResponse, whose wrapped-only contract drops flat arrivals — so the
+    // relayed message must still be the wire envelope (payload intact).
+    expect(relayed.data.message).toBe(wireMessage)
+    expect(relayed.data.message.message).toBeDefined()
+    // Consumed: the relay must only happen once per request.
+    expect((client as any).openRequestsOtherTabs.has('req-other-tab')).toBe(false)
+  })
+})
+
 describe('DAppClient.resolveOperationNetwork', () => {
   let client: DAppClient
   const L1 = 'tezos:NetXsqzbfFenSTS'

@@ -445,10 +445,15 @@ export class DAppClient extends Client {
       }
 
       if (this.openRequestsOtherTabs.has(message.id)) {
+        // Relay the ORIGINAL wrapped envelope, not the normalized flat
+        // message: the receiving tab funnels this straight back into its own
+        // handleResponse, whose wrapped-only contract would drop a flat
+        // arrival (version '4' with no `.message` payload) and leave the
+        // other tab's request pending forever.
         this.multiTabChannel.postMessage({
           type: 'RESPONSE',
           data: {
-            message,
+            message: wireMessage,
             connectionInfo
           },
           id: message.id

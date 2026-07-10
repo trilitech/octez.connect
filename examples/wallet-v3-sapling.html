@@ -56,6 +56,7 @@
         // matrixNodes: ['beacon-node-0.papers.tech:8448']
         // matrixNodes: ['beacon.tztip.me']
       })
+      client.addBlockchain(new beacon.SubstrateBlockchain())
 
       const setStatus = (status) => {
         document.getElementById('status').innerHTML = status ? 'Status: ' + status : status
@@ -98,7 +99,12 @@
 
             console.log('message', message)
 
-            if (message.version === '3') {
+            // Non-tezos (generic API) messages arrive as wrapped envelopes
+            // ({ id, version, senderId, message: { blockchainIdentifier, ... } }).
+            // Tezos messages are normalized by the SDK and arrive FLAT
+            // ({ type, id, network, ... }), so we branch on the envelope, not
+            // on the version (both shapes carry version '3' or '4' now).
+            if (message.message !== undefined) {
               // Example: Handle PermissionRequest. A wallet should handle all request types
               if (message.message.type === beacon.BeaconMessageType.PermissionRequest) {
                 if (message.message.blockchainIdentifier !== 'substrate') {
@@ -107,21 +113,25 @@
                 console.log('SUBSTRATE MESSAGE')
                 // Show a UI to the user where he can confirm sharing an account with the DApp
 
+                // Generic API responses are wrapped: { id, message: { ... } }
                 const response = {
                   id: message.id,
-                  type: beacon.BeaconMessageType.PermissionResponse,
-                  blockchainData: {
-                    appMetadata: { name: 'Example Wallet' },
-                    scopes: [0],
-                    accounts: [
-                      {
-                        network: { genesisHash: 'xxx' },
-                        addressPrefix: 0,
-                        publicKey:
-                          '3b92229274683b338cf8b040cf91ac0f8e19e410f06eda5537ef077e718e0024'
-                        // should we add a curve type here?
-                      }
-                    ]
+                  message: {
+                    type: beacon.BeaconMessageType.PermissionResponse,
+                    blockchainIdentifier: message.message.blockchainIdentifier,
+                    blockchainData: {
+                      appMetadata: { name: 'Example Wallet' },
+                      scopes: [0],
+                      accounts: [
+                        {
+                          network: { genesisHash: 'xxx' },
+                          addressPrefix: 0,
+                          publicKey:
+                            '3b92229274683b338cf8b040cf91ac0f8e19e410f06eda5537ef077e718e0024'
+                          // should we add a curve type here?
+                        }
+                      ]
+                    }
                   }
                 }
 
@@ -142,6 +152,8 @@
                 client.respond(response)
               }
             } else {
+              // Flat tezos message (WalletClient registers TezosBlockchain by
+              // default and normalizes tezos requests to the flat shape).
               // Example: Handle PermissionRequest. A wallet should handle all request types
               if (message.type === beacon.BeaconMessageType.PermissionRequest) {
                 // Show a UI to the user where he can confirm sharing an account with the DApp

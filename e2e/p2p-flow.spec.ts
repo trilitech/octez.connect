@@ -27,6 +27,26 @@ test('should load activeAccount on page reload', async () => {
   })
 })
 
+test('negotiated wire is wrapped (v4 envelope on the permission response)', async () => {
+  // pairWithBeaconWallet paired via #requestPermission, whose handler stores
+  // the resolved permission response on window.__lastPermissionResponse. The
+  // flat-normalized output keeps the wire envelope's version stamp, so two
+  // up-to-date SDK peers must have negotiated the wrapped v4 dialect.
+  // Poll: #activeAccount can render (via ACTIVE_ACCOUNT_SET) slightly before
+  // the requestPermissions .then stores the hook.
+  await expect
+    .poll(
+      () =>
+        dapp.evaluate(
+          () =>
+            (window as unknown as { __lastPermissionResponse?: { version?: string } })
+              .__lastPermissionResponse?.version
+        ),
+      { timeout: 30_000 }
+    )
+    .toBe('4')
+})
+
 test('should send a request to sign', async () => {
   // #sendToSelf
   await dapp.click('#signPayloadRaw')

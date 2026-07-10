@@ -61,7 +61,7 @@
     <span>Accounts:</span>
     <div id="accounts"></div>
     <br />
-    <input id="operationNetwork" value="tezos:NetXnHfVqm9iesp9" />
+    <input id="operationNetwork" value="tezos:NetXnHfVqm9iesp" />
     <button id="requestOperationMultiNetwork">Request Operation On Network</button>
     <div id="operationResult"></div>
     <hr />
@@ -371,8 +371,8 @@
 
       // --- Multi-network (v4) exercise -------------------------------------
       // Two distinct Tezos networks (CAIP-2 chain ids) the dApp asks for.
-      const MULTI_NETWORK_L1 = 'tezos:NetXdQprcVkpaWU7' // mainnet
-      const MULTI_NETWORK_L2 = 'tezos:NetXnHfVqm9iesp9' // ghostnet
+      const MULTI_NETWORK_L1 = 'tezos:NetXdQprcVkpaWU' // mainnet
+      const MULTI_NETWORK_L2 = 'tezos:NetXnHfVqm9iesp' // ghostnet
 
       // Render every persisted account (one per network on the v4 path) so the
       // e2e test can assert N accounts keyed by their chain ids.
@@ -400,6 +400,8 @@
           })
           .then((permissions) => {
             console.log('multi-network permissions', permissions)
+            // e2e hook (see requestPermission): expose the envelope version.
+            window.__lastPermissionResponse = permissions
             updateActiveAccount()
             return renderAccounts()
           })
@@ -447,6 +449,10 @@
           .requestPermissions()
           .then((permissions) => {
             console.log('permissions', permissions)
+            // e2e hook: the flat-normalized response still carries the wire
+            // envelope version, so tests can assert the negotiated wrapped
+            // dialect ('4' between two up-to-date SDK peers).
+            window.__lastPermissionResponse = permissions
             if (callback) {
               callback(permissions)
             }
