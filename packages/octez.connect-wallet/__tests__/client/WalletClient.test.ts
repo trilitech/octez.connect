@@ -35,6 +35,25 @@ jest.mock('@tezos-x/octez.connect-utils', () => ({
   generateGUID: jest.fn().mockReturnValue('guid-123')
 }))
 
+// The WalletClient constructor registers TezosBlockchain by default; its real
+// module reads the bundled wallet lists via octez.connect-utils, which the
+// minimal mock above starves — stub the whole handler for this suite.
+jest.mock('@tezos-x/octez.connect-blockchain-tezos', () => ({
+  TezosBlockchain: class {
+    public readonly identifier = 'tezos'
+    public readonly legacyIdentifiers = ['xtz']
+    public async validateRequest() {}
+    public async validateResponse() {}
+    public async handleResponse() {}
+    public async getWalletLists() {
+      return { extensionList: [], desktopList: [], webList: [], iOSList: [] }
+    }
+    public async getAccountInfosFromPermissionResponse() {
+      return []
+    }
+  }
+}))
+
 // Stub everything from beacon-core *except* Client, so subclassing still works
 jest.mock('@tezos-x/octez.connect-core', () => {
   const actual = jest.requireActual('@tezos-x/octez.connect-core')

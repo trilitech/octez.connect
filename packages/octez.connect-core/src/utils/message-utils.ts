@@ -1,5 +1,11 @@
-import { BeaconBaseMessage, BeaconMessageWrapper } from '@tezos-x/octez.connect-types'
+import { BeaconMessageWrapper } from '@tezos-x/octez.connect-types'
 import { BEACON_VERSION } from '../constants'
+
+// Structural stand-in for the beaconV3 BeaconBaseMessage ({ type: unknown }).
+// The types barrel re-exports the flat BeaconBaseMessage (which also carries
+// id/version/senderId) under the same name, so constraining on the barrel
+// type would wrongly require envelope fields on the inner payload.
+interface WrappedPayload { type: unknown }
 import { InvalidBeaconVersionError } from '../errors/InvalidBeaconVersionError'
 
 export const MESSAGE_WRAPPED_FROM_VERSION = 3
@@ -120,7 +126,7 @@ export const negotiateEnvelopeVersion = (peerVersion: string | undefined): strin
  *
  * @category Utility
  */
-export const wrapBeaconMessage = <T extends BeaconBaseMessage>(
+export const wrapBeaconMessage = <T extends WrappedPayload>(
   envelope: { id: string; version: string; senderId: string },
   message: T
 ): BeaconMessageWrapper<T> => ({
@@ -138,7 +144,7 @@ export const wrapBeaconMessage = <T extends BeaconBaseMessage>(
  *
  * @category Utility
  */
-export const unwrapBeaconMessage = <T extends BeaconBaseMessage>(candidate: {
+export const unwrapBeaconMessage = <T extends WrappedPayload>(candidate: {
   version?: string
   message?: T
 }): T | undefined => (usesWrappedMessages(candidate.version) ? candidate.message : undefined)

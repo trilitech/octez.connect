@@ -1,164 +1,145 @@
 import {
   AppMetadataManager,
   BEACON_VERSION,
-  getAccountIdentifier,
   Logger,
+  networkFromTezosCaip2,
+  normalizeTezosCaip2,
   PermissionManager,
-  usesWrappedMessages,
-  assertNever
+  assertNever,
+  wrapBeaconMessage
 } from '@tezos-x/octez.connect-core'
 import {
-  ErrorResponse,
   BeaconMessage,
   BeaconResponseInputMessage,
   BeaconMessageType,
-  PermissionResponse,
-  OperationResponse,
-  SignPayloadResponse,
-  BroadcastResponse,
   PermissionInfo,
-  AcknowledgeResponse,
   AppMetadata,
-  BeaconRequestMessage,
   BeaconErrorType,
   BeaconMessageWrapper,
+  BlockchainErrorResponse,
   BlockchainResponseV3,
   PermissionResponseV3,
   BeaconBaseMessage,
-  ProofOfEventChallengeResponse,
-  SimulatedProofOfEventChallengeResponse,
+  AcknowledgeMessage,
   Blockchain,
-  NetworkType
-  // EncryptPayloadResponse
+  Network,
+  NetworkType,
+  RequestPermissionNetwork
 } from '@tezos-x/octez.connect-types'
-import { getAddressFromPublicKey, CONTRACT_PREFIX, isValidAddress } from '@tezos-x/octez.connect-utils'
 
 interface OutgoingResponseInterceptorOptions {
   senderId: string
-  request: BeaconRequestMessage | BeaconMessageWrapper<BeaconBaseMessage>
+  request: BeaconMessageWrapper<BeaconBaseMessage>
   message: BeaconResponseInputMessage
   ownAppMetadata: AppMetadata
   permissionManager: PermissionManager
   appMetadataManager: AppMetadataManager
-  interceptorCallback(message: BeaconMessage): void
+  interceptorCallback: (message: BeaconMessage) => void
   blockchains: Map<string, Blockchain>
 }
 
 const logger = new Logger('OutgoingResponseInterceptor')
 
+// The wallet app's `respond()` input is either one of the flat convenience
+// shapes (unchanged public API — Tezos wallets never see wrapped envelopes)
+// or an already-wrapped message from the generic chain-agnostic API.
+const isWrappedInput = (
+  message: BeaconResponseInputMessage
+): message is BeaconResponseInputMessage & BeaconMessageWrapper<BeaconBaseMessage> =>
+  (message as { message?: unknown }).message !== undefined
+
+// Maps each flat Tezos response type to its wrapped blockchainData
+// discriminator (the pre-fork flat wire strings, kept verbatim).
+const FLAT_RESPONSE_PAYLOAD_TYPES: Partial<Record<BeaconMessageType, string>> = {
+  [BeaconMessageType.OperationResponse]: 'operation_response',
+  [BeaconMessageType.SignPayloadResponse]: 'sign_payload_response',
+  [BeaconMessageType.BroadcastResponse]: 'broadcast_response',
+  [BeaconMessageType.ProofOfEventChallengeResponse]: 'proof_of_event_challenge_response',
+  [BeaconMessageType.SimulatedProofOfEventChallengeResponse]:
+    'simulated_proof_of_event_challenge_response'
+}
+
 /**
  * @internalapi
  *
- * The OutgoingResponseInterceptor is used in the WalletClient to intercept an outgoing response and enrich it with data.
+ * The OutgoingResponseInterceptor is used in the WalletClient to intercept an
+ * outgoing response, wrap it onto the (wrapped-only) wire, validate it via the
+ * blockchain registry, and persist granted permissions.
  */
 export class OutgoingResponseInterceptor {
   public static async intercept(config: OutgoingResponseInterceptorOptions): Promise<void> {
-    if (config.request.version === '2') {
-      OutgoingResponseInterceptor.handleV2Message(config)
-    } else if (usesWrappedMessages(config.request.version)) {
-      OutgoingResponseInterceptor.handleV3Message(config)
+    if (isWrappedInput(config.message)) {
+      await OutgoingResponseInterceptor.handleWrappedInput(config)
+    } else {
+      await OutgoingResponseInterceptor.handleFlatInput(config)
     }
   }
 
-  private static async handleV3Message(config: OutgoingResponseInterceptorOptions) {
-    const {
-      senderId,
-      request,
-      message: msg,
-      ownAppMetadata,
-      permissionManager,
-      appMetadataManager,
-      interceptorCallback,
-      blockchains
-    }: OutgoingResponseInterceptorOptions = config
+  // Generic chain-agnostic wallet API: the app responds with an
+  // already-wrapped message (substrate flow, examples/wallet-v3.html).
+  private static async handleWrappedInput(
+    config: OutgoingResponseInterceptorOptions
+  ): Promise<void> {
+    const { senderId, request, message: msg, ownAppMetadata, interceptorCallback, blockchains } =
+      config
 
-    const wrappedMessage:
-      | BeaconMessageWrapper<PermissionResponseV3<string>>
-      | BeaconMessageWrapper<BlockchainResponseV3<string>> = msg as any
+    const wrappedMessage = msg as unknown as
+      | BeaconMessageWrapper<PermissionResponseV3>
+      | BeaconMessageWrapper<BlockchainResponseV3>
 
-    logger.log('WRAPPED MESSAGE', wrappedMessage)
+    const v3Message: PermissionResponseV3 | BlockchainResponseV3 = wrappedMessage.message
 
-    const v3Message: PermissionResponseV3<string> | BlockchainResponseV3<string> =
-      wrappedMessage.message
-
-    logger.log('LOGGING OUTGOING V3', v3Message, appMetadataManager)
-
+    // The pre-fork escape hatch that leaked flat Acknowledge/Error messages
+    // through unwrapped is gone: those now arrive as flat inputs and are
+    // wrapped in handleFlatInput.
     if (v3Message === undefined) {
-      interceptorCallback(msg as any)
-      return
+      throw new Error('Malformed wrapped response: missing message payload')
     }
 
-    const blockchain = blockchains.get(v3Message.blockchainIdentifier)
-    if (blockchain === undefined) {
-      throw new Error(`Blockchain "${v3Message.blockchainIdentifier}" not supported`)
-    }
+    const blockchain = OutgoingResponseInterceptor.requireBlockchain(
+      blockchains,
+      v3Message.blockchainIdentifier
+    )
 
     switch (v3Message.type) {
       case BeaconMessageType.PermissionResponse:
         {
-          const response: BeaconMessageWrapper<PermissionResponseV3<string>> = {
-            id: wrappedMessage.id,
-            version: request.version,
-            senderId,
-            message: {
+          const response: BeaconMessageWrapper<PermissionResponseV3> = wrapBeaconMessage(
+            { id: wrappedMessage.id, version: request.version, senderId },
+            {
               blockchainIdentifier: v3Message.blockchainIdentifier,
               type: BeaconMessageType.PermissionResponse,
               blockchainData: {
-                ...(v3Message.blockchainData as any),
+                ...(v3Message.blockchainData as Record<string, unknown>),
                 appMetadata: ownAppMetadata
-              }
+              } as unknown as PermissionResponseV3['blockchainData']
             }
-          }
-
-          const appMetadata = await appMetadataManager.getAppMetadata(request.senderId)
-          if (!appMetadata) {
-            throw new Error('AppMetadata not found')
-          }
-
-          // This wallet just served the response, so the routing key for the
-          // parser is its own BEACON_VERSION.
-          const accountInfos = await blockchain.getAccountInfosFromPermissionResponse(
-            response.message,
-            BEACON_VERSION
           )
-          for (const accountInfo of accountInfos) {
-            const permission: PermissionInfo = {
-              accountIdentifier: accountInfo.accountId,
-              senderId: request.senderId,
-              appMetadata,
-              website: '',
-              address: accountInfo.address,
-              publicKey: accountInfo.publicKey,
-              network: accountInfo.network ?? { type: NetworkType.MAINNET },
-              scopes: accountInfo.scopes,
-              connectedAt: new Date().getTime()
-            }
 
-            permissionManager.addPermission(permission).catch(console.error)
-          }
+          await OutgoingResponseInterceptor.persistGrantedPermissions(
+            config,
+            blockchain,
+            response
+          )
 
-          interceptorCallback(response as any)
+          interceptorCallback(response as unknown as BeaconMessage)
         }
         break
       case BeaconMessageType.BlockchainResponse:
         {
-          // const appMetadata: AppMetadata = await IncomingRequestInterceptor.getAppMetadata(
-          //   appMetadataManager,
-          //   msg.senderId
-          // )
-          const response: BeaconMessageWrapper<BlockchainResponseV3<string>> = {
-            id: wrappedMessage.id,
-            version: request.version,
-            senderId,
-            message: {
-              blockchainIdentifier: wrappedMessage.message.blockchainIdentifier,
+          const response: BeaconMessageWrapper<BlockchainResponseV3> = wrapBeaconMessage(
+            { id: wrappedMessage.id, version: request.version, senderId },
+            {
+              blockchainIdentifier: v3Message.blockchainIdentifier,
               type: BeaconMessageType.BlockchainResponse,
               blockchainData: {
-                ...(wrappedMessage.message.blockchainData as any)
+                ...(wrappedMessage.message.blockchainData as Record<string, unknown>)
               }
             }
-          }
-          interceptorCallback(response as any)
+          )
+
+          await blockchain.validateResponse?.(response.message)
+          interceptorCallback(response as unknown as BeaconMessage)
         }
         break
 
@@ -168,26 +149,29 @@ export class OutgoingResponseInterceptor {
     }
   }
 
-  private static async handleV2Message(config: OutgoingResponseInterceptorOptions) {
-    const {
-      senderId,
-      request,
-      message,
-      ownAppMetadata,
-      permissionManager,
-      appMetadataManager,
-      interceptorCallback
-    }: OutgoingResponseInterceptorOptions = config
+  // Flat convenience inputs: the unchanged wallet-app API. Each flat response
+  // is wrapped onto the wire here; the app never handles envelopes.
+  private static async handleFlatInput(config: OutgoingResponseInterceptorOptions): Promise<void> {
+    const { senderId, request, message, interceptorCallback, blockchains, ownAppMetadata } = config
+
+    const requestInner = request.message as
+      | { blockchainIdentifier?: string; blockchainData?: Record<string, unknown> }
+      | undefined
+    const blockchainIdentifier = requestInner?.blockchainIdentifier ?? 'tezos'
+    const envelope = { id: message.id, version: request.version, senderId }
 
     switch (message.type) {
       case BeaconMessageType.Error: {
-        const response: ErrorResponse = {
-          type: message.type,
-          version: '2',
-          senderId,
-          id: message.id,
-          errorType: message.errorType
-        }
+        const response: BeaconMessageWrapper<BlockchainErrorResponse> = wrapBeaconMessage(
+          envelope,
+          {
+            blockchainIdentifier,
+            type: BeaconMessageType.Error,
+            blockchainData: undefined,
+            error: { type: message.errorType },
+            description: (message as { description?: string }).description
+          }
+        )
         if (message.errorType === BeaconErrorType.TRANSACTION_INVALID_ERROR && message.errorData) {
           const errorData = message.errorData
           // Check if error data is in correct format
@@ -195,142 +179,161 @@ export class OutgoingResponseInterceptor {
             Array.isArray(errorData) &&
             errorData.every((item) => Boolean(item.kind) && Boolean(item.id))
           ) {
-            response.errorData = message.errorData
+            response.message.error.data = message.errorData
           } else {
             logger.warn(
               'ErrorData provided is not in correct format. It needs to be an array of RPC errors. It will not be included in the message sent to the dApp'
             )
           }
         }
-        interceptorCallback(response)
+        interceptorCallback(response as unknown as BeaconMessage)
         break
       }
       case BeaconMessageType.Acknowledge: {
-        const response: AcknowledgeResponse = {
-          type: message.type,
-          version: '2',
-          senderId,
-          id: message.id
-        }
-        interceptorCallback(response)
+        const response: BeaconMessageWrapper<AcknowledgeMessage> = wrapBeaconMessage(envelope, {
+          type: BeaconMessageType.Acknowledge
+        })
+        interceptorCallback(response as unknown as BeaconMessage)
         break
       }
       case BeaconMessageType.PermissionResponse: {
-        const response: PermissionResponse = {
-          senderId,
-          version: '2',
-          appMetadata: ownAppMetadata,
-          ...message
-        }
+        const blockchain = OutgoingResponseInterceptor.requireBlockchain(
+          blockchains,
+          blockchainIdentifier
+        )
+        const flat = message as Record<string, unknown>
+        const response: BeaconMessageWrapper<PermissionResponseV3> = wrapBeaconMessage(
+          envelope,
+          {
+            blockchainIdentifier,
+            type: BeaconMessageType.PermissionResponse,
+            blockchainData: {
+              appMetadata: ownAppMetadata,
+              scopes: flat.scopes,
+              publicKey: flat.publicKey,
+              address: flat.address,
+              network: flat.network,
+              accounts: flat.accounts,
+              walletType: flat.walletType,
+              verificationType: flat.verificationType,
+              threshold: flat.threshold,
+              notification: flat.notification
+            } as unknown as PermissionResponseV3['blockchainData']
+          }
+        )
 
-        if (!response.address && !response.publicKey) {
-          throw new Error('Address or PublicKey must be defined')
-        }
+        await OutgoingResponseInterceptor.persistGrantedPermissions(config, blockchain, response)
 
-        const publicKey = response.publicKey
-
-        const address: string = response.address ?? (await getAddressFromPublicKey(publicKey!))
-
-        if (!isValidAddress(address)) {
-          throw new Error(`Invalid address: "${address}"`)
-        }
-
-        if (
-          message.walletType === 'abstracted_account' &&
-          address.substring(0, 3) !== CONTRACT_PREFIX
-        ) {
-          throw new Error(
-            `Invalid abstracted account address "${address}", it should be a ${CONTRACT_PREFIX} address`
-          )
-        }
-
-        const appMetadata = await appMetadataManager.getAppMetadata(request.senderId)
-
-        if (!appMetadata) {
-          throw new Error('AppMetadata not found')
-        }
-
-        const permission: PermissionInfo = {
-          accountIdentifier: await getAccountIdentifier(address, response.network),
-          senderId: request.senderId,
-          appMetadata,
-          website: '',
-          address,
-          publicKey,
-          network: response.network,
-          scopes: response.scopes,
-          connectedAt: new Date().getTime()
-        }
-
-        permissionManager.addPermission(permission).catch(console.error)
-
-        interceptorCallback(response)
+        interceptorCallback(response as unknown as BeaconMessage)
         break
       }
       case BeaconMessageType.OperationResponse:
-        {
-          const response: OperationResponse = {
-            senderId,
-            version: '2',
-            ...message
-          }
-          interceptorCallback(response)
-        }
-        break
       case BeaconMessageType.SignPayloadResponse:
-        {
-          const response: SignPayloadResponse = {
-            senderId,
-            version: '2',
-            ...message
-          }
-          interceptorCallback(response)
-        }
-        break
-      // TODO: ENCRYPTION
-      // case BeaconMessageType.EncryptPayloadResponse:
-      //   {
-      //     const response: EncryptPayloadResponse = {
-      //       senderId,
-      //       version: BEACON_VERSION,
-      //       ...message
-      //     }
-      //     interceptorCallback(response)
-      //   }
-      //   break
       case BeaconMessageType.BroadcastResponse:
-        {
-          const response: BroadcastResponse = {
-            senderId,
-            version: '2',
-            ...message
-          }
-          interceptorCallback(response)
-        }
-        break
       case BeaconMessageType.ProofOfEventChallengeResponse:
-        {
-          const response: ProofOfEventChallengeResponse = {
-            senderId,
-            version: '2',
-            ...message
+      case BeaconMessageType.SimulatedProofOfEventChallengeResponse: {
+        const payloadType = FLAT_RESPONSE_PAYLOAD_TYPES[message.type]
+        const payload = { ...(message as Record<string, unknown>) }
+        delete payload.id
+        delete payload.type
+        const response: BeaconMessageWrapper<BlockchainResponseV3> = wrapBeaconMessage(
+          envelope,
+          {
+            blockchainIdentifier,
+            type: BeaconMessageType.BlockchainResponse,
+            blockchainData: {
+              type: payloadType,
+              ...payload
+            }
           }
-          interceptorCallback(response)
-        }
+        )
+        interceptorCallback(response as unknown as BeaconMessage)
         break
-      case BeaconMessageType.SimulatedProofOfEventChallengeResponse:
-        {
-          const response: SimulatedProofOfEventChallengeResponse = {
-            senderId,
-            version: '2',
-            ...message
-          }
-          interceptorCallback(response)
-        }
-        break
+      }
       default:
         logger.log('intercept', 'Message not handled')
         assertNever(message)
     }
+  }
+
+  private static requireBlockchain(
+    blockchains: Map<string, Blockchain>,
+    identifier: string
+  ): Blockchain {
+    const blockchain = blockchains.get(identifier)
+    if (blockchain === undefined) {
+      throw new Error(`Blockchain "${identifier}" not supported`)
+    }
+
+    return blockchain
+  }
+
+  // Shared permission persistence for both input styles: validate the
+  // response via the chain handler (ported flat-v2 address/publicKey/
+  // abstracted-account checks), parse it into per-network accounts, and
+  // persist all grants in ONE batched write (N racing addPermission calls
+  // used to lose updates on the shared permission list).
+  private static async persistGrantedPermissions(
+    config: OutgoingResponseInterceptorOptions,
+    blockchain: Blockchain,
+    response: BeaconMessageWrapper<PermissionResponseV3>
+  ): Promise<void> {
+    const { request, permissionManager, appMetadataManager } = config
+
+    await blockchain.validateResponse?.(response.message)
+
+    const appMetadata = await appMetadataManager.getAppMetadata(request.senderId)
+    if (!appMetadata) {
+      throw new Error('AppMetadata not found')
+    }
+
+    // This wallet just served the response, so the routing key for the
+    // parser is its own BEACON_VERSION.
+    const accountInfos = await blockchain.getAccountInfosFromPermissionResponse(
+      response.message,
+      BEACON_VERSION
+    )
+
+    const permissions: PermissionInfo[] = accountInfos.map((accountInfo) => ({
+      accountIdentifier: accountInfo.accountId,
+      senderId: request.senderId,
+      appMetadata,
+      website: '',
+      address: accountInfo.address,
+      publicKey: accountInfo.publicKey,
+      network:
+        accountInfo.network ?? OutgoingResponseInterceptor.networkFromRequest(request),
+      scopes: accountInfo.scopes,
+      connectedAt: new Date().getTime()
+    }))
+
+    await permissionManager.addPermissions(permissions)
+  }
+
+  // Network echo for permission records whose parser entry carries no
+  // network: prefer what the dApp actually requested over a blind MAINNET
+  // default (the pre-fork behavior, kept only as the logged last resort).
+  private static networkFromRequest(request: BeaconMessageWrapper<BeaconBaseMessage>): Network {
+    const data = (request.message as { blockchainData?: Record<string, unknown> } | undefined)
+      ?.blockchainData
+    const requestedNetwork = data?.network
+    if (requestedNetwork && typeof requestedNetwork === 'object') {
+      return requestedNetwork as Network
+    }
+
+    const requestedNetworks = data?.networks
+    if (Array.isArray(requestedNetworks) && requestedNetworks.length > 0) {
+      const first = requestedNetworks[0] as RequestPermissionNetwork
+      if (first?.chainId) {
+        return networkFromTezosCaip2(normalizeTezosCaip2(first.chainId), { name: first.name })
+      }
+    }
+
+    logger.warn(
+      'networkFromRequest',
+      'Permission request carried no network; defaulting the stored permission to MAINNET'
+    )
+
+    return { type: NetworkType.MAINNET }
   }
 }

@@ -37,12 +37,15 @@ import {
   P2PPairingRequest,
   ExtendedP2PPairingRequest,
   WalletConnectPairingRequest,
-  ExtendedWalletConnectPairingRequest
+  ExtendedWalletConnectPairingRequest,
+  BeaconErrorType,
+  ErrorResponse
 } from '@tezos-x/octez.connect-types'
-import { WalletClientOptions } from './WalletClientOptions'
+import { TezosBlockchain } from '@tezos-x/octez.connect-blockchain-tezos'
 import { WalletP2PTransport } from '../transports/WalletP2PTransport'
 import { IncomingRequestInterceptor } from '../interceptors/IncomingRequestInterceptor'
 import { OutgoingResponseInterceptor } from '../interceptors/OutgoingResponseInterceptor'
+import { WalletClientOptions } from './WalletClientOptions'
 
 const logger = new Logger('WalletClient')
 
@@ -72,12 +75,11 @@ export class WalletClient extends Client {
   private readonly appMetadataManager: AppMetadataManager
 
   /**
-   * This array stores pending requests, meaning requests we received and have not yet handled / sent a response.
+   * This array stores pending requests, meaning requests we received and have
+   * not yet handled / sent a response. Wrapped-only: flat v2 traffic is
+   * tombstoned before it can become pending.
    */
-  private pendingRequests: [
-    BeaconRequestMessage | BeaconMessageWrapper<BeaconBaseMessage>,
-    ConnectionContext
-  ][] = []
+  private pendingRequests: [BeaconMessageWrapper<BeaconBaseMessage>, ConnectionContext][] = []
 
   constructor(config: WalletClientOptions) {
     super({
@@ -86,6 +88,11 @@ export class WalletClient extends Client {
     })
     this.permissionManager = new PermissionManager(this.storage)
     this.appMetadataManager = new AppMetadataManager(this.storage)
+    // Tezos is the default chain: the wrapped-only pipeline needs the
+    // registry handler for every request/response, so registration is no
+    // longer a consumer obligation. addBlockchain stays public — a later
+    // registration under 'tezos' overrides this default.
+    this.addBlockchain(new TezosBlockchain())
   }
 
   public async init(): Promise<TransportType> {
@@ -155,31 +162,14 @@ export class WalletClient extends Client {
           })
         }
       } else {
-        const typedMessage = message as BeaconRequestMessage | DisconnectMessage
-
-        if (typedMessage.type === BeaconMessageType.Disconnect) {
-          return this.disconnect(typedMessage.senderId)
-        }
-
-        // Filter out response types (echoed back from Matrix room)
-        if (!validRequestTypes.includes(typedMessage.type)) {
-          return
-        }
-
-        if (!this.pendingRequests.some((request) => request[0].id === message.id)) {
-          this.pendingRequests.push([typedMessage, connectionContext])
-
-          if (typedMessage.version && typedMessage.version !== '1') {
-            await this.sendAcknowledgeResponse(typedMessage, connectionContext)
-          }
-
-          await IncomingRequestInterceptor.intercept({
-            message: typedMessage,
-            connectionInfo: connectionContext,
-            appMetadataManager: this.appMetadataManager,
-            interceptorCallback: newMessageCallback
-          })
-        }
+        // Hard fork: the flat v2 wire is no longer spoken. Reject legacy
+        // requests fast with a typed error instead of letting the old dApp
+        // hang until timeout.
+        await this.handleLegacyV2Message(
+          message as BeaconRequestMessage | DisconnectMessage,
+          connectionContext,
+          validRequestTypes
+        )
       }
     }
 
@@ -209,7 +199,7 @@ export class WalletClient extends Client {
     ].join(' ')
 
     const bytes = toHex(constructedString)
-    const payloadBytes = '05' + '01' + bytes.length.toString(16).padStart(8, '0') + bytes
+    const payloadBytes = `05` + `01${  bytes.length.toString(16).padStart(8, '0')  }${bytes}`
 
     return {
       challenge,
@@ -288,6 +278,7 @@ export class WalletClient extends Client {
       logger.warn('_connect', err.message)
       await transport.disconnect()
       await this._connect(--attempts)
+
       return
     }
 
@@ -497,12 +488,56 @@ export class WalletClient extends Client {
   }
 
   /**
+   * The v2 tombstone — the ONLY surviving code path that speaks the removed
+   * flat v2 wire. A legacy dApp's request is answered with a flat
+   * ErrorResponse so it fails fast with a readable reason instead of hanging;
+   * everything else (echoes, garbage) is dropped. Never enters
+   * pendingRequests, never acknowledges, never reaches an interceptor.
+   */
+  private async handleLegacyV2Message(
+    message: BeaconRequestMessage | DisconnectMessage,
+    connectionContext: ConnectionContext,
+    validRequestTypes: BeaconMessageType[]
+  ): Promise<void> {
+    if (message.type === BeaconMessageType.Disconnect) {
+      // Peer-state hygiene: honor the goodbye, send nothing back.
+      return this.disconnect(message.senderId)
+    }
+
+    if (!message.id || !validRequestTypes.includes(message.type)) {
+      return
+    }
+
+    logger.warn(
+      'handleLegacyV2Message',
+      `Rejecting flat v${JSON.stringify(message.version)} ${message.type} from ${message.senderId}: the v2 wire is no longer supported`
+    )
+
+    const tombstone: ErrorResponse = {
+      type: BeaconMessageType.Error,
+      id: message.id,
+      // The one intentional '2' stamp left in the SDK: the reply must be
+      // parseable by the legacy peer we are rejecting.
+      version: '2',
+      senderId: await getSenderId(await this.beaconId),
+      // UNKNOWN_ERROR is deliberate: old getError() switches assertNever on
+      // enum members they don't know, so a new VERSION_NOT_SUPPORTED value
+      // would crash exactly the dApps this tombstone must reach.
+      errorType: BeaconErrorType.UNKNOWN_ERROR,
+      description:
+        'Beacon protocol version 2 is no longer supported by this wallet. Please update the dApp SDK.'
+    }
+
+    await this.respondToMessage(tombstone, connectionContext)
+  }
+
+  /**
    * Send an acknowledge message back to the sender
    *
    * @param message The message that was received
    */
   private async sendAcknowledgeResponse(
-    request: BeaconRequestMessage | BeaconMessageWrapper<BeaconBaseMessage>,
+    request: BeaconMessageWrapper<BeaconBaseMessage>,
     connectionContext: ConnectionContext
   ): Promise<void> {
     // Acknowledge the message
