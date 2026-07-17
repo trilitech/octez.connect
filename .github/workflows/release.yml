@@ -45,5 +45,9 @@ jobs:
       - name: Run end-to-end tests
         run: ./scripts/npm11.sh run e2e:smoke
 
+      # Dist-tag is derived from the version by scripts/helpers/publish-workspaces.js:
+      # prereleases go under their prerelease label (5.0.0-beta.7 -> beta),
+      # stable versions default to latest. Never hardcode --tag latest here —
+      # it would point npm's default install at a prerelease.
       - name: Publish public packages
-        run: ./scripts/npm11.sh run publish:packages -- --tag latest
+        run: ./scripts/npm11.sh run publish:packages
