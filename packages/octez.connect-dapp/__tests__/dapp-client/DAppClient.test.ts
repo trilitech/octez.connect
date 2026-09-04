@@ -42,6 +42,9 @@ jest.mock('@tezos-x/octez.connect-core', () => {
       async set(key: string, value: any) {
         this.store.set(key, value)
       }
+      async delete(key: string) {
+        this.store.delete(key)
+      }
       subscribeToStorageChanged(_cb: any) {
         /* no op */
       }
@@ -762,5 +765,64 @@ describe('DAppClient — wrapped-wire boundary mappers (hard fork)', () => {
       })
       expect(result).toBeUndefined()
     })
+  })
+})
+
+describe('DAppClient — dropping transports', () => {
+  const fakeTransport = (disconnect = jest.fn().mockResolvedValue(undefined)) => ({ disconnect })
+
+  const make = () =>
+    new DAppClient({
+      name: 'DropTransportsApp',
+      storage: new LocalStorage(),
+      preferredNetwork: NetworkType.MAINNET
+    }) as any
+
+  it('disconnects postMessage and P2P before forgetting them, and leaves WalletConnect to the caller', async () => {
+    const client = make()
+    const postMessage = fakeTransport()
+    const p2p = fakeTransport()
+    const walletConnect = fakeTransport()
+    client.postMessageTransport = postMessage
+    client.p2pTransport = p2p
+    client.walletConnectTransport = walletConnect
+
+    await client.dropTransports()
+
+    expect(postMessage.disconnect).toHaveBeenCalledTimes(1)
+    expect(p2p.disconnect).toHaveBeenCalledTimes(1)
+    expect(walletConnect.disconnect).not.toHaveBeenCalled()
+    expect(client.postMessageTransport).toBeUndefined()
+    expect(client.p2pTransport).toBeUndefined()
+    expect(client.walletConnectTransport).toBeUndefined()
+  })
+
+  it('tolerates a transport whose disconnect rejects', async () => {
+    const client = make()
+    client.p2pTransport = fakeTransport(jest.fn().mockRejectedValue(new Error('relay unreachable')))
+
+    await expect(client.dropTransports()).resolves.toBeUndefined()
+    expect(client.p2pTransport).toBeUndefined()
+  })
+
+  it('does not let one failing transport keep the others alive', async () => {
+    const client = make()
+    const p2p = fakeTransport()
+    client.postMessageTransport = fakeTransport(jest.fn().mockRejectedValue(new Error('boom')))
+    client.p2pTransport = p2p
+
+    await expect(client.dropTransports()).resolves.toBeUndefined()
+    expect(p2p.disconnect).toHaveBeenCalledTimes(1)
+  })
+
+  it('destroy() drops the transports', async () => {
+    const client = make()
+    const postMessage = fakeTransport()
+    client.postMessageTransport = postMessage
+
+    await client.destroy()
+
+    expect(postMessage.disconnect).toHaveBeenCalledTimes(1)
+    expect(client.postMessageTransport).toBeUndefined()
   })
 })

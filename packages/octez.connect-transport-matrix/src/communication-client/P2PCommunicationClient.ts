@@ -369,6 +369,10 @@ export class P2PCommunicationClient extends CommunicationClient {
   public async start(): Promise<void> {
     logger.log('start', 'starting client')
 
+    // `reset()` -- which `stop()` always runs -- replaces this promise, so a
+    // different one after the login below means a stop landed meanwhile.
+    const pending = this.client
+
     logger.log('start', `connecting to server`)
 
     const relayServer: { server: string; timestamp: number } = await this.getRelayServer()
@@ -457,6 +461,15 @@ export class P2PCommunicationClient extends CommunicationClient {
 
         throw new Error('Could not connect to any beacon nodes. Try again later.')
       }
+    }
+
+    if (pending !== this.client) {
+      // stop() ran while we were logging in: the client it could not reach yet
+      // must not outlive it as a ghost that keeps syncing.
+      logger.log('start', 'stopped while starting, shutting the client down')
+      await client.stop().catch((error) => logger.error(error))
+
+      return
     }
 
     logger.log('start', 'login successful, client is ready')

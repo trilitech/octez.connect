@@ -137,7 +137,24 @@ export class PostMessageTransport<
 
     this._isConnected = TransportStatus.CONNECTING
 
+    // Re-arms the client's `window` subscription after a disconnect(); the
+    // same transport instance is reconnected when a request interrupts a
+    // pending pairing (DAppClient.makeRequest).
+    await this.client.start()
+
     const knownPeers = await this.getPeers()
+
+    // A disconnect() that ran while this was awaiting has already stopped the
+    // client; finishing the connection would re-arm a transport nobody holds.
+    // If a later connect() has already completed instead, its client is live
+    // and must be left alone.
+    if (this._isConnected !== TransportStatus.CONNECTING) {
+      if (this._isConnected === TransportStatus.NOT_CONNECTED) {
+        await this.client.stop()
+      }
+
+      return
+    }
 
     if (knownPeers.length > 0) {
       logger.log('connect', `connecting to ${knownPeers.length} peers`)
@@ -148,7 +165,30 @@ export class PostMessageTransport<
 
     await this.startOpenChannelListener()
 
+    // Same check once more: arming the listener yields, so a disconnect() can
+    // still land here. Calling super.connect() then would flip the status to
+    // CONNECTED on a client whose handlers that disconnect just removed --
+    // a transport reporting itself live while it is deaf.
+    if (this._isConnected !== TransportStatus.CONNECTING) {
+      if (this._isConnected === TransportStatus.NOT_CONNECTED) {
+        await this.client.stop()
+      }
+
+      return
+    }
+
     await super.connect()
+  }
+
+  /**
+   * A disconnected transport must stop listening on `window`. Until it did,
+   * every transport a client dropped kept its handlers and its peer
+   * subscriptions for the lifetime of the page, one set per connection.
+   */
+  public async disconnect(): Promise<void> {
+    await this.client.stop()
+
+    return super.disconnect()
   }
 
   public async startOpenChannelListener(): Promise<void> {

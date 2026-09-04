@@ -305,7 +305,7 @@ export class WalletClient extends Client {
     transport
       .addListener(async (message: unknown, connectionInfo: ConnectionContext) => {
         if (typeof message === 'string') {
-          const peer = await this.findPeer(connectionInfo.id)
+          const peer = await this.findPeer(connectionInfo.id, transport)
           const protocolVersion = this.getPeerProtocolVersion(peer)
           const deserializedMessage = (await new Serializer(protocolVersion).deserialize(
             message
@@ -545,17 +545,19 @@ export class WalletClient extends Client {
     response: BeaconMessage,
     connectionContext: ConnectionContext
   ): Promise<void> {
+    const transport = await this.transport
+
     let peer: PeerInfo | undefined
     if (connectionContext) {
-      peer = await this.findPeer(connectionContext.id)
+      peer = await this.findPeer(connectionContext.id, transport)
     }
 
     const protocolVersion = this.getPeerProtocolVersion(peer)
     const serializedMessage: string = await new Serializer(protocolVersion).serialize(response)
     if (connectionContext) {
-      await (await this.transport).send(serializedMessage, peer)
+      await transport.send(serializedMessage, peer)
     } else {
-      await (await this.transport).send(serializedMessage)
+      await transport.send(serializedMessage)
     }
   }
 

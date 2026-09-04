@@ -56,9 +56,19 @@ export abstract class Client extends BeaconClient {
 
   protected readonly matrixNodes: NodeDistributions
 
-  private transportListeners: Map<
+  /**
+   * One subscription per transport type, together with the transport instance
+   * it is attached to. The instance is needed to detach: a replaced transport
+   * outlives the client's reference to it (`disconnect()` and
+   * `handleDisconnect()` only null the reference), so removing the listener
+   * from the *incoming* transport would leave the old one subscribed.
+   */
+  private readonly transportListeners: Map<
     TransportType,
-    (message: any, connectionInfo: ConnectionContext) => Promise<void>
+    {
+      transport: Transport
+      listener: (message: unknown, connectionInfo: ConnectionContext) => Promise<void>
+    }
   > = new Map()
 
   protected _transport: ExposedPromise<Transport<any>> = new ExposedPromise()
@@ -100,15 +110,16 @@ export abstract class Client extends BeaconClient {
       return
     }
 
-    if (this._transport.isResolved()) {
-      const transport = await this.transport
-      await Promise.all(
-        Array.from(this.transportListeners.values()).map((listener) =>
-          transport.removeListener(listener)
-        )
+    // Each subscription is removed from the transport it is attached to.
+    // Going through `this.transport` removed them all from whichever transport
+    // was active, and removed none when no transport was resolved -- the state
+    // `disconnect()` leaves behind.
+    await Promise.all(
+      Array.from(this.transportListeners.values()).map(({ transport, listener }) =>
+        transport.removeListener(listener)
       )
-      this.transportListeners.clear()
-    }
+    )
+    this.transportListeners.clear()
   }
 
   /**
@@ -221,9 +232,13 @@ export abstract class Client extends BeaconClient {
   }
 
   public async destroy(): Promise<void> {
+    // Subscriptions are detached from their own transports, so this no longer
+    // needs an active one -- after disconnect() there is none, and that is
+    // precisely when the orphaned subscriptions have to go.
+    await this.cleanup()
+
     if (this._transport.isResolved()) {
       const transport = await this.transport
-      await this.cleanup()
       await transport.disconnect()
       if (transport.type === TransportType.WALLETCONNECT) {
         await (transport as any).doClientCleanup() // any because I cannot import the type definition
@@ -258,8 +273,14 @@ export abstract class Client extends BeaconClient {
     // However, while running a multiple tabs setup, if one of the dApps disconnects
     // the others wont't recover until after a page refresh
 
-    if (this.transportListeners.has(transport.type)) {
-      await transport.removeListener(this.transportListeners.get(transport.type)!)
+    // Detach the previous subscription from the transport it is actually
+    // attached to. Calling removeListener on the incoming transport, which never
+    // had it, left every replaced transport subscribed: they share the client's
+    // key pair, so each one kept decrypting wallet messages and routing them into
+    // handleResponse -- once per past connection.
+    const previous = this.transportListeners.get(transport.type)
+    if (previous) {
+      await previous.transport.removeListener(previous.listener)
     }
 
     const subscription = async (message: any, connectionInfo: ConnectionContext) => {
@@ -267,7 +288,7 @@ export abstract class Client extends BeaconClient {
         return
       }
 
-      const peer = await this.findPeer(connectionInfo.id)
+      const peer = await this.findPeer(connectionInfo.id, transport)
       const protocolVersion = this.getPeerProtocolVersion(peer)
 
       const deserializedMessage = (await new Serializer(protocolVersion).deserialize(
@@ -276,7 +297,7 @@ export abstract class Client extends BeaconClient {
       this.handleResponse(deserializedMessage, connectionInfo)
     }
 
-    this.transportListeners.set(transport.type, subscription)
+    this.transportListeners.set(transport.type, { transport, listener: subscription })
 
     transport.addListener(subscription).catch((error) => logger.error('addListener', error))
   }
@@ -297,14 +318,44 @@ export abstract class Client extends BeaconClient {
     await selectedTransport.send(payload, peer)
   }
 
-  protected async findPeer(publicKey?: string): Promise<PeerInfo | undefined> {
-    if (!publicKey) {
+  /**
+   * Look a peer up by the id the transport attached to a message, on the
+   * transport that delivered it.
+   *
+   * The transport is a parameter rather than a lookup because every caller
+   * already has one: a message can only have been delivered by a transport
+   * that exists. Reaching for `this.transport` instead parked every arrival
+   * between a disconnection and the next pairing -- setTransport(undefined)
+   * leaves `_transport` unsettled, so the await only returned once a later
+   * pairing resolved it, and the message was replayed into that connection.
+   *
+   * `connectionInfo.id` is the peer's public key over P2P, but the browser
+   * extension's id over postMessage, where the transport cannot tell which
+   * peer's key decrypted the message. Match either: only a postMessage
+   * pairing response carries an `extensionId`, so the fallback is inert for
+   * every other peer.
+   */
+  protected async findPeer(
+    id: string | undefined,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    transport: Transport<any>
+  ): Promise<PeerInfo | undefined> {
+    if (!id) {
       return undefined
     }
 
-    const transport = await this.transport
     const peers = await transport.getPeers()
-    return peers.find((peerInfo) => peerInfo.publicKey === publicKey)
+
+    return (
+      peers.find((peerInfo) => peerInfo.publicKey === id) ??
+      // Newest first. `addPeer` dedupes by public key, so a wallet that rotated
+      // its beacon key -- a reinstall, a reset -- leaves the stale peer in place
+      // beside the new one, both carrying the same extension id. A fresh pairing
+      // has to shadow the stale peer, not the other way round.
+      [...peers]
+        .reverse()
+        .find((peerInfo) => 'extensionId' in peerInfo && peerInfo.extensionId === id)
+    )
   }
 
   private getLocalProtocolVersion(): number {
@@ -321,7 +372,6 @@ export abstract class Client extends BeaconClient {
 
     const peerProtocolRaw =
       typeof peer.protocolVersion === 'number' ? peer.protocolVersion : Number(peer.protocolVersion)
-
     return Number.isFinite(peerProtocolRaw) && peerProtocolRaw >= DEFAULT_PROTOCOL_VERSION
       ? peerProtocolRaw
       : DEFAULT_PROTOCOL_VERSION
@@ -330,6 +380,7 @@ export abstract class Client extends BeaconClient {
   protected getPeerProtocolVersion(peer?: PeerInfo): number {
     const localVersion = this.getLocalProtocolVersion()
     const peerVersion = this.extractPeerProtocolVersion(peer)
+
     return Math.min(peerVersion, localVersion)
   }
 }

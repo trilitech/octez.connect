@@ -328,9 +328,9 @@ export class MatrixClient {
     const store = this.store
     const sync = this.sync.bind(this)
 
+    // Manual stop is normal shutdown: the polling promise only resolves.
     const pollSync = async (
-      resolve: (value?: void | PromiseLike<void> | undefined) => void,
-      reject: (reason?: any) => void
+      resolve: (value?: void | PromiseLike<void> | undefined) => void
     ): Promise<void> => {
       let syncingRetries: number = 0
       try {
@@ -348,12 +348,12 @@ export class MatrixClient {
         if (this.isActive) {
           setTimeout(
             async () => {
-              await pollSync(resolve, reject)
+              await pollSync(resolve)
             },
             syncingRetries > IMMEDIATE_POLLING_RETRIES ? RETRY_INTERVAL + interval : interval
           )
         } else {
-          reject(new Error(`Syncing stopped manually.`))
+          resolve()
         }
       }
     }

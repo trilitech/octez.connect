@@ -234,10 +234,12 @@ describe('P2PCommunicationClient', () => {
       const beaconInfoSpy = jest
         .spyOn(freshClient, 'getBeaconInfo')
         .mockRejectedValueOnce(new Error('ETIMEDOUT'))
-      const discoverySpy = jest.spyOn(freshClient as any, 'findBestRegionAndGetServer').mockResolvedValue({
-        server: 'discovered-node.papers.tech',
-        timestamp: 5000
-      })
+      const discoverySpy = jest
+        .spyOn(freshClient as any, 'findBestRegionAndGetServer')
+        .mockResolvedValue({
+          server: 'discovered-node.papers.tech',
+          timestamp: 5000
+        })
 
       const result = await freshClient.getRelayServer()
 
@@ -272,10 +274,12 @@ describe('P2PCommunicationClient', () => {
       const beaconInfoSpy = jest
         .spyOn(freshClient, 'getBeaconInfo')
         .mockRejectedValueOnce(new Error('ECONNREFUSED'))
-      const discoverySpy = jest.spyOn(freshClient as any, 'findBestRegionAndGetServer').mockResolvedValue({
-        server: 'discovered-node.papers.tech',
-        timestamp: 5000
-      })
+      const discoverySpy = jest
+        .spyOn(freshClient as any, 'findBestRegionAndGetServer')
+        .mockResolvedValue({
+          server: 'discovered-node.papers.tech',
+          timestamp: 5000
+        })
 
       const result = await freshClient.getRelayServer()
 
@@ -363,12 +367,17 @@ describe('P2PCommunicationClient', () => {
     it('reuses a single in-flight discovery for concurrent callers', async () => {
       mockStorage.get.mockResolvedValue('')
       mockStorage.set.mockResolvedValue(undefined)
-      const discoverySpy = jest.spyOn(freshClient as any, 'findBestRegionAndGetServer').mockResolvedValue({
-        server: 'discovered-node.papers.tech',
-        timestamp: 3000
-      })
+      const discoverySpy = jest
+        .spyOn(freshClient as any, 'findBestRegionAndGetServer')
+        .mockResolvedValue({
+          server: 'discovered-node.papers.tech',
+          timestamp: 3000
+        })
 
-      const [resultA, resultB] = await Promise.all([freshClient.getRelayServer(), freshClient.getRelayServer()])
+      const [resultA, resultB] = await Promise.all([
+        freshClient.getRelayServer(),
+        freshClient.getRelayServer()
+      ])
 
       expect(resultA).toEqual({ server: 'discovered-node.papers.tech', timestamp: 3000 })
       expect(resultB).toEqual({ server: 'discovered-node.papers.tech', timestamp: 3000 })
@@ -382,19 +391,27 @@ describe('P2PCommunicationClient', () => {
       mockStorage.delete.mockResolvedValue(undefined)
 
       let callCount = 0
-      let resolveSecond!: (value: { region: string; known_servers: string[]; timestamp: number }) => void
+      let resolveSecond!: (value: {
+        region: string
+        known_servers: string[]
+        timestamp: number
+      }) => void
       let rejectFirst!: (reason?: unknown) => void
 
-      const firstRefresh = new Promise<{ region: string; known_servers: string[]; timestamp: number }>(
-        (_, reject) => {
-          rejectFirst = reject
-        }
-      )
-      const secondRefresh = new Promise<{ region: string; known_servers: string[]; timestamp: number }>(
-        (resolve) => {
-          resolveSecond = resolve
-        }
-      )
+      const firstRefresh = new Promise<{
+        region: string
+        known_servers: string[]
+        timestamp: number
+      }>((_, reject) => {
+        rejectFirst = reject
+      })
+      const secondRefresh = new Promise<{
+        region: string
+        known_servers: string[]
+        timestamp: number
+      }>((resolve) => {
+        resolveSecond = resolve
+      })
 
       jest.spyOn(freshClient, 'getBeaconInfo').mockImplementation(async () => {
         callCount += 1
@@ -450,6 +467,56 @@ describe('P2PCommunicationClient', () => {
       expect(mockStorage.set).toHaveBeenCalledWith(StorageKey.MATRIX_PEER_ROOM_IDS, {
         [sender]: '!new:room'
       })
+    })
+  })
+
+  describe('stop() while start() is still pending', () => {
+    const realKeyPair = { publicKey: new Uint8Array(32), secretKey: new Uint8Array(64) }
+
+    it('shuts the late matrix client down instead of adopting it', async () => {
+      // Real ed25519 signing runs before client.start(); it needs real key sizes.
+      ;(client as any).keyPair = realKeyPair
+      let finishLogin!: () => void
+      const matrixClient = {
+        subscribe: jest.fn(),
+        start: jest.fn(
+          () =>
+            new Promise<void>((resolve) => {
+              finishLogin = resolve
+            })
+        ),
+        stop: jest.fn().mockResolvedValue(undefined),
+        invitedRooms: Promise.resolve([])
+      }
+      ;(MatrixClient.create as jest.Mock).mockReturnValue(matrixClient)
+
+      const starting = client.start()
+      // Let start() reach the pending login.
+      await new Promise((resolve) => setTimeout(resolve, 0))
+      expect(matrixClient.start).toHaveBeenCalledTimes(1)
+
+      await client.stop()
+      finishLogin()
+      await starting
+
+      expect(matrixClient.stop).toHaveBeenCalledTimes(1)
+      expect((client as any).client.isResolved()).toBe(false)
+    })
+
+    it('adopts the matrix client when nothing stopped it', async () => {
+      ;(client as any).keyPair = realKeyPair
+      const matrixClient = {
+        subscribe: jest.fn(),
+        start: jest.fn().mockResolvedValue(undefined),
+        stop: jest.fn(),
+        invitedRooms: Promise.resolve([])
+      }
+      ;(MatrixClient.create as jest.Mock).mockReturnValue(matrixClient)
+
+      await client.start()
+
+      expect(matrixClient.stop).not.toHaveBeenCalled()
+      expect((client as any).client.isResolved()).toBe(true)
     })
   })
 })

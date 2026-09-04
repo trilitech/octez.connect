@@ -23,8 +23,41 @@ export class PostMessageClient extends MessageBasedClient {
     (message: EncryptedExtensionMessage, context: ConnectionContext) => void
   > = new Map()
 
+  /**
+   * The `window` handlers this client registered, kept so `stop()` can remove
+   * them. Both used to be anonymous and permanent: every client instance --
+   * one per transport, one transport per connection -- left two listeners
+   * behind for the lifetime of the page.
+   */
+  private messageHandler?: (message: unknown) => void
+  private channelOpeningHandler?: (event: unknown) => Promise<void>
+
   public async init(): Promise<void> {
     this.subscribeToMessages().catch(console.error)
+  }
+
+  /**
+   * (Re)arm the `window` subscription. Idempotent, so a transport can call it
+   * on every `connect()`: after a `stop()` this is what brings the client back.
+   */
+  public async start(): Promise<void> {
+    await this.subscribeToMessages()
+  }
+
+  /**
+   * Stop listening on `window` and forget every peer subscription. The
+   * counterpart of `start()`; a transport calls it from `disconnect()`.
+   */
+  public async stop(): Promise<void> {
+    if (this.messageHandler) {
+      windowRef.removeEventListener('message', this.messageHandler)
+      this.messageHandler = undefined
+    }
+    if (this.channelOpeningHandler) {
+      windowRef.removeEventListener('message', this.channelOpeningHandler)
+      this.channelOpeningHandler = undefined
+    }
+    this.activeListeners.clear()
   }
 
   public async listenForEncryptedMessage(
@@ -77,6 +110,13 @@ export class PostMessageClient extends MessageBasedClient {
   public async listenForChannelOpening(
     messageCallback: (pairingResponse: ExtendedPostMessagePairingResponse) => void
   ): Promise<void> {
+    // One channel-opening handler at a time: a transport that reconnects
+    // calls this again, and stacking handlers delivered every pairing response
+    // once per past connect().
+    if (this.channelOpeningHandler) {
+      windowRef.removeEventListener('message', this.channelOpeningHandler)
+    }
+
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const fn = async (event: any): Promise<void> => {
       if (event.source !== windowRef || event.origin !== windowRef.location.origin) {
@@ -116,6 +156,7 @@ export class PostMessageClient extends MessageBasedClient {
       }
     }
 
+    this.channelOpeningHandler = fn
     windowRef.addEventListener('message', fn)
   }
 
@@ -134,7 +175,11 @@ export class PostMessageClient extends MessageBasedClient {
   }
 
   private async subscribeToMessages(): Promise<void> {
-    windowRef.addEventListener('message', (message) => {
+    if (this.messageHandler) {
+      return
+    }
+
+    const handler = (message: unknown): void => {
       if (
         (message as any).source !== windowRef ||
         (message as any).origin !== windowRef.location.origin
@@ -158,6 +203,9 @@ export class PostMessageClient extends MessageBasedClient {
           })
         }
       }
-    })
+    }
+
+    this.messageHandler = handler
+    windowRef.addEventListener('message', handler)
   }
 }

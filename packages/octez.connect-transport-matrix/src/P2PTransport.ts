@@ -56,6 +56,14 @@ export class P2PTransport<
 
     await this.client.start()
 
+    // A disconnect() that ran while start() was pending has already stopped
+    // the client (start() shuts a client stopped mid-login down itself), and
+    // the client promise it left behind never resolves: going on would hang
+    // on startOpenChannelListener(). Nothing to do but stop here.
+    if (this._isConnected !== TransportStatus.CONNECTING) {
+      return
+    }
+
     const knownPeers = await this.getPeers()
 
     if (knownPeers.length > 0) {

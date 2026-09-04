@@ -141,6 +141,57 @@ describe('PostMessageClient', () => {
     })
   })
 
+  describe('start() / stop()', () => {
+    const messageHandlers = () =>
+      (windowRef.addEventListener as jest.Mock).mock.calls
+        .filter(([event]) => event === 'message')
+        .map(([, handler]) => handler)
+
+    it('start() arms the message subscription once, however often it is called', async () => {
+      await client.start()
+      await client.start()
+      await client.init()
+
+      expect(messageHandlers()).toHaveLength(1)
+    })
+
+    it('stop() removes the message subscription and the channel-opening handler', async () => {
+      await client.start()
+      await client.listenForChannelOpening(jest.fn())
+      const [messageHandler, channelHandler] = messageHandlers()
+
+      await client.stop()
+
+      expect(windowRef.removeEventListener).toHaveBeenCalledWith('message', messageHandler)
+      expect(windowRef.removeEventListener).toHaveBeenCalledWith('message', channelHandler)
+    })
+
+    it('stop() forgets every peer subscription', async () => {
+      client.decryptMessage = jest.fn().mockResolvedValue('x')
+      await client.listenForEncryptedMessage('sender-pub', jest.fn())
+
+      await client.stop()
+
+      expect((client as any).activeListeners.size).toBe(0)
+    })
+
+    it('start() after stop() arms a fresh message subscription', async () => {
+      await client.start()
+      await client.stop()
+      ;(windowRef.addEventListener as jest.Mock).mockClear()
+
+      await client.start()
+
+      expect(messageHandlers()).toHaveLength(1)
+    })
+
+    it('stop() without start() is a no-op', async () => {
+      await client.stop()
+
+      expect(windowRef.removeEventListener).not.toHaveBeenCalled()
+    })
+  })
+
   describe('listenForChannelOpening()', () => {
     it('registers a message listener', async () => {
       const cb = jest.fn()
@@ -181,6 +232,22 @@ describe('PostMessageClient', () => {
       expect(resp.version).toBe('v')
       expect(resp.senderId).toBe('sender-id')
       expect(resp.extensionId).toBe('sender-ext')
+    })
+
+    it('replaces the previous channel-opening handler instead of stacking a second one', async () => {
+      await client.listenForChannelOpening(jest.fn())
+      const [first] = (windowRef.addEventListener as jest.Mock).mock.calls
+        .filter(([event]) => event === 'message')
+        .map(([, handler]) => handler)
+
+      await client.listenForChannelOpening(jest.fn())
+
+      expect(windowRef.removeEventListener).toHaveBeenCalledWith('message', first)
+      expect(
+        (windowRef.addEventListener as jest.Mock).mock.calls.filter(
+          ([event]) => event === 'message'
+        )
+      ).toHaveLength(2)
     })
 
     it('ignores events from the wrong source or origin', async () => {
