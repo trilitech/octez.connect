@@ -1063,6 +1063,8 @@ export class DAppClient extends Client {
 
           const abortHandler = async () => {
             logger.log('init', 'ABORTED')
+            // Popup closed: replies to the QR code / request it showed no longer count.
+            stopListening()
             this.sendMetrics(
               'performance-metrics/save',
               await this.buildPayload('connect', 'abort')

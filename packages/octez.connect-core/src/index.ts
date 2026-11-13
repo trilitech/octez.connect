@@ -55,6 +55,7 @@ import { InvalidBeaconVersionError } from './errors/InvalidBeaconVersionError'
 import { getLogger, Logger, setLogger } from './utils/Logger'
 import { windowRef } from './MockWindow'
 import { CommunicationClient } from './transports/clients/CommunicationClient'
+import { PendingPairingRequests } from './transports/clients/PendingPairingRequests'
 import { ClientEvents } from './transports/clients/ClientEvents'
 import { WCStorage } from './storage/WCStorage'
 import { IndexedDBStorage } from './storage/IndexedDBStorage'
@@ -90,7 +91,7 @@ export {
 }
 
 // Transport
-export { Transport, MessageBasedClient, CommunicationClient }
+export { Transport, MessageBasedClient, CommunicationClient, PendingPairingRequests }
 
 // Storage
 export { ChromeStorage, LocalStorage, WCStorage, IndexedDBStorage, StorageValidator, getStorage }

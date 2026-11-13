@@ -36,7 +36,8 @@ import {
   getPreferredMessageProtocolVersion,
   getSenderId,
   Logger,
-  CommunicationClient
+  CommunicationClient,
+  PendingPairingRequests
 } from '@tezos-x/octez.connect-core'
 import { hash } from '@stablelib/blake2b'
 import { encode } from '@stablelib/utf8'
@@ -93,6 +94,12 @@ export class P2PCommunicationClient extends CommunicationClient {
 
   private readonly ignoredRooms: string[] = []
   private loginCounter: number = 0
+  private readonly pendingPairings = new PendingPairingRequests('octez.connect:pending-pairings:p2p')
+
+  /** Stop accepting replies to pairing requests already shown (popup closed or paired). */
+  public clearPendingPairings(): void {
+    this.pendingPairings.clear()
+  }
 
   constructor(
     private readonly name: string,
@@ -133,6 +140,8 @@ export class P2PCommunicationClient extends CommunicationClient {
     if (this.appUrl) {
       info.appUrl = this.appUrl
     }
+
+    this.pendingPairings.add(info.id)
 
     return info
   }
@@ -723,9 +732,6 @@ export class P2PCommunicationClient extends CommunicationClient {
           JSON.stringify(event)
         )
 
-        await this.updateRelayServer(event.content.message.sender)
-        await this.updatePeerRoom(event.content.message.sender, event.content.roomId)
-
         const splits = event.content.message.content.split(':')
         const payload = Buffer.from(splits[splits.length - 1], 'hex')
 
@@ -747,10 +753,29 @@ export class P2PCommunicationClient extends CommunicationClient {
               JSON.stringify(pairingResponse)
             )
 
-            messageCallback({
-              ...pairingResponse,
-              senderId: await getSenderId(pairingResponse.publicKey)
-            })
+            if (
+              typeof pairingResponse.publicKey !== 'string' ||
+              !(await this.isSender(event, pairingResponse.publicKey)) ||
+              !this.pendingPairings.consume(pairingResponse.id)
+            ) {
+              logger.log(`listenForChannelOpening`, `ignoring unsolicited pairing response`)
+
+              return
+            }
+
+            // The request id is used up now: surface any failure instead of
+            // letting the catch below swallow it as "not for us".
+            try {
+              await this.updateRelayServer(event.content.message.sender)
+              await this.updatePeerRoom(event.content.message.sender, event.content.roomId)
+
+              messageCallback({
+                ...pairingResponse,
+                senderId: await getSenderId(pairingResponse.publicKey)
+              })
+            } catch (acceptError) {
+              logger.error('listenForChannelOpening', 'accepted pairing failed', acceptError)
+            }
           } catch (decryptionError) {
             /* NO-OP. We try to decode every message, but some might not be addressed to us. */
           }

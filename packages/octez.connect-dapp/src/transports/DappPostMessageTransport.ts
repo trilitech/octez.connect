@@ -48,5 +48,6 @@ export class DappPostMessageTransport extends PostMessageTransport<
   public async stopListeningForNewPeers(): Promise<void> {
     logger.log('stopListeningForNewPeers')
     this.newPeerListener = undefined
+    this.client.clearPendingPairings()
   }
 }
