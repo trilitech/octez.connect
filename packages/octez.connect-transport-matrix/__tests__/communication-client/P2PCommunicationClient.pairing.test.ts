@@ -99,21 +99,20 @@ const channelOpen = async (
 }
 
 describe('P2PCommunicationClient pairing and session checks', () => {
-  beforeEach(() => sessionStorage.clear()) // pending pairings live there
   afterEach(() => jest.restoreAllMocks())
 
-  it('still accepts the reply after the tab reloads mid-pairing', async () => {
+  it('forgets pending pairings on reload: a fresh QR code is needed', async () => {
     const before = await setup()
     const request = await before.client.getPairingRequestInfo()
 
-    // Reload: a brand-new client, same tab (same sessionStorage).
+    // Reload: a brand-new client starts with no pending pairings.
     const after = await setup()
     const accepted = jest.fn()
     await after.client.listenForChannelOpening(accepted)
     const { event } = await channelOpen(after.dappKeys.publicKey, 'real-wallet', request.id)
     await after.emit(MatrixClientEventType.MESSAGE, event)
 
-    expect(accepted).toHaveBeenCalledTimes(1)
+    expect(accepted).not.toHaveBeenCalled()
   })
 
   it('ignores the reply once the pairing popup was closed', async () => {

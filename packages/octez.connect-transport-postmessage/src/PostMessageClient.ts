@@ -38,9 +38,7 @@ export class PostMessageClient extends MessageBasedClient {
   private messageHandler?: (message: unknown) => void
   private channelOpeningHandler?: (event: unknown) => Promise<void>
 
-  private readonly pendingPairings = new PendingPairingRequests(
-    'octez.connect:pending-pairings:postmessage'
-  )
+  private readonly pendingPairings = new PendingPairingRequests()
 
   /** Stop accepting replies to pairing requests already sent (popup closed or paired). */
   public clearPendingPairings(): void {

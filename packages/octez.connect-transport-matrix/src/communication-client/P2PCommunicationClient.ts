@@ -94,7 +94,7 @@ export class P2PCommunicationClient extends CommunicationClient {
 
   private readonly ignoredRooms: string[] = []
   private loginCounter: number = 0
-  private readonly pendingPairings = new PendingPairingRequests('octez.connect:pending-pairings:p2p')
+  private readonly pendingPairings = new PendingPairingRequests()
 
   /** Stop accepting replies to pairing requests already shown (popup closed or paired). */
   public clearPendingPairings(): void {

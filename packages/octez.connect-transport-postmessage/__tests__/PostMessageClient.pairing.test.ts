@@ -46,7 +46,6 @@ const postReply = async (dappPublicKey: Uint8Array, requestId: string) => {
 describe('PostMessageClient pairing and session checks', () => {
   beforeEach(() => {
     ;(windowRef as any).listeners.length = 0
-    sessionStorage.clear() // pending pairings live there
   })
 
   it('ignores an extension pairing reply when the dApp never asked for one', async () => {
