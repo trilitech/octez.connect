@@ -27,6 +27,7 @@ describe('NetworkType ↔ genesis chain id table', () => {
     [NetworkType.GHOSTNET, 'NetXnHfVqm9iesp'],
     [NetworkType.SHADOWNET, 'NetXsqzbfFenSTS'],
     [NetworkType.TEZOSX_MAINNET, 'NetXohUVN5QWR4f'],
+    [NetworkType.TEZOSX_PREVIEWNET, 'NetXY2oPPzkxUW1'],
     [NetworkType.USHUAIANET, 'NetXpX8WSZkAZZA']
   ])('%s → %s', (type, genesis) => {
     expect(TEZOS_NETWORK_GENESIS_IDS[type]).toBe(genesis)
@@ -40,7 +41,6 @@ describe('NetworkType ↔ genesis chain id table', () => {
     ['no RPC-sourced id yet', NetworkType.TALLINNNET],
     ['no RPC-sourced id yet', NetworkType.SEOULNET],
     ['no RPC-sourced id yet', NetworkType.TEZLINK_SHADOWNET],
-    ['no RPC-sourced id yet', NetworkType.TEZOSX_PREVIEWNET],
     ['no RPC-sourced id yet', NetworkType.TEZOSX_SHADOWNET]
   ])('unmappable (%s): %s', (_reason, type) => {
     expect(tezosCaip2FromNetworkType(type)).toBeUndefined()
@@ -50,6 +50,7 @@ describe('NetworkType ↔ genesis chain id table', () => {
     expect(networkTypeFromTezosCaip2('tezos:NetXdQprcVkpaWU')).toBe(NetworkType.MAINNET)
     expect(networkTypeFromTezosCaip2('NetXnHfVqm9iesp')).toBe(NetworkType.GHOSTNET)
     expect(networkTypeFromTezosCaip2('tezos:NetXohUVN5QWR4f')).toBe(NetworkType.TEZOSX_MAINNET)
+    expect(networkTypeFromTezosCaip2('tezos:NetXY2oPPzkxUW1')).toBe(NetworkType.TEZOSX_PREVIEWNET)
     expect(networkTypeFromTezosCaip2('tezos:NetXunknown')).toBeUndefined()
   })
 })
