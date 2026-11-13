@@ -1,7 +1,7 @@
 {
   "name": "octez.connect-workspace",
   "private": true,
-  "version": "5.0.4",
+  "version": "5.0.5",
   "description": "Workspace for the Trilitech-maintained octez.connect packages.",
   "workspaces": [
     "packages/*"
