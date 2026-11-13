@@ -4,7 +4,13 @@ jest.mock('../../src/matrix-client/MatrixClient', () => ({
   MatrixClient: { create: jest.fn() }
 }))
 
-import { getHexHash, getKeypairFromSeed, sealCryptobox, toHex } from '@tezos-x/octez.connect-utils'
+import {
+  ExposedPromise,
+  getHexHash,
+  getKeypairFromSeed,
+  sealCryptobox,
+  toHex
+} from '@tezos-x/octez.connect-utils'
 import { StorageKey } from '@tezos-x/octez.connect-types'
 import { MatrixClient } from '../../src/matrix-client/MatrixClient'
 import { MatrixClientEventType } from '../../src/matrix-client/models/MatrixClientEvent'
@@ -186,5 +192,69 @@ describe('P2PCommunicationClient pairing and session checks', () => {
     await emit(MatrixClientEventType.MESSAGE, event)
 
     expect(storage.data[StorageKey.MATRIX_PEER_ROOM_IDS]).toEqual({})
+  })
+
+  it('does not join a room or store routing for an invite from an unknown user', async () => {
+    const { client, matrix, emit, storage } = await setup()
+    ;(client as any).client = new ExposedPromise() // let start() do the resolving
+    await client.start() // fake login; registers the invite handler
+
+    await emit(MatrixClientEventType.INVITE, {
+      type: MatrixClientEventType.INVITE,
+      content: { roomId: '!other:' + RELAY, members: ['@unknown:' + RELAY] }
+    })
+
+    expect(matrix.joinRooms).not.toHaveBeenCalled()
+    expect(storage.data[StorageKey.MATRIX_PEER_ROOM_IDS]).toEqual({})
+  })
+
+  it('still joins a room when a saved peer invites it', async () => {
+    const { client, matrix, emit, storage } = await setup()
+    const wallet = await getKeypairFromSeed('real-wallet')
+    const walletHash = await getHexHash(Buffer.from(wallet.publicKey))
+    storage.data[StorageKey.TRANSPORT_P2P_PEERS_DAPP] = [{ publicKey: toHex(wallet.publicKey) }]
+    ;(client as any).client = new ExposedPromise()
+    await client.start()
+
+    await emit(MatrixClientEventType.INVITE, {
+      type: MatrixClientEventType.INVITE,
+      content: { roomId: '!new:' + RELAY, members: [`@${walletHash}:${RELAY}`] }
+    })
+
+    expect(matrix.joinRooms).toHaveBeenCalledWith('!new:' + RELAY)
+  })
+
+  it('does not change routing on an invite, even from a saved peer user name on another server', async () => {
+    const { client, emit, storage } = await setup()
+    const wallet = await getKeypairFromSeed('real-wallet')
+    const walletHash = await getHexHash(Buffer.from(wallet.publicKey))
+    storage.data[StorageKey.TRANSPORT_P2P_PEERS_DAPP] = [{ publicKey: toHex(wallet.publicKey) }]
+    ;(client as any).client = new ExposedPromise()
+    await client.start()
+
+    // Same user name on another homeserver: an invite alone is not proof.
+    await emit(MatrixClientEventType.INVITE, {
+      type: MatrixClientEventType.INVITE,
+      content: { roomId: '!other:other.example', members: [`@${walletHash}:other.example`] }
+    })
+
+    expect(storage.data[StorageKey.MATRIX_PEER_ROOM_IDS]).toEqual({})
+  })
+
+  it('does not treat a Matrix user whose id only starts with the paired wallet id', async () => {
+    const { client } = await setup()
+    const wallet = await getKeypairFromSeed('real-wallet')
+    const walletHex = toHex(wallet.publicKey)
+    const walletHash = await getHexHash(Buffer.from(wallet.publicKey))
+
+    const lookAlike = {
+      type: MatrixClientEventType.MESSAGE,
+      content: {
+        roomId: '!x:' + RELAY,
+        message: { type: 'm.text', sender: `@${walletHash}x:${RELAY}`, content: '' }
+      }
+    }
+
+    await expect(client.isSender(lookAlike as any, walletHex)).resolves.toBe(false)
   })
 })
