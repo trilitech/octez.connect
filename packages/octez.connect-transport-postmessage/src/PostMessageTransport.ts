@@ -203,7 +203,16 @@ export class PostMessageTransport<
     logger.log('listen', publicKey)
 
     await this.client
-      .listenForEncryptedMessage(publicKey, (message: string, context: ConnectionContext) => {
+      .listenForEncryptedMessage(publicKey, async (message: string, context: ConnectionContext) => {
+        const peer = (await this.getPeers()).find((p) => p.publicKey === publicKey) as
+          | ExtendedPostMessagePairingResponse
+          | undefined
+        if (peer?.extensionId && peer.extensionId !== context.id) {
+          logger.warn('listen', 'dropping message: extension id does not match its sender')
+
+          return
+        }
+
         const connectionContext: ConnectionContext = {
           origin: Origin.EXTENSION,
           id: context.id

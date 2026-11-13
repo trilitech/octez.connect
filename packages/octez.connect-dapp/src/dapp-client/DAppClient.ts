@@ -430,6 +430,17 @@ export class DAppClient extends Client {
       const typedMessage =
         normalized ?? (wireMessage as BeaconMessageWrapper<BeaconBaseMessage>).message
 
+      if (
+        (connectionInfo.origin === Origin.P2P &&
+          message.senderId !== (await getSenderId(connectionInfo.id))) ||
+        (connectionInfo.origin === Origin.EXTENSION &&
+          !(await this.isPairedWallet(message.senderId, connectionInfo)))
+      ) {
+        logger.warn('handleResponse', 'dropping message: senderId does not match its sender')
+
+        return
+      }
+
       let appMetadata: AppMetadata | undefined = normalized
         ? (typedMessage as PermissionResponse).appMetadata
         : (typedMessage as unknown as PermissionResponseV3).blockchainData?.appMetadata
@@ -488,7 +499,8 @@ export class DAppClient extends Client {
       logger.log('### message ###', JSON.stringify(message))
       logger.log('### connectionInfo ###', connectionInfo)
 
-      const handleDisconnect = async (): Promise<void> => {
+      // endSession=false: a saved but inactive wallet removes only its own records.
+      const handleDisconnect = async (endSession: boolean = true): Promise<void> => {
         this.analytics.track('event', 'DAppClient', 'Disconnect received from Wallet')
 
         const relevantTransport =
@@ -510,6 +522,9 @@ export class DAppClient extends Client {
         }
 
         await this.removeAccountsForPeerIds([message.senderId])
+        if (!endSession) {
+          return
+        }
         await this.events.emit(BeaconEvent.CHANNEL_CLOSED)
 
         // Reset transport state so next requestPermissions() shows pairing modal
@@ -563,9 +578,13 @@ export class DAppClient extends Client {
         }
       } else {
         if (typedMessage.type === BeaconMessageType.Disconnect) {
-          await handleDisconnect()
+          await this.onUnsolicitedDisconnect(message.senderId, connectionInfo, handleDisconnect)
         } else if (typedMessage.type === BeaconMessageType.ChangeAccountRequest) {
-          await this.onNewAccount(typedMessage as ChangeAccountRequest, connectionInfo)
+          if (await this.isActiveWallet(message.senderId, connectionInfo)) {
+            await this.onNewAccount(typedMessage as ChangeAccountRequest, connectionInfo)
+          } else {
+            logger.warn('handleResponse', 'ignoring change account from a non-active wallet')
+          }
         }
       }
 
@@ -3548,6 +3567,76 @@ export class DAppClient extends Client {
     )
   }
 
+  /**
+   * Is this message from the wallet behind the active account? Over P2P the
+   * senderId is already bound to the decrypting key (see handleResponse).
+   */
+  private async isActiveWallet(
+    senderId: string,
+    connectionInfo: ConnectionContext
+  ): Promise<boolean> {
+    if (connectionInfo.origin === Origin.WALLETCONNECT) {
+      return true
+    }
+    await this.activeAccountLoaded
+    const active = await this.getActiveAccount()
+
+    return Boolean(
+      active &&
+        active.senderId === senderId &&
+        active.origin.type === connectionInfo.origin &&
+        active.origin.id === connectionInfo.id
+    )
+  }
+
+  /** Is this message from a wallet we are paired with on this connection? */
+  private async isPairedWallet(
+    senderId: string,
+    connectionInfo: ConnectionContext
+  ): Promise<boolean> {
+    if (connectionInfo.origin === Origin.P2P) {
+      const peers = (await this.storage.get(StorageKey.TRANSPORT_P2P_PEERS_DAPP)) ?? []
+
+      return peers.some((peer) => peer.publicKey === connectionInfo.id)
+    }
+    if (connectionInfo.origin === Origin.EXTENSION) {
+      const peers = (await this.storage.get(StorageKey.TRANSPORT_POSTMESSAGE_PEERS_DAPP)) ?? []
+      for (const peer of peers) {
+        if (
+          (peer as ExtendedPostMessagePairingResponse).extensionId === connectionInfo.id &&
+          (await getSenderId(peer.publicKey)) === senderId
+        ) {
+          return true
+        }
+      }
+
+      return false
+    }
+
+    return true // WalletConnect: unchanged, see isActiveWallet
+  }
+
+  /**
+   * A wallet-initiated disconnect. Strangers are ignored; a saved but inactive
+   * wallet only removes its own records; only the active wallet (or any paired
+   * wallet when no account is active) ends the session.
+   */
+  private async onUnsolicitedDisconnect(
+    senderId: string,
+    connectionInfo: ConnectionContext,
+    handleDisconnect: (end?: boolean) => Promise<void>
+  ): Promise<void> {
+    if (!(await this.isPairedWallet(senderId, connectionInfo))) {
+      logger.warn('handleResponse', 'ignoring disconnect from an unknown wallet')
+
+      return
+    }
+    await this.activeAccountLoaded
+    const active = await this.getActiveAccount()
+    const endSession = !active || (await this.isActiveWallet(senderId, connectionInfo))
+    await handleDisconnect(endSession)
+  }
+
   private async onNewAccount(
     message: PermissionResponse | ChangeAccountRequest,
     connectionInfo: ConnectionContext
@@ -3563,6 +3652,18 @@ export class DAppClient extends Client {
     }
 
     const address = message.address ?? (await getAddressFromPublicKey(publicKey!))
+
+    if (
+      connectionInfo.origin !== Origin.WALLETCONNECT &&
+      publicKey &&
+      message.address &&
+      message.walletType !== 'abstracted_account'
+    ) {
+      const derived = await getAddressFromPublicKey(publicKey).catch(() => undefined)
+      if (derived && derived !== message.address) {
+        throw new Error(`Address "${message.address}" does not match its public key`)
+      }
+    }
 
     if (!isValidAddress(address)) {
       throw new Error(`Invalid address: "${address}"`)

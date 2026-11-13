@@ -14,9 +14,10 @@ jest.mock('@tezos-x/octez.connect-core', () => {
 })
 
 import { windowRef } from '@tezos-x/octez.connect-core'
-import { ExtensionMessageTarget } from '@tezos-x/octez.connect-types'
+import { ExtensionMessageTarget, StorageKey } from '@tezos-x/octez.connect-types'
 import { getKeypairFromSeed, sealCryptobox, toHex } from '@tezos-x/octez.connect-utils'
 import { PostMessageClient } from '../src/PostMessageClient'
+import { PostMessageTransport } from '../src/PostMessageTransport'
 
 // Post a sealed pairing reply to the page, as an extension (or any page script) can.
 const postReply = async (dappPublicKey: Uint8Array, requestId: string) => {
@@ -58,6 +59,44 @@ describe('PostMessageClient pairing and session checks', () => {
     await postReply(dappKeys.publicKey, 'never-requested')
 
     expect(accepted).not.toHaveBeenCalled()
+  })
+
+  it('drops a message from a paired extension that claims another extension id', async () => {
+    const dappKeys = await getKeypairFromSeed('dapp-seed')
+    const data: Record<string, any> = {
+      [StorageKey.TRANSPORT_POSTMESSAGE_PEERS_DAPP]: [
+        { publicKey: 'b'.repeat(64), extensionId: 'extension-B' }
+      ]
+    }
+    const storage = {
+      get: async (k: string) => data[k] ?? [],
+      set: async (k: string, v: any) => {
+        data[k] = v
+      },
+      delete: async () => undefined
+    }
+    const transport = new PostMessageTransport(
+      'dapp',
+      dappKeys,
+      storage as any,
+      StorageKey.TRANSPORT_POSTMESSAGE_PEERS_DAPP
+    )
+    const delivered = jest.fn()
+    jest.spyOn(transport as any, 'notifyListeners').mockImplementation(async (...a) => {
+      delivered(...a)
+    })
+    const client = (transport as any).client
+    client.decryptMessage = jest.fn().mockResolvedValue('decrypted')
+
+    await transport.listen('b'.repeat(64))
+    const onMessage = client.activeListeners.get('b'.repeat(64))
+    // Decrypts with B's key (so B sent it), but claims to be extension A.
+    await onMessage({ encryptedPayload: 'x' }, { origin: 'extension', id: 'extension-A' })
+    await onMessage({ encryptedPayload: 'x' }, { origin: 'extension', id: 'extension-B' })
+    await new Promise((resolve) => setTimeout(resolve, 0)) // the client does not await the callback
+
+    expect(delivered).toHaveBeenCalledTimes(1)
+    expect(delivered.mock.calls[0][1]).toEqual({ origin: 'extension', id: 'extension-B' })
   })
 
   it('still accepts the reply to a pairing request it sent, once', async () => {
