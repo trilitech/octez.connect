@@ -202,6 +202,8 @@ describe('PostMessageClient', () => {
     it('decrypts a valid channel-open event and calls back', async () => {
       const raw = { id: 'id1', name: 'n', publicKey: 'p', version: 'v' }
       ;(openCryptobox as jest.Mock).mockResolvedValueOnce(JSON.stringify(raw))
+      // Only a reply to a pairing request we sent is accepted.
+      ;(client as any).pendingPairings.add('id1')
 
       const cb = jest.fn()
       await client.listenForChannelOpening(cb)

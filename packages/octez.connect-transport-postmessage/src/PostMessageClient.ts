@@ -1,4 +1,10 @@
-import { windowRef, Serializer, getSenderId, MessageBasedClient } from '@tezos-x/octez.connect-core'
+import {
+  windowRef,
+  Serializer,
+  getSenderId,
+  MessageBasedClient,
+  PendingPairingRequests
+} from '@tezos-x/octez.connect-core'
 
 import { openCryptobox, secretbox_NONCEBYTES, secretbox_MACBYTES } from '@tezos-x/octez.connect-utils'
 import {
@@ -31,6 +37,20 @@ export class PostMessageClient extends MessageBasedClient {
    */
   private messageHandler?: (message: unknown) => void
   private channelOpeningHandler?: (event: unknown) => Promise<void>
+
+  private readonly pendingPairings = new PendingPairingRequests()
+
+  /** Stop accepting replies to pairing requests already sent (popup closed or paired). */
+  public clearPendingPairings(): void {
+    this.pendingPairings.clear()
+  }
+
+  public async getPairingRequestInfo(): Promise<PostMessagePairingRequest> {
+    const info = await super.getPairingRequestInfo()
+    this.pendingPairings.add(info.id)
+
+    return info
+  }
 
   public async init(): Promise<void> {
     this.subscribeToMessages().catch(console.error)
@@ -138,6 +158,10 @@ export class PostMessageClient extends MessageBasedClient {
             const pairingResponse: PostMessagePairingResponse = JSON.parse(
               await openCryptobox(payload, this.keyPair!.publicKey, this.keyPair!.secretKey)
             )
+
+            if (!this.pendingPairings.consume(pairingResponse.id)) {
+              return
+            }
 
             messageCallback(
               new ExtendedPostMessagePairingResponse(

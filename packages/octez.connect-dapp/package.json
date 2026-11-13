@@ -1,6 +1,6 @@
 {
   "name": "@tezos-x/octez.connect-dapp",
-  "version": "5.0.4",
+  "version": "5.0.5",
   "description": "Use this package on your dApp to instanciate a DAppClient object and communicate to wallets.",
   "author": "Blockchain Infra <blockchain.infra@trili.tech>",
   "homepage": "https://octez-connect.tezos.com",
@@ -35,14 +35,14 @@
     "url": "https://github.com/trilitech/octez.connect/issues"
   },
   "dependencies": {
-    "@tezos-x/octez.connect-blockchain-tezos": "5.0.4",
-    "@tezos-x/octez.connect-core": "5.0.4",
-    "@tezos-x/octez.connect-transport-matrix": "5.0.4",
-    "@tezos-x/octez.connect-transport-postmessage": "5.0.4",
-    "@tezos-x/octez.connect-transport-walletconnect": "5.0.4",
-    "@tezos-x/octez.connect-types": "5.0.4",
-    "@tezos-x/octez.connect-ui": "5.0.4",
-    "@tezos-x/octez.connect-utils": "5.0.4",
+    "@tezos-x/octez.connect-blockchain-tezos": "5.0.5",
+    "@tezos-x/octez.connect-core": "5.0.5",
+    "@tezos-x/octez.connect-transport-matrix": "5.0.5",
+    "@tezos-x/octez.connect-transport-postmessage": "5.0.5",
+    "@tezos-x/octez.connect-transport-walletconnect": "5.0.5",
+    "@tezos-x/octez.connect-types": "5.0.5",
+    "@tezos-x/octez.connect-ui": "5.0.5",
+    "@tezos-x/octez.connect-utils": "5.0.5",
     "@walletconnect/types": "2.18.0",
     "broadcast-channel": "^7.3.0",
     "bs58check": "4.0.0"

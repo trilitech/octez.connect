@@ -56,5 +56,6 @@ export class DappP2PTransport extends P2PTransport<
   public async stopListeningForNewPeers(): Promise<void> {
     logger.log('stopListeningForNewPeers')
     this.newPeerListener = undefined
+    this.client.clearPendingPairings()
   }
 }

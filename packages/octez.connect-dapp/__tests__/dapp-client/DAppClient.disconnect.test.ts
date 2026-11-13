@@ -1,4 +1,5 @@
-import { Origin } from '@tezos-x/octez.connect-types'
+import { getSenderId } from '@tezos-x/octez.connect-core'
+import { Origin, StorageKey } from '@tezos-x/octez.connect-types'
 import { DAppClient } from '../../src/dapp-client/DAppClient'
 import { BeaconEvent } from '../../src/events'
 
@@ -38,10 +39,22 @@ jest.mock('@walletconnect/utils', () => ({ getSdkError: jest.fn() }))
  * P2P keeps the SDK from touching a transport that never resolves in a test;
  * the wrapped/flat routing under test runs before any transport is used.
  */
-const CONNECTION_INFO = { origin: Origin.P2P, id: 'wallet-sender-id' }
+// A real paired wallet: over P2P, connectionInfo.id is the key the message was
+// decrypted with, and a disconnect is only honoured from a paired wallet whose
+// senderId matches that key.
+const WALLET_KEY = 'aa'.repeat(32)
+const CONNECTION_INFO = { origin: Origin.P2P, id: WALLET_KEY }
+let WALLET_SENDER_ID: string
+beforeAll(async () => {
+  WALLET_SENDER_ID = await getSenderId(WALLET_KEY)
+})
 
 const channelClosedEvents = async (message: Record<string, unknown>): Promise<number> => {
   const client = new DAppClient({ name: 'test-dapp', disableDefaultEvents: true })
+  await (client as any).storage.set(StorageKey.TRANSPORT_P2P_PEERS_DAPP, [
+    { publicKey: WALLET_KEY, type: 'p2p-pairing-response' }
+  ])
+  message = { ...message, senderId: WALLET_SENDER_ID }
   let closed = 0
   await client.subscribeToEvent(BeaconEvent.CHANNEL_CLOSED, () => {
     closed += 1
