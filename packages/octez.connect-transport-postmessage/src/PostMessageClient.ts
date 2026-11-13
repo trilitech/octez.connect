@@ -35,7 +35,9 @@ export class PostMessageClient extends MessageBasedClient {
    * one per transport, one transport per connection -- left two listeners
    * behind for the lifetime of the page.
    */
-  private messageHandler?: (message: unknown) => void
+  // The base constructor initializes this reference before derived fields run.
+  // Do not emit a field that overwrites the registered handler with undefined.
+  declare private messageHandler?: (message: unknown) => void
   private channelOpeningHandler?: (event: unknown) => Promise<void>
 
   private readonly pendingPairings = new PendingPairingRequests()
