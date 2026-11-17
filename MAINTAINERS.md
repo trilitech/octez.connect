@@ -25,6 +25,8 @@ This repository maintains the Trilitech octez.connect package line under the
 - Require passing CI before merge
 - Publish from signed tags through `.github/workflows/release.yml`
 - Use npm Trusted Publishers, not long-lived automation tokens
+- Release owners (may push `v*` tags and approve the `npm-release` environment):
+  to be named. See `RELEASING.md`.
 
 ## Operational notes
 

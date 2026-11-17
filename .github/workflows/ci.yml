@@ -64,6 +64,9 @@ jobs:
       - name: Run unit tests
         run: ./scripts/npm11.sh run test
 
+      - name: Run release script tests
+        run: ./scripts/npm11.sh run test:scripts
+
   end-to-end:
     name: end-to-end
     # Playwright does not support chromium on ubuntu 26.04 yet, and

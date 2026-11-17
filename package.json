@@ -42,6 +42,7 @@
     "lint:fix": "eslint 'packages/*/src/**/*.ts' --fix",
     "lint:new": "node scripts/lint-new-findings.mjs",
     "test": "node scripts/run-workspaces.mjs test",
+    "test:scripts": "node --test 'scripts/__tests__/*.test.js'",
     "test-ci": "nyc --reporter=lcov npm test",
     "e2e": "playwright test e2e",
     "e2e:smoke": "playwright test e2e --grep-invert @extended",
