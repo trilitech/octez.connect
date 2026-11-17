@@ -50,9 +50,10 @@ for (const pkg of packages) {
 for (const pkg of packages) {
   const spec = `${pkg.manifest.name}@${pkg.manifest.version}`
 
-  // A re-run after a partial publish skips what already went out.
-  if (!dryRun && isAlreadyPublished(pkg)) {
-    console.log(`${spec} is already on npm, skipping.`)
+  // A re-run after a partial publish skips what already went out. The check
+  // is a read, so a dry run does it too and reports what a real run would do.
+  if (isAlreadyPublished(pkg)) {
+    console.log(`${spec} is already on npm, ${dryRun ? 'would skip' : 'skipping'}.`)
     continue
   }
 
