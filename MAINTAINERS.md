@@ -26,7 +26,12 @@ This repository maintains the Trilitech octez.connect package line under the
 - Publish from signed tags through `.github/workflows/release.yml`
 - Use npm Trusted Publishers, not long-lived automation tokens
 - Release owners (may push `v*` tags and approve the `npm-release` environment):
-  to be named. See `RELEASING.md`.
+  the maintainers listed below. See `RELEASING.md`.
+
+## Maintainers
+
+- Pietro Abate ([@abate](https://github.com/abate)), tech lead
+- Devon Nathan ([@devon-n](https://github.com/devon-n))
 
 ## Operational notes
 
