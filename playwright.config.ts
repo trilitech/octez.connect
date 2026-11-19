@@ -101,6 +101,9 @@ export default defineConfig({
   // 8. Reporter(s)—console “list” plus HTML report output under “playwright-report/”
   reporter: [
     ['list'], // simple console output
-    ['html', { outputFolder: './e2e/playwright-report', open: 'never' }]
+    ['html', { outputFolder: './e2e/playwright-report', open: 'never' }],
+    // CI timing record (scripts/ci/write-e2e-metrics.js); only when asked for,
+    // since the json reporter otherwise prints to stdout.
+    ...(process.env.PLAYWRIGHT_JSON_OUTPUT_NAME ? [['json'] as ['json']] : [])
   ]
 })
