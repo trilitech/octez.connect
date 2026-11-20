@@ -41,9 +41,9 @@ npm install --package-lock-only --ignore-scripts
 ## Trusted Publisher releases
 
 Releases are published from GitHub Actions using npm Trusted Publishers. The npm
-package settings must point at `.github/workflows/release.yml` in this repo.
-Avoid introducing long-lived npm publish tokens back into the workflow.
-Prerelease versions publish under the prerelease identifier as the npm dist-tag
-(for example `4.8.4-beta.1` → `beta`) only when the publish is invoked without
-an explicit `--tag`; the release workflow passes `--tag latest`, so override it
-(`--tag <identifier>`) when publishing a prerelease.
+package settings must point at `.github/workflows/release.yml` in this repo and
+the `npm-release` environment. Avoid introducing long-lived npm publish tokens
+back into the workflow. Stable versions publish to `latest`; prerelease versions
+publish under the prerelease identifier as the npm dist-tag (for example
+`5.0.6-rc.1` → `rc`), and the publish script refuses to put a prerelease on
+`latest`. The full procedure and the wallet checklist are in `RELEASING.md`.

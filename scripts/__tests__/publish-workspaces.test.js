@@ -89,3 +89,44 @@ test('resolvePublishCommand falls back to npm on path outside npm-launched proce
     }
   )
 })
+
+const {
+  assertSafePublishTag,
+  checkReleaseTag,
+  effectivePublishTag,
+  getExplicitTagArg
+} = require('../helpers/publish-workspaces')
+
+test('getExplicitTagArg reads both --tag forms', () => {
+  assert.equal(getExplicitTagArg(['--tag', 'next']), 'next')
+  assert.equal(getExplicitTagArg(['--tag=next']), 'next')
+  assert.equal(getExplicitTagArg(['--dry-run']), undefined)
+})
+
+test('effectivePublishTag falls back to npm default latest for stable versions', () => {
+  assert.equal(effectivePublishTag({ version: '5.0.6', extraArgs: [], env: {} }), 'latest')
+  assert.equal(effectivePublishTag({ version: '5.0.6-rc.1', extraArgs: [], env: {} }), 'rc')
+  assert.equal(
+    effectivePublishTag({ version: '5.0.6-rc.1', extraArgs: ['--tag', 'next'], env: {} }),
+    'next'
+  )
+})
+
+test('assertSafePublishTag refuses a prerelease on latest', () => {
+  assert.throws(
+    () => assertSafePublishTag({ version: '5.0.6-rc.1', extraArgs: ['--tag', 'latest'], env: {} }),
+    /Refusing to publish prerelease 5\.0\.6-rc\.1/
+  )
+  assert.throws(
+    () => assertSafePublishTag({ version: '5.0.6-rc.1', extraArgs: [], env: { NPM_DIST_TAG: 'latest' } }),
+    /Refusing/
+  )
+  assert.equal(assertSafePublishTag({ version: '5.0.6-rc.1', extraArgs: [], env: {} }), 'rc')
+  assert.equal(assertSafePublishTag({ version: '5.0.6', extraArgs: [], env: {} }), 'latest')
+})
+
+test('checkReleaseTag requires the tag to name the workspace version', () => {
+  assert.doesNotThrow(() => checkReleaseTag({ refName: 'v5.0.6', version: '5.0.6' }))
+  assert.throws(() => checkReleaseTag({ refName: 'v5.0.7', version: '5.0.6' }), /expected v5\.0\.6/)
+  assert.throws(() => checkReleaseTag({ refName: '5.0.6', version: '5.0.6' }), /expected v5\.0\.6/)
+})

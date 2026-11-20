@@ -7,22 +7,40 @@ on:
 
 permissions:
   contents: read
-  id-token: write
+
+# One release at a time; a second tag waits instead of racing the first.
+concurrency:
+  group: release
+  cancel-in-progress: false
 
 jobs:
-  publish-packages:
-    name: publish-packages
+  verify:
+    name: verify
     if: github.repository == 'trilitech/octez.connect'
-    runs-on: ubuntu-latest
+    # Playwright does not support chromium on ubuntu 26.04 (ubuntu-latest since Nov 2026).
+    runs-on: ubuntu-24.04
     timeout-minutes: 40
 
     steps:
       - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
 
       - uses: actions/setup-node@v6
         with:
           node-version: 22
           cache: npm
+
+      - name: Check the tag matches the workspace version
+        run: node scripts/check-release-tag.mjs "$GITHUB_REF_NAME"
+
+      - name: Check the tagged commit is on master
+        run: |
+          git fetch --no-tags origin master
+          if ! git merge-base --is-ancestor "$GITHUB_SHA" origin/master; then
+            echo "Tag $GITHUB_REF_NAME points at $GITHUB_SHA, which is not on master." >&2
+            exit 1
+          fi
 
       - name: Verify npm 11 runner
         run: ./scripts/npm11.sh --version
@@ -45,5 +63,35 @@ jobs:
       - name: Run end-to-end tests
         run: ./scripts/npm11.sh run e2e:smoke
 
+  publish-packages:
+    name: publish-packages
+    needs: verify
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    # Required reviewers on this environment are the approval step. The npm
+    # Trusted Publisher settings name the same environment, so a publish
+    # from anywhere else is refused by npm.
+    environment: npm-release
+    permissions:
+      contents: read
+      id-token: write
+
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: ./scripts/npm11.sh ci --include=optional
+
+      - name: Build packages
+        run: ./scripts/npm11.sh run build
+
+      # No --tag here: stable versions go to `latest`, prereleases to their
+      # channel (5.0.6-rc.1 -> `rc`). The script refuses a prerelease on
+      # `latest`, and skips packages a previous run already published.
       - name: Publish public packages
-        run: ./scripts/npm11.sh run publish:packages -- --tag latest
+        run: ./scripts/npm11.sh run publish:packages
