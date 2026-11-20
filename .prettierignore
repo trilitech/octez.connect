@@ -9,5 +9,4 @@
 coverage
 dist
 node_modules
-npm-ci-publish-prerelease.sh
 npm-ci-publish.sh
