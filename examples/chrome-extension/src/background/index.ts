@@ -139,6 +139,20 @@ async function handleBeaconMessage(message: any, connectionInfo: any, peerPublic
     }).catch(() => {})
   } catch (error) {
     console.error('[Background] Error handling beacon message:', error)
+
+    // A request that cannot be shown is answered, not left hanging.
+    if (error instanceof formatter.RequestRefusedError) {
+      try {
+        const response = formatter.toBeaconError(message, error.errorType, '')
+        if (peerPublicKey) {
+          await sendEncryptedResponse(response, peerPublicKey)
+        } else {
+          await (await getOrCreateWalletClient()).respond(response as any)
+        }
+      } catch (respondError) {
+        console.error('[Background] Could not answer refused request:', respondError)
+      }
+    }
   }
 }
 

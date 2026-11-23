@@ -26,9 +26,11 @@
   },
   "dependencies": {
     "@tezos-x/octez.connect-types": "file:../../packages/octez.connect-types",
+    "@tezos-x/octez.connect-utils": "file:../../packages/octez.connect-utils",
     "@tezos-x/octez.connect-wallet": "file:../../packages/octez.connect-wallet",
-    "@tezos-x/octez.js-signer": "0.9.0",
     "@tezos-x/octez.js": "0.9.0",
+    "@tezos-x/octez.js-local-forging": "0.9.0",
+    "@tezos-x/octez.js-signer": "0.9.0",
     "bip39": "^3.1.0",
     "buffer": "^6.0.3"
   }
