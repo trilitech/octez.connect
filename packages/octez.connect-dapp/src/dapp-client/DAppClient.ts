@@ -124,7 +124,9 @@ import {
   CONTRACT_PREFIX,
   prefixPublicKey,
   isValidAddress,
-  getKeypairFromSeed
+  getKeypairFromSeed,
+  assertSignPayloadConsistent,
+  SignPayloadConsistencyError
 } from '@tezos-x/octez.connect-utils'
 import { PostMessageTransport } from '@tezos-x/octez.connect-transport-postmessage'
 import {
@@ -2116,31 +2118,20 @@ export class DAppClient extends Client {
       throw new Error('Payload must be a string')
     }
 
-    const signingType = ((): SigningType => {
-      switch (input.signingType) {
-        case SigningType.OPERATION:
-          if (!payload.startsWith('03')) {
-            throw new Error(
-              'When using signing type "OPERATION", the payload must start with prefix "03"'
-            )
-          }
+    // An omitted signing type keeps its historical default (RAW); a value that is
+    // present but unknown is an error rather than a silent RAW.
+    const signingType: SigningType = input.signingType === undefined ? SigningType.RAW : input.signingType
 
-          return SigningType.OPERATION
-
-        case SigningType.MICHELINE:
-          if (!payload.startsWith('05')) {
-            throw new Error(
-              'When using signing type "MICHELINE", the payload must start with prefix "05"'
-            )
-          }
-
-          return SigningType.MICHELINE
-
-        case SigningType.RAW:
-        default:
-          return SigningType.RAW
+    try {
+      assertSignPayloadConsistent(signingType, payload, {
+        onWarning: (warning) => logger.warn('requestSignPayload', warning)
+      })
+    } catch (error) {
+      if (error instanceof SignPayloadConsistencyError) {
+        throw new Error(error.message)
       }
-    })()
+      throw error
+    }
 
     this.analytics.track('event', 'DAppClient', 'Signature requested')
 
