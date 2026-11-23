@@ -100,8 +100,64 @@ jobs:
       - name: Check example pages use only our relays
         run: node scripts/check-example-relays.mjs
 
+      # Capture the exit code, write the timing record, then re-exit with the
+      # test result so a failing suite still fails the job.
       - name: Run end-to-end tests
-        run: ./scripts/npm11.sh run e2e:smoke
+        env:
+          PLAYWRIGHT_JSON_OUTPUT_NAME: ci-metrics/playwright-results.json
+        run: |
+          mkdir -p ci-metrics
+          started="$(date +%s)"
+          set +e
+          ./scripts/npm11.sh run e2e:smoke
+          code=$?
+          set -e
+          node scripts/ci/write-e2e-metrics.js end-to-end "$code" "$started" ci-metrics/playwright-results.json || true
+          exit "$code"
+
+      - name: Upload e2e timing record
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: e2e-timing-end-to-end
+          path: ci-metrics/
+          retention-days: 30
+          if-no-files-found: warn
+
+  # Report-only: probes the relays while the end-to-end job runs, so a failing
+  # pairing test can be matched against relay faults afterwards.
+  relay-health-monitor:
+    name: relay-health-monitor
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    continue-on-error: true
+    permissions:
+      contents: read
+      actions: read # list this run's jobs to see when end-to-end completes
+
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 22
+
+      - name: Poll relay health until end-to-end completes
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          POLL_INTERVAL_SECONDS: '15'
+          POLL_MAX_DURATION_SECONDS: '1200'
+          POLL_WATCH_JOB_NAME: end-to-end
+        run: node scripts/ci/poll-relay-health.js
+
+      - name: Upload relay health timeline
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: relay-health-timeline
+          path: ci-metrics/
+          retention-days: 30
+          if-no-files-found: warn
 
   firefox-extension-e2e:
     name: firefox-extension-e2e
@@ -142,4 +198,21 @@ jobs:
           token: ${{ github.token }}
 
       - name: Run real-Firefox content-script harness (#32, headless via xvfb)
-        run: xvfb-run -a ./scripts/npm11.sh run e2e:firefox-ext
+        run: |
+          mkdir -p ci-metrics
+          started="$(date +%s)"
+          set +e
+          xvfb-run -a ./scripts/npm11.sh run e2e:firefox-ext
+          code=$?
+          set -e
+          node scripts/ci/write-e2e-metrics.js firefox-extension-e2e "$code" "$started" || true
+          exit "$code"
+
+      - name: Upload e2e timing record
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: e2e-timing-firefox-extension-e2e
+          path: ci-metrics/
+          retention-days: 30
+          if-no-files-found: warn
