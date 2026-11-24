@@ -2135,10 +2135,16 @@ export class DAppClient extends Client {
 
     this.analytics.track('event', 'DAppClient', 'Signature requested')
 
+    // The check accepts a "0x" prefix on hex payloads. Wallets expect bare hex, so it is
+    // removed for operation and micheline (already verified to be hex). RAW is text or
+    // opaque data and is forwarded unchanged.
+    const forwardedPayload =
+      signingType !== SigningType.RAW && /^0x/i.test(payload) ? payload.slice(2) : payload
+
     const request: SignPayloadRequestInput = {
       type: BeaconMessageType.SignPayloadRequest,
       signingType,
-      payload,
+      payload: forwardedPayload,
       sourceAddress: input.sourceAddress || activeAccount.address
     }
 

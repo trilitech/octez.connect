@@ -897,4 +897,36 @@ describe('DAppClient.requestSignPayload — payload/signing type consistency', (
       expect.objectContaining({ signingType: SigningType.OPERATION })
     )
   })
+
+  it('strips a 0x prefix from OPERATION and MICHELINE payloads before forwarding', async () => {
+    ;(client as any).checkMakeRequest.mockResolvedValue(true)
+    await expect(
+      client.requestSignPayload({ signingType: SigningType.OPERATION, payload: '0x03abcdef' })
+    ).rejects.toBe(SENTINEL)
+    await expect(
+      client.requestSignPayload({ signingType: SigningType.MICHELINE, payload: '0X050100' })
+    ).rejects.toBe(SENTINEL)
+    expect(sent).toHaveBeenNthCalledWith(1, expect.objectContaining({ payload: '03abcdef' }))
+    expect(sent).toHaveBeenNthCalledWith(2, expect.objectContaining({ payload: '050100' }))
+  })
+
+  it('forwards a RAW payload unchanged, including a 0x prefix', async () => {
+    ;(client as any).checkMakeRequest.mockResolvedValue(true)
+    await expect(
+      client.requestSignPayload({ signingType: SigningType.RAW, payload: '0xhello' })
+    ).rejects.toBe(SENTINEL)
+    expect(sent).toHaveBeenCalledWith(expect.objectContaining({ payload: '0xhello' }))
+  })
+
+  it.each([
+    ['trailing space', '03abcd '],
+    ['trailing newline', '03abcd\n'],
+    ['odd length', '03abc'],
+    ['non-hex tail', '03abcdzz']
+  ])('rejects RAW payload with %s that starts like an operation', async (_l, payload) => {
+    await expect(
+      client.requestSignPayload({ signingType: SigningType.RAW, payload })
+    ).rejects.toThrow(/operation/)
+    expect(sent).not.toHaveBeenCalled()
+  })
 })
