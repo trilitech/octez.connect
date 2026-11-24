@@ -27,6 +27,16 @@ const HEX_REGEX = /^[0-9a-fA-F]+$/
 // is refused, the others are only reported.
 const WATERMARKS_WARNED_UNDER_RAW = ['01', '02', '11', '12', '13']
 
+// Under RAW the payload may be text, so it is not required to be strict hex.
+// A wallet that decodes it with a lenient hex decoder (for example Node's
+// `Buffer.from(p, 'hex')`, which stops at the first invalid character) would
+// still read bytes from "03ab " or "03abcdzz". The check below therefore only
+// looks at the first byte plus one more hex byte-sized pair, and ignores what follows.
+const LENIENT_OPERATION_REGEX = /^03[0-9a-fA-F]{2}/
+const LENIENT_WARNED_REGEX = new RegExp(
+  `^(${WATERMARKS_WARNED_UNDER_RAW.join('|')})[0-9a-fA-F]{2}`
+)
+
 const isHex = (value: string): boolean => value.length % 2 === 0 && HEX_REGEX.test(value)
 
 export interface AssertSignPayloadOptions {
@@ -39,9 +49,13 @@ export interface AssertSignPayloadOptions {
  *
  * - `operation`: even-length hex starting with `03`.
  * - `micheline`: even-length hex starting with `05`.
- * - `raw`: anything non-empty, except hex starting with `03` (an operation
- *   that must be sent as `operation`). Hex starting with `01`, `02`, `11`, `12`
- *   or `13` is accepted and reported through `options.onWarning`.
+ * - `raw`: anything non-empty, except a payload that starts with `03` followed
+ *   by two more hex digits (an operation that must be sent as `operation`).
+ *   This is a prefix match: trailing characters, odd length or non-hex tails
+ *   do not make the payload text, because lenient hex decoders still read
+ *   bytes from it. Text such as "03ab..." is therefore refused as well.
+ *   A prefix of `01`, `02`, `11`, `12` or `13` followed by two hex digits is
+ *   accepted and reported through `options.onWarning`.
  *
  * An optional `0x` prefix is ignored. Hex is matched case-insensitively.
  *
@@ -95,16 +109,19 @@ export const assertSignPayloadConsistent = (
 
       return
     case SigningType.RAW:
-      if (hex && prefix === '03') {
+      if (LENIENT_OPERATION_REGEX.test(body)) {
         throw new SignPayloadConsistencyError(
           'payload-mismatch',
           'A payload starting with "03" is an operation and must use signing type "operation"'
         )
       }
-      if (hex && WATERMARKS_WARNED_UNDER_RAW.includes(prefix)) {
-        options.onWarning?.(
-          `Signing type "raw" with a payload starting with watermark byte "${prefix}"`
-        )
+      {
+        const warned = LENIENT_WARNED_REGEX.exec(body)
+        if (warned) {
+          options.onWarning?.(
+            `Signing type "raw" with a payload starting with watermark byte "${warned[1]}"`
+          )
+        }
       }
 
       return
