@@ -1,0 +1,53 @@
+name: Real phones
+
+# Nightly wallet-picker check on real phones via BrowserStack (free
+# open-source plan). Not run for PRs: fork PRs can't read the secrets.
+on:
+  schedule:
+    - cron: '0 2 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: real-phones
+  cancel-in-progress: false
+
+jobs:
+  real-phones:
+    name: real-phones
+    # Forks have no BrowserStack secrets; skip there instead of failing nightly.
+    if: github.repository == 'trilitech/octez.connect'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: ./scripts/npm11.sh ci --include=optional
+
+      - name: Build packages
+        run: ./scripts/npm11.sh run build
+
+      - name: Serve example pages
+        run: |
+          node scripts/static-server.js examples 1234 > /tmp/static-server.log 2>&1 &
+          curl -sf --retry 30 --retry-connrefused --retry-delay 1 -o /dev/null http://localhost:1234/dapp.html || { cat /tmp/static-server.log; exit 1; }
+
+      - name: Run on real phones
+        working-directory: e2e-phones
+        env:
+          BROWSERSTACK_USERNAME: ${{ secrets.BROWSERSTACK_USERNAME }}
+          BROWSERSTACK_ACCESS_KEY: ${{ secrets.BROWSERSTACK_ACCESS_KEY }}
+        run: |
+          if [ -z "$BROWSERSTACK_USERNAME" ] || [ -z "$BROWSERSTACK_ACCESS_KEY" ]; then
+            echo "::error::BrowserStack secrets are not set"; exit 1
+          fi
+          npx -y browserstack-node-sdk@1.80.3 playwright test
