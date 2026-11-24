@@ -15,6 +15,7 @@
 
 import { InMemorySigner } from '@tezos-x/octez.js-signer'
 import { TezosToolkit, OpKind } from '@tezos-x/octez.js'
+import { assertSignPayloadConsistent } from '@tezos-x/octez.connect-utils'
 import * as bip39 from 'bip39'
 import type {
   WalletProviderWithSetup,
@@ -45,6 +46,10 @@ export class TaquitoProvider implements WalletProviderWithSetup {
     if (!this.signer) {
       throw new Error('Wallet not initialized')
     }
+
+    // The caller is not trusted: re-check that the payload matches the signing type, whatever the
+    // layers above did. Copy this check into your own wallet.
+    assertSignPayloadConsistent(signingType, payload)
 
     // Normalize payload - remove 0x prefix if present
     const normalizedPayload = payload.startsWith('0x') ? payload.slice(2) : payload

@@ -41,5 +41,8 @@
     "@tezos-x/octez.connect-transport-postmessage": "5.0.6-rc.0",
     "@tezos-x/octez.connect-types": "5.0.6-rc.0",
     "@tezos-x/octez.connect-utils": "5.0.6-rc.0"
+  },
+  "devDependencies": {
+    "@tezos-x/octez.js-local-forging": "0.9.0"
   }
 }

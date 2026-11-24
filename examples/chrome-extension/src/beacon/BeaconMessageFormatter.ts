@@ -9,9 +9,9 @@ import {
   type SignPayloadRequestOutput,
   type OperationRequest,
   type OperationRequestOutput,
-  type PermissionScope,
-  SigningType
+  type PermissionScope
 } from '@tezos-x/octez.connect-types'
+import { assertSignPayloadConsistent, SignPayloadConsistencyError } from '@tezos-x/octez.connect-utils'
 
 import type {
   UIRequest,
@@ -21,6 +21,20 @@ import type {
   NetworkConfig,
   TezosOperation
 } from './types'
+
+/**
+ * Thrown when a request cannot be shown to the user because it is malformed. It carries the
+ * Beacon error the dApp should be answered with.
+ */
+export class RequestRefusedError extends Error {
+  constructor(
+    message: string,
+    public readonly errorType: BeaconErrorType
+  ) {
+    super(message)
+    Object.setPrototypeOf(this, RequestRefusedError.prototype)
+  }
+}
 
 // V2 beacon request types
 export type BeaconRequest =
@@ -73,13 +87,29 @@ function toUIPermissionRequest(message: PermissionRequest | PermissionRequestOut
 }
 
 function toUISignRequest(message: SignPayloadRequestOutput): UISignRequest {
+  // The signing type decides what the payload means: a missing or unknown one must not be
+  // treated as RAW. Refuse the request instead.
+  try {
+    assertSignPayloadConsistent(message.signingType, message.payload)
+  } catch (error) {
+    if (error instanceof SignPayloadConsistencyError) {
+      throw new RequestRefusedError(
+        error.message,
+        error.reason === 'unsupported-signing-type'
+          ? BeaconErrorType.SIGNATURE_TYPE_NOT_SUPPORTED
+          : BeaconErrorType.PARAMETERS_INVALID_ERROR
+      )
+    }
+    throw error
+  }
+
   return {
     id: message.id,
     type: 'sign',
     appName: message.appMetadata?.name || 'Unknown App',
     appIcon: message.appMetadata?.icon,
-    payload: message.payload || '',
-    signingType: message.signingType || SigningType.RAW
+    payload: message.payload,
+    signingType: message.signingType
   }
 }
 
@@ -90,10 +120,11 @@ function toUIOperationRequest(message: OperationRequestOutput): UIOperationReque
     appName: message.appMetadata?.name || 'Unknown App',
     appIcon: message.appMetadata?.icon,
     operations: (message.operationDetails as TezosOperation[]) || [],
-    network: {
-      type: message.network?.type || 'mainnet',
-      rpcUrl: message.network?.rpcUrl
-    }
+    // `network` is a Network object, or a CAIP-2 chain id string on the multi-network path.
+    network:
+      typeof message.network === 'string'
+        ? { type: message.network }
+        : { type: message.network?.type || 'mainnet', rpcUrl: message.network?.rpcUrl }
   }
 }
 
@@ -134,7 +165,7 @@ export function toBeaconSignResponse(
   return {
     id: request.id,
     type: BeaconMessageType.SignPayloadResponse,
-    signingType: v2.signingType || SigningType.RAW,
+    signingType: v2.signingType,
     signature: result.signature
   }
 }
@@ -155,12 +186,14 @@ export function toBeaconError(
   request: BeaconRequest,
   errorType: BeaconErrorType,
   _walletSenderId: string,
-  errorData?: unknown
+  errorData?: unknown,
+  description?: string
 ): unknown {
   return {
     id: request.id,
     type: BeaconMessageType.Error,
     errorType,
-    ...(errorData ? { errorData } : {})
+    ...(errorData ? { errorData } : {}),
+    ...(description ? { description } : {})
   }
 }
