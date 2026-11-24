@@ -28,6 +28,7 @@ export {
 export type { SessionKeys } from './utils/crypto'
 export {
   assertSignPayloadConsistent,
+  encodeTezosSignedMessage,
   SignPayloadConsistencyError,
   type SignPayloadConsistencyReason,
   type AssertSignPayloadOptions

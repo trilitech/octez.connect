@@ -1,6 +1,7 @@
 import { SigningType } from '@tezos-x/octez.connect-types'
 import {
   assertSignPayloadConsistent,
+  encodeTezosSignedMessage,
   SignPayloadConsistencyError
 } from '../../src/utils/sign-payload'
 
@@ -108,5 +109,34 @@ describe('assertSignPayloadConsistent', () => {
       ).toThrow()
       expect(warn).not.toHaveBeenCalled()
     })
+  })
+})
+
+describe('encodeTezosSignedMessage', () => {
+  // Beacon docs vector. The expected hex was derived independently: the text is
+  // 66 bytes (0x42), prefixed with 05 01 and the 4-byte length.
+  const text = 'Tezos Signed Message: mydapp.com 2021-01-14T15:16:04Z Hello world!'
+  const expected =
+    '05010000004254657a6f73205369676e6564204d6573736167653a206d79646170702e636f6d20323032312d30312d31345431353a31363a30345a2048656c6c6f20776f726c6421'
+
+  it('matches the Beacon docs vector', () => {
+    expect(encodeTezosSignedMessage(text)).toBe(expected)
+    expect(expected.slice(0, 12)).toBe('050100000042')
+  })
+
+  it('counts UTF-8 bytes, not characters or hex digits', () => {
+    // 'é' is 1 character, 2 bytes
+    expect(encodeTezosSignedMessage('é')).toBe('0501000000' + '02' + 'c3a9')
+    expect(encodeTezosSignedMessage('')).toBe('050100000000')
+  })
+
+  it('length field equals the byte count of the body', () => {
+    const out = encodeTezosSignedMessage('a'.repeat(300))
+    expect(parseInt(out.slice(4, 12), 16)).toBe(300)
+    expect((out.length - 12) / 2).toBe(300)
+  })
+
+  it('is accepted as a micheline payload', () => {
+    expect(() => assertSignPayloadConsistent(SigningType.MICHELINE, encodeTezosSignedMessage(text))).not.toThrow()
   })
 })
