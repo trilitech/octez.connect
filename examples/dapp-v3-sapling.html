@@ -294,7 +294,10 @@
       document.getElementById('signPayloadOperation').addEventListener('click', async () => {
         const signature = await client.requestSignPayload({
           signingType: beacon.SigningType.OPERATION,
-          payload: '03test'
+          // Forged transaction (1 tez) with the 03 watermark, produced with
+          // @tezos-x/octez.js-local-forging (LocalForger.forge). Not broadcastable.
+          payload:
+            '038fcf233671b6a04fcf679d2a381c2544ea6c1ea29ba6157776ed842426e5cab86c006b82198cb179e8306c1bedd08f12dc863f328886900301dc0b00c0843d0000a26828841890d3f3a2a1d4083839c7a882fe050100'
         })
 
         console.log('signature:', signature)
