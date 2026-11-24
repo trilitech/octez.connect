@@ -3,6 +3,7 @@
 import { Client, LocalStorage } from '@tezos-x/octez.connect-core'
 import { StorageKey } from '@tezos-x/octez.connect-types'
 import { WalletClient } from '../../src/client/WalletClient'
+import { toHex } from '@tezos-x/octez.connect-utils'
 import { WalletP2PTransport } from '../../src/transports/WalletP2PTransport'
 
 const fetchMock = jest.fn()
@@ -147,6 +148,22 @@ describe('WalletClient', () => {
       expect(challenge).toEqual({ id: 'challenge-id', timestamp: '2025-04-24T12:00:00Z' })
       // toHex is mocked to 'abcd'
       expect(payloadToSign).toBe('050100000004abcd')
+    })
+
+    // The push backend's /retrieve-accounts rebuilds this payload with the length written as the
+    // number of hex characters, not of bytes. The encoding is therefore pinned on purpose: do not
+    // switch it to the byte length (encodeTezosSignedMessage) without changing that service.
+    it('keeps writing the hex-character length in the length field (backend compatibility)', async () => {
+      // 8 hex characters = 4 bytes: the length field must say 8, not 4.
+      ;(toHex as jest.Mock).mockReturnValueOnce('c3a9c3a9')
+
+      const { payloadToSign } = await client.getRegisterPushChallenge(
+        backendUrl,
+        accountKey,
+        oracleUrl
+      )
+
+      expect(payloadToSign).toBe('05' + '01' + '00000008' + 'c3a9c3a9')
     })
   })
 

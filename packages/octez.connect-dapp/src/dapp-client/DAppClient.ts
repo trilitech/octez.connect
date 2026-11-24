@@ -119,7 +119,7 @@ import {
   getAddressFromPublicKey,
   ExposedPromise,
   generateGUID,
-  toHex,
+  encodeTezosSignedMessage,
   signMessage,
   CONTRACT_PREFIX,
   prefixPublicKey,
@@ -3443,8 +3443,9 @@ export class DAppClient extends Client {
       payload
     ].join(' ')
 
-    const bytes = toHex(constructedString)
-    const payloadBytes = `05` + `01${  bytes.length.toString(16).padStart(8, '0')  }${bytes}`
+    // 05 01 + 4-byte BYTE length + utf8 hex. The previous hand-built form used
+    // the hex-character count (twice the byte count) as the length.
+    const payloadBytes = encodeTezosSignedMessage(constructedString)
 
     const signature = await signMessage(payloadBytes, {
       secretKey: Buffer.from(keypair.secretKey)
