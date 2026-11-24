@@ -14,6 +14,7 @@ import { ExposedPromise, toHex } from '@tezos-x/octez.connect-utils'
 
 import {
   ConnectionContext,
+  Origin,
   BeaconRequestMessage,
   BeaconMessageType,
   AcknowledgeResponseInput,
@@ -136,11 +137,38 @@ export class WalletClient extends Client {
         BeaconMessageType.ChangeAccountRequest
       ]
 
+      // The wrapped dialect is identified by its payload, not by the version
+      // alone: dApps on the 4.x line pair as version 3 but send `disconnect` as
+      // a flat message ({ id, version: '3', senderId, type }), so reading
+      // `.message.type` on it threw and the peer was never removed (#65).
+      // Only a disconnect is taken down the flat branch; any other
+      // payload-less message is dropped instead of throwing. In both cases
+      // `disconnect()` only removes a peer that is paired under that senderId.
+      const hasWrappedPayload = Boolean(
+        (message as BeaconMessageWrapper<BeaconBaseMessage>).message
+      )
+
+      if (usesWrappedMessages(message.version) && !hasWrappedPayload) {
+        const flat = message as DisconnectMessage
+
+        if (flat.type === BeaconMessageType.Disconnect) {
+          return this.disconnect(flat.senderId, connectionContext)
+        }
+
+        logger.log(
+          'handleResponse',
+          'dropping a version 3 message without a wrapped payload that is not a disconnect',
+          (message as { type?: unknown }).type
+        )
+
+        return
+      }
+
       if (usesWrappedMessages(message.version)) {
         const typedMessage = message as BeaconMessageWrapper<BeaconBaseMessage>
 
         if (typedMessage.message.type === BeaconMessageType.Disconnect) {
-          return this.disconnect(typedMessage.senderId)
+          return this.disconnect(typedMessage.senderId, connectionContext)
         }
 
         // Filter out response types (echoed back from Matrix room)
@@ -168,7 +196,7 @@ export class WalletClient extends Client {
         const typedMessage = message as BeaconRequestMessage | DisconnectMessage
 
         if (typedMessage.type === BeaconMessageType.Disconnect) {
-          return this.disconnect(typedMessage.senderId)
+          return this.disconnect(typedMessage.senderId, connectionContext)
         }
 
         // Filter out response types (echoed back from Matrix room)
@@ -561,10 +589,38 @@ export class WalletClient extends Client {
     }
   }
 
-  private async disconnect(senderId: string) {
+  /**
+   * Removes the peer named by `senderId`, but only if the message arrived on that peer's own channel.
+   *
+   * The `senderId` is read from the message body. On the P2P and WalletConnect transports the
+   * listener is registered per peer and `connectionContext.id` is that peer's public key (the
+   * messages are decrypted with the key shared with that peer), so the named peer must have
+   * `publicKey === connectionContext.id`. This is a plain comparison with the stored peer, so it
+   * holds for both transports; deriving `getSenderId(connectionContext.id)` would not, because a
+   * WalletConnect peer's senderId is its raw public key, not the hash.
+   *
+   * On the extension (postMessage) transport `connectionContext.id` is the browser extension id,
+   * not a peer key, so the binding cannot be expressed with it and the previous behaviour is kept.
+   */
+  private async disconnect(senderId: string, connectionContext?: ConnectionContext) {
     const transport = await this.transport
     const peers: ExtendedPeerInfo[] = await transport.getPeers()
     const peer: ExtendedPeerInfo | undefined = peers.find((peerEl) => peerEl.senderId === senderId)
+
+    if (
+      peer &&
+      connectionContext &&
+      (connectionContext.origin === Origin.P2P ||
+        connectionContext.origin === Origin.WALLETCONNECT) &&
+      peer.publicKey !== connectionContext.id
+    ) {
+      logger.warn(
+        'disconnect',
+        'ignoring a disconnect that names a peer other than the one it arrived from'
+      )
+
+      return
+    }
 
     if (peer) {
       await this.removePeer(peer as any)
