@@ -104,3 +104,7 @@ Once the SDK is built, you can open [`examples/dapp.html`](./examples/dapp.html)
 [`examples/wallet.html`](./examples/wallet.html) in your
 browser and try the basic functionality. To support browser extensions, the
 examples should be served over HTTP rather than opened directly from disk.
+
+## Testing
+
+This project is tested with BrowserStack
