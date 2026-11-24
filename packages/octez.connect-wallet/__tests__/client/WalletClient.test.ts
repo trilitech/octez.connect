@@ -23,7 +23,7 @@ const jsonResponse = <T>(data: T): Response =>
     status: 200,
     statusText: 'OK',
     json: async () => data
-  } as unknown as Response)
+  }) as unknown as Response
 
 // Stub out all of beacon-utils, including generateGUID
 jest.mock('@tezos-x/octez.connect-utils', () => ({
@@ -256,18 +256,23 @@ describe('WalletClient', () => {
   })
 
   describe('handleResponse() disconnect', () => {
-    const pairedPeer = { id: 'p1', senderId: 'paired-sender', version: '3' }
+    // Two paired peers. `publicKey` is what the transport uses as `connectionContext.id`
+    // for the P2P and WalletConnect transports.
+    const pairedPeer = { id: 'p1', senderId: 'paired-sender', publicKey: 'pk-A', version: '3' }
+    const otherPeer = { id: 'p2', senderId: 'other-sender', publicKey: 'pk-B', version: '3' }
     let removePeerSpy: jest.SpyInstance
     let callback: jest.Mock
 
-    const handle = (message: any) =>
-      (client as any).handleResponse(message, { origin: 'p2p', id: 'x' })
+    const handle = (message: any, context: any = { origin: 'p2p', id: 'pk-A' }) =>
+      (client as any).handleResponse(message, context)
 
     beforeEach(async () => {
       jest.spyOn(client as any, '_connect').mockResolvedValue(undefined)
-      jest.spyOn(client as any, 'transport', 'get').mockReturnValue(
-        Promise.resolve({ getPeers: jest.fn().mockResolvedValue([pairedPeer]) } as any)
-      )
+      jest
+        .spyOn(client as any, 'transport', 'get')
+        .mockReturnValue(
+          Promise.resolve({ getPeers: jest.fn().mockResolvedValue([pairedPeer, otherPeer]) } as any)
+        )
       removePeerSpy = jest.spyOn(client, 'removePeer').mockResolvedValue(undefined)
       callback = jest.fn()
       await client.connect(callback)
@@ -290,7 +295,9 @@ describe('WalletClient', () => {
       await expect(
         handle({ id: 'm1', version: '3', senderId: 'paired-sender', type: 'permission_request' })
       ).resolves.toBeUndefined()
-      await expect(handle({ id: 'm2', version: '3', senderId: 'paired-sender' })).resolves.toBeUndefined()
+      await expect(
+        handle({ id: 'm2', version: '3', senderId: 'paired-sender' })
+      ).resolves.toBeUndefined()
 
       expect(removePeerSpy).not.toHaveBeenCalled()
       expect(callback).not.toHaveBeenCalled()
@@ -322,6 +329,62 @@ describe('WalletClient', () => {
       await handle({ id: 'm1', version: '2', senderId: 'paired-sender', type: 'disconnect' })
 
       expect(removePeerSpy).toHaveBeenCalledTimes(1)
+    })
+
+    describe('a disconnect is bound to the channel it arrived on', () => {
+      const dialects: [string, (senderId: string) => any][] = [
+        ['flat v3', (senderId) => ({ id: 'm1', version: '3', senderId, type: 'disconnect' })],
+        ['flat v2', (senderId) => ({ id: 'm1', version: '2', senderId, type: 'disconnect' })],
+        [
+          'wrapped v3',
+          (senderId) => ({ id: 'm1', version: '3', senderId, message: { type: 'disconnect' } })
+        ]
+      ]
+
+      it.each(dialects)(
+        "%s: a disconnect on A's channel naming B does not remove B",
+        async (_name, build) => {
+          await handle(build(otherPeer.senderId), { origin: 'p2p', id: pairedPeer.publicKey })
+
+          expect(removePeerSpy).not.toHaveBeenCalled()
+        }
+      )
+
+      it.each(dialects)(
+        "%s: a disconnect on A's channel naming A still works",
+        async (_n, build) => {
+          await handle(build(pairedPeer.senderId), { origin: 'p2p', id: pairedPeer.publicKey })
+
+          expect(removePeerSpy).toHaveBeenCalledTimes(1)
+          expect(removePeerSpy).toHaveBeenCalledWith(pairedPeer)
+        }
+      )
+
+      it.each(dialects)(
+        '%s: the same binding applies on the WalletConnect transport',
+        async (_name, build) => {
+          await handle(build(otherPeer.senderId), {
+            origin: 'walletconnect',
+            id: pairedPeer.publicKey
+          })
+          expect(removePeerSpy).not.toHaveBeenCalled()
+
+          await handle(build(otherPeer.senderId), {
+            origin: 'walletconnect',
+            id: otherPeer.publicKey
+          })
+          expect(removePeerSpy).toHaveBeenCalledWith(otherPeer)
+        }
+      )
+
+      it('keeps the previous behaviour on the extension transport (id is the extension id)', async () => {
+        await handle(
+          { id: 'm1', version: '3', senderId: otherPeer.senderId, type: 'disconnect' },
+          { origin: 'extension', id: 'chrome-extension-id' }
+        )
+
+        expect(removePeerSpy).toHaveBeenCalledWith(otherPeer)
+      })
     })
   })
 })
