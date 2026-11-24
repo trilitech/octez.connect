@@ -112,3 +112,29 @@ export const assertSignPayloadConsistent = (
       return
   }
 }
+
+/**
+ * Encodes text as a framed Tezos signed message, the form that is safe to sign
+ * with `signMessage` or to send as a `micheline` sign request:
+ * `05` + `01` + 4-byte big-endian BYTE length of the UTF-8 text + the UTF-8
+ * bytes, all as lowercase hex.
+ *
+ * The length is the number of UTF-8 bytes, not the number of characters and
+ * not the number of hex characters. The `05` prefix marks the payload as a
+ * Micheline expression, so a signature over it can never be replayed as a
+ * Tezos operation (`03`). By convention the text starts with
+ * `Tezos Signed Message: `.
+ *
+ * @example
+ * encodeTezosSignedMessage('Tezos Signed Message: mydapp.com 2021-01-14T15:16:04Z Hello world!')
+ * // '05010000004254657a6f73205369676e6564...'
+ */
+export const encodeTezosSignedMessage = (text: string): string => {
+  if (typeof text !== 'string') {
+    throw new TypeError('encodeTezosSignedMessage expects a string')
+  }
+
+  const bytes = Buffer.from(text, 'utf8')
+
+  return `0501${bytes.length.toString(16).padStart(8, '0')}${bytes.toString('hex')}`
+}

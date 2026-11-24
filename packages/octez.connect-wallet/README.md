@@ -9,6 +9,19 @@ This is a primary package in the Trilitech-maintained octez.connect SDK line and
 ```sh
 npm install @tezos-x/octez.connect-wallet
 ```
+## Signing payloads
+
+A sign request carries a hex `payload` and a `signingType`. Treat the payload as untrusted input from the dApp and decide what to show the user from its content, not from the label alone.
+
+- `operation`: the payload starts with `03`. Decode it and show the operations it contains (destination, amount, parameters), and treat the request like an operation request: same review, same confirmation.
+- `micheline`: the payload starts with `05`. Decode and show the expression. Text is carried as a framed message (see below).
+- `raw`: the payload must not start with `03`, because that would be an operation signed without the review an operation request gets. Refuse it, or show it as an operation. Payloads starting with `01`, `02`, `11`, `12` or `13` look like consensus watermarks and are unusual for `raw`.
+- Unknown signing types must be rejected.
+
+For text, prefer a framed message: `05` + `01` + 4-byte big-endian byte length + UTF-8 bytes. A dApp can build it with `encodeTezosSignedMessage(text)` from `@tezos-x/octez.connect-utils`; a wallet can use the same function to recognise and display it. By convention the text starts with `Tezos Signed Message: `, followed by the dApp's domain, a timestamp and the message.
+
+`signMessage` in `@tezos-x/octez.connect-utils` signs the bytes it is given with no watermark and no framing. It is meant for the transport keypair only. Never use it to sign with a user's account key or with a payload supplied by a dApp.
+
 ## Package provenance
 
 This package is published from the Trilitech-maintained octez.connect repository:
