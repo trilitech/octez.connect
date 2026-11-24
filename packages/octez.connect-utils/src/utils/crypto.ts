@@ -267,6 +267,19 @@ const coinlibhash = async (message: Uint8Array, size: number = 32): Promise<Uint
   return hash(message, size)
 }
 
+/**
+ * Signs raw bytes with the given secret key: blake2b-32 of the decoded message
+ * bytes, then ed25519, returned as an `edsig` string. It adds no watermark and
+ * no framing, so the signature is valid for whatever bytes were passed in.
+ *
+ * It is meant for the transport keypair (pairing and protocol messages). Never
+ * call it with a user's account key, and never with a payload that a dApp or
+ * another third party supplied. To sign text, build the payload with
+ * `encodeTezosSignedMessage` first.
+ *
+ * @param message The payload as hex (or the string `toBuffer` decodes).
+ * @param keypair The key pair whose `secretKey` signs.
+ */
 export const signMessage = async (
   message: string,
   keypair: { secretKey: Buffer }
