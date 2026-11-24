@@ -15,8 +15,9 @@ A sign request carries a hex `payload` and a `signingType`. Treat the payload as
 
 - `operation`: the payload starts with `03`. Decode it and show the operations it contains (destination, amount, parameters), and treat the request like an operation request: same review, same confirmation.
 - `micheline`: the payload starts with `05`. Decode and show the expression. Text is carried as a framed message (see below).
-- `raw`: the payload must not start with `03`, because that would be an operation signed without the review an operation request gets. Refuse it, or show it as an operation. Payloads starting with `01`, `02`, `11`, `12` or `13` look like consensus watermarks and are unusual for `raw`.
+- `raw`: the payload must not start with `03` followed by two hex digits, whatever comes after (`03abcd `, `03abc` and `03abcdzz` are decoded by lenient hex decoders into bytes starting with `03`), because that would be an operation signed without the review an operation request gets. Refuse it, or show it as an operation. Payloads starting with `01`, `02`, `11`, `12` or `13` followed by two hex digits look like consensus watermarks and are unusual for `raw`.
 - Unknown signing types must be rejected.
+- Decode hex strictly: accept only an even number of `0-9a-fA-F` characters (after an optional `0x`) and reject anything else. Do not use a lenient decoder such as `Buffer.from(payload, 'hex')`, which stops at the first invalid character and silently returns the bytes before it.
 
 For text, prefer a framed message: `05` + `01` + 4-byte big-endian byte length + UTF-8 bytes. A dApp can build it with `encodeTezosSignedMessage(text)` from `@tezos-x/octez.connect-utils`; a wallet can use the same function to recognise and display it. By convention the text starts with `Tezos Signed Message: `, followed by the dApp's domain, a timestamp and the message.
 
