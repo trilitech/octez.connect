@@ -27,7 +27,8 @@ import {
   getAddressFromPublicKey,
   isValidAddress,
   loadWalletLists,
-  prefixPublicKey
+  prefixPublicKey,
+  assertSignPayloadConsistent
 } from '@tezos-x/octez.connect-utils'
 import { bundledWalletRegistry as bundledTezosRegistry } from './data/bundled-wallet-registry'
 import { TezosMessageType } from './types/message-type'
@@ -106,6 +107,7 @@ export class TezosBlockchain implements Blockchain {
           ['signingType', data.signingType],
           ['payload', data.payload]
         ])
+        assertSignPayloadConsistent(data.signingType, data.payload)
 
         return
       case TezosMessageType.broadcast_request:

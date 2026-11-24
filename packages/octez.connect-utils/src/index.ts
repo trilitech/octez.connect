@@ -26,6 +26,12 @@ export {
   type KeyPair
 } from './utils/ed25519'
 export type { SessionKeys } from './utils/crypto'
+export {
+  assertSignPayloadConsistent,
+  SignPayloadConsistencyError,
+  type SignPayloadConsistencyReason,
+  type AssertSignPayloadOptions
+} from './utils/sign-payload'
 export { generateGUID } from './utils/generate-uuid'
 export { loadWalletLists, WalletLists } from './wallet-list-loader'
 export { fetchWalletListsFromGitHub, WalletRegistry } from './wallet-list-fetcher'

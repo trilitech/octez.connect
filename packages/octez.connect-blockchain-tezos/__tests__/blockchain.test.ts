@@ -186,9 +186,28 @@ describe('TezosBlockchain.validateRequest', () => {
     ['missing payload', { type: TezosMessageType.sign_payload_request, signingType: 'raw' }],
     ['missing signedTransaction', { type: TezosMessageType.broadcast_request, network: { type: NetworkType.MAINNET } }],
     ['missing contractAddress', { type: TezosMessageType.proof_of_event_challenge_request, payload: 'p' }],
-    ['unknown type', { type: 'teleport_request' }]
+    ['unknown type', { type: 'teleport_request' }],
+    ['raw payload starting with 03', { type: TezosMessageType.sign_payload_request, signingType: 'raw', payload: '03abcdef' }],
+    ['operation payload without 03', { type: TezosMessageType.sign_payload_request, signingType: 'operation', payload: '05abcdef' }],
+    ['operation payload not hex', { type: TezosMessageType.sign_payload_request, signingType: 'operation', payload: '03zz' }],
+    ['micheline payload without 05', { type: TezosMessageType.sign_payload_request, signingType: 'micheline', payload: '03abcdef' }],
+    ['unknown signing type', { type: TezosMessageType.sign_payload_request, signingType: 'sha256', payload: 'abcd' }]
   ])('rejects %s', async (_label, blockchainData) => {
     await expect(blockchain.validateRequest(request(blockchainData))).rejects.toThrow()
+  })
+
+  it.each([
+    ['operation + 03', 'operation', '03abcdef'],
+    ['micheline + 05', 'micheline', '050100'],
+    ['raw text', 'raw', 'hello'],
+    ['raw framed 05', 'raw', '05010000000568656c6c6f'],
+    ['raw watermark 01 (warned, not refused)', 'raw', '01abcdef']
+  ])('accepts sign_payload_request %s', async (_label, signingType, payload) => {
+    await expect(
+      blockchain.validateRequest(
+        request({ type: TezosMessageType.sign_payload_request, signingType, payload })
+      )
+    ).resolves.toBeUndefined()
   })
 
   it('passes permission requests through untouched', async () => {

@@ -10,13 +10,19 @@ import {
   usesWrappedMessages
 } from '@tezos-x/octez.connect-core'
 
-import { ExposedPromise, toHex } from '@tezos-x/octez.connect-utils'
+import {
+  ExposedPromise,
+  toHex,
+  assertSignPayloadConsistent,
+  SignPayloadConsistencyError
+} from '@tezos-x/octez.connect-utils'
 
 import {
   ConnectionContext,
   Origin,
   BeaconRequestMessage,
   BeaconMessageType,
+  BeaconErrorType,
   AcknowledgeResponseInput,
   ExtendedP2PPairingResponse,
   ExtendedPeerInfo,
@@ -181,6 +187,10 @@ export class WalletClient extends Client {
 
           await this.sendAcknowledgeResponse(typedMessage, connectionContext)
 
+          if (await this.refuseInconsistentSignRequest(typedMessage)) {
+            return
+          }
+
           await IncomingRequestInterceptor.intercept({
             message: typedMessage,
             connectionInfo: connectionContext,
@@ -209,6 +219,10 @@ export class WalletClient extends Client {
 
           if (typedMessage.version && typedMessage.version !== '1') {
             await this.sendAcknowledgeResponse(typedMessage, connectionContext)
+          }
+
+          if (await this.refuseInconsistentSignRequest(typedMessage)) {
+            return
           }
 
           await IncomingRequestInterceptor.intercept({
@@ -533,6 +547,64 @@ export class WalletClient extends Client {
       (permissionInfo) => permissionInfo.accountIdentifier
     )
     await this.permissionManager.removePermissions(permissionIdentifiersToRemove)
+  }
+
+  /**
+   * Checks that a sign_payload request carries a payload that matches its signing type.
+   * If it does not, the dApp is answered with a Beacon error and the request never reaches the
+   * wallet application's callback. Handles both the wrapped (v3+) and the flat (v2) dialect.
+   *
+   * @returns true if the request was refused (and answered)
+   */
+  private async refuseInconsistentSignRequest(
+    request: BeaconRequestMessage | BeaconMessageWrapper<BeaconBaseMessage>
+  ): Promise<boolean> {
+    let signing: { signingType?: unknown; payload?: unknown } | undefined
+
+    if (usesWrappedMessages(request.version)) {
+      const inner = (request as BeaconMessageWrapper<BeaconBaseMessage>).message as {
+        type?: string
+        blockchainIdentifier?: string
+        blockchainData?: { type?: string; signingType?: unknown; payload?: unknown }
+      }
+      if (
+        inner?.type === BeaconMessageType.BlockchainRequest &&
+        (inner.blockchainIdentifier === 'tezos' || inner.blockchainIdentifier === 'xtz') &&
+        inner.blockchainData?.type === 'sign_payload_request'
+      ) {
+        signing = inner.blockchainData
+      }
+    } else if ((request as BeaconRequestMessage).type === BeaconMessageType.SignPayloadRequest) {
+      signing = request as { signingType?: unknown; payload?: unknown }
+    }
+
+    if (!signing) {
+      return false
+    }
+
+    try {
+      assertSignPayloadConsistent(signing.signingType, signing.payload, {
+        onWarning: (warning) => logger.warn('refuseInconsistentSignRequest', warning)
+      })
+
+      return false
+    } catch (error) {
+      if (!(error instanceof SignPayloadConsistencyError)) {
+        throw error
+      }
+      logger.warn('refuseInconsistentSignRequest', error.reason, error.message)
+      await this.respond({
+        id: request.id,
+        type: BeaconMessageType.Error,
+        errorType:
+          error.reason === 'unsupported-signing-type'
+            ? BeaconErrorType.SIGNATURE_TYPE_NOT_SUPPORTED
+            : BeaconErrorType.PARAMETERS_INVALID_ERROR,
+        description: error.message
+      })
+
+      return true
+    }
   }
 
   /**

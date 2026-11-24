@@ -1,6 +1,6 @@
 // __tests__/DAppClient.test.ts
 import { DAppClient } from '../../src/dapp-client/DAppClient'
-import { BeaconErrorType, BeaconMessageType, NetworkType } from '@tezos-x/octez.connect-types'
+import { BeaconErrorType, BeaconMessageType, NetworkType, SigningType } from '@tezos-x/octez.connect-types'
 import { ExposedPromise } from '@tezos-x/octez.connect-utils'
 import { LocalStorage, DEFAULT_WALLETCONNECT_PROJECT_ID } from '@tezos-x/octez.connect-core'
 import { BeaconEvent } from '../../src/events'
@@ -824,5 +824,109 @@ describe('DAppClient — dropping transports', () => {
 
     expect(postMessage.disconnect).toHaveBeenCalledTimes(1)
     expect(client.postMessageTransport).toBeUndefined()
+  })
+})
+
+describe('DAppClient.requestSignPayload — payload/signing type consistency', () => {
+  const SENTINEL = new Error('reached transport')
+  let client: DAppClient
+  let sent: jest.Mock
+
+  beforeEach(() => {
+    client = new DAppClient({
+      name: 'SignApp',
+      storage: new LocalStorage(),
+      preferredNetwork: NetworkType.MAINNET
+    })
+    sent = jest.fn()
+    jest.spyOn(client, 'getActiveAccount').mockResolvedValue({ address: 'tz1src' } as any)
+    jest.spyOn(client as any, 'sendMetrics').mockResolvedValue(undefined)
+    jest.spyOn(client as any, 'buildPayload').mockResolvedValue({})
+    jest.spyOn(client as any, 'checkMakeRequest').mockImplementation(async () => {
+      throw SENTINEL
+    })
+    jest.spyOn(client as any, 'makeRequest').mockImplementation((req: any) => {
+      sent(req)
+      throw SENTINEL
+    })
+    jest.spyOn(client as any, 'makeRequestBC').mockImplementation((req: any) => {
+      sent(req)
+      throw SENTINEL
+    })
+  })
+
+  it('rejects RAW + 03 payload before any transport call', async () => {
+    await expect(
+      client.requestSignPayload({ signingType: SigningType.RAW, payload: '03abcdef' })
+    ).rejects.toThrow(/operation/)
+    expect((client as any).checkMakeRequest).not.toHaveBeenCalled()
+    expect(sent).not.toHaveBeenCalled()
+  })
+
+  it('rejects an unknown signing type instead of falling back to RAW', async () => {
+    await expect(
+      client.requestSignPayload({ signingType: 'sha256' as any, payload: 'hello' })
+    ).rejects.toThrow(/Unsupported signing type/)
+    expect((client as any).checkMakeRequest).not.toHaveBeenCalled()
+  })
+
+  it('rejects OPERATION without 03 and MICHELINE without 05', async () => {
+    await expect(
+      client.requestSignPayload({ signingType: SigningType.OPERATION, payload: '05ff' })
+    ).rejects.toThrow(/"03"/)
+    await expect(
+      client.requestSignPayload({ signingType: SigningType.MICHELINE, payload: '03ff' })
+    ).rejects.toThrow(/"05"/)
+    expect((client as any).checkMakeRequest).not.toHaveBeenCalled()
+  })
+
+  it('an omitted signing type still defaults to RAW and reaches the transport', async () => {
+    ;(client as any).checkMakeRequest.mockResolvedValue(true)
+    await expect(client.requestSignPayload({ payload: 'hello' } as any)).rejects.toBe(SENTINEL)
+    expect(sent).toHaveBeenCalledWith(
+      expect.objectContaining({ signingType: SigningType.RAW, payload: 'hello' })
+    )
+  })
+
+  it('passes OPERATION + 03 through to the transport', async () => {
+    ;(client as any).checkMakeRequest.mockResolvedValue(true)
+    await expect(
+      client.requestSignPayload({ signingType: SigningType.OPERATION, payload: '03abcdef' })
+    ).rejects.toBe(SENTINEL)
+    expect(sent).toHaveBeenCalledWith(
+      expect.objectContaining({ signingType: SigningType.OPERATION })
+    )
+  })
+
+  it('strips a 0x prefix from OPERATION and MICHELINE payloads before forwarding', async () => {
+    ;(client as any).checkMakeRequest.mockResolvedValue(true)
+    await expect(
+      client.requestSignPayload({ signingType: SigningType.OPERATION, payload: '0x03abcdef' })
+    ).rejects.toBe(SENTINEL)
+    await expect(
+      client.requestSignPayload({ signingType: SigningType.MICHELINE, payload: '0X050100' })
+    ).rejects.toBe(SENTINEL)
+    expect(sent).toHaveBeenNthCalledWith(1, expect.objectContaining({ payload: '03abcdef' }))
+    expect(sent).toHaveBeenNthCalledWith(2, expect.objectContaining({ payload: '050100' }))
+  })
+
+  it('forwards a RAW payload unchanged, including a 0x prefix', async () => {
+    ;(client as any).checkMakeRequest.mockResolvedValue(true)
+    await expect(
+      client.requestSignPayload({ signingType: SigningType.RAW, payload: '0xhello' })
+    ).rejects.toBe(SENTINEL)
+    expect(sent).toHaveBeenCalledWith(expect.objectContaining({ payload: '0xhello' }))
+  })
+
+  it.each([
+    ['trailing space', '03abcd '],
+    ['trailing newline', '03abcd\n'],
+    ['odd length', '03abc'],
+    ['non-hex tail', '03abcdzz']
+  ])('rejects RAW payload with %s that starts like an operation', async (_l, payload) => {
+    await expect(
+      client.requestSignPayload({ signingType: SigningType.RAW, payload })
+    ).rejects.toThrow(/operation/)
+    expect(sent).not.toHaveBeenCalled()
   })
 })
