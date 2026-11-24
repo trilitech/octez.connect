@@ -136,6 +136,27 @@ export class WalletClient extends Client {
         BeaconMessageType.ChangeAccountRequest
       ]
 
+      // The wrapped dialect is identified by its payload, not by the version
+      // alone: dApps on the 4.x line pair as version 3 but send `disconnect` as
+      // a flat message ({ id, version: '3', senderId, type }), so reading
+      // `.message.type` on it threw and the peer was never removed (#65).
+      // Only a disconnect is taken down the flat branch; any other
+      // payload-less message is dropped instead of throwing. In both cases
+      // `disconnect()` only removes a peer that is paired under that senderId.
+      const hasWrappedPayload = Boolean(
+        (message as BeaconMessageWrapper<BeaconBaseMessage>).message
+      )
+
+      if (usesWrappedMessages(message.version) && !hasWrappedPayload) {
+        const flat = message as DisconnectMessage
+
+        if (flat.type === BeaconMessageType.Disconnect) {
+          return this.disconnect(flat.senderId)
+        }
+
+        return
+      }
+
       if (usesWrappedMessages(message.version)) {
         const typedMessage = message as BeaconMessageWrapper<BeaconBaseMessage>
 

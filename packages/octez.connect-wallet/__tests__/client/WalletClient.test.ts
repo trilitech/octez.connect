@@ -254,4 +254,74 @@ describe('WalletClient', () => {
       expect(transportMock.addPeer).toHaveBeenCalledWith(extended, true)
     })
   })
+
+  describe('handleResponse() disconnect', () => {
+    const pairedPeer = { id: 'p1', senderId: 'paired-sender', version: '3' }
+    let removePeerSpy: jest.SpyInstance
+    let callback: jest.Mock
+
+    const handle = (message: any) =>
+      (client as any).handleResponse(message, { origin: 'p2p', id: 'x' })
+
+    beforeEach(async () => {
+      jest.spyOn(client as any, '_connect').mockResolvedValue(undefined)
+      jest.spyOn(client as any, 'transport', 'get').mockReturnValue(
+        Promise.resolve({ getPeers: jest.fn().mockResolvedValue([pairedPeer]) } as any)
+      )
+      removePeerSpy = jest.spyOn(client, 'removePeer').mockResolvedValue(undefined)
+      callback = jest.fn()
+      await client.connect(callback)
+    })
+
+    it('removes the paired peer on a flat disconnect labelled version 3 (4.x dApps)', async () => {
+      await handle({ id: 'm1', version: '3', senderId: 'paired-sender', type: 'disconnect' })
+
+      expect(removePeerSpy).toHaveBeenCalledTimes(1)
+      expect(removePeerSpy).toHaveBeenCalledWith(pairedPeer)
+    })
+
+    it('ignores a flat version 3 disconnect from an unknown sender', async () => {
+      await handle({ id: 'm1', version: '3', senderId: 'someone-else', type: 'disconnect' })
+
+      expect(removePeerSpy).not.toHaveBeenCalled()
+    })
+
+    it('does not throw on a payload-less version 3 message that is not a disconnect', async () => {
+      await expect(
+        handle({ id: 'm1', version: '3', senderId: 'paired-sender', type: 'permission_request' })
+      ).resolves.toBeUndefined()
+      await expect(handle({ id: 'm2', version: '3', senderId: 'paired-sender' })).resolves.toBeUndefined()
+
+      expect(removePeerSpy).not.toHaveBeenCalled()
+      expect(callback).not.toHaveBeenCalled()
+    })
+
+    it('still handles the wrapped version 3 disconnect', async () => {
+      await handle({
+        id: 'm1',
+        version: '3',
+        senderId: 'paired-sender',
+        message: { type: 'disconnect' }
+      })
+
+      expect(removePeerSpy).toHaveBeenCalledTimes(1)
+    })
+
+    it('ignores a wrapped version 3 disconnect from an unknown sender', async () => {
+      await handle({
+        id: 'm1',
+        version: '3',
+        senderId: 'someone-else',
+        message: { type: 'disconnect' }
+      })
+
+      expect(removePeerSpy).not.toHaveBeenCalled()
+    })
+
+    it('still handles the flat version 2 disconnect', async () => {
+      await handle({ id: 'm1', version: '2', senderId: 'paired-sender', type: 'disconnect' })
+
+      expect(removePeerSpy).toHaveBeenCalledTimes(1)
+    })
+  })
 })
