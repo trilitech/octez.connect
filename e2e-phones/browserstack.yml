@@ -1,0 +1,18 @@
+# Real phones for the nightly check (.github/workflows/real-phones.yml).
+# Credentials come from BROWSERSTACK_USERNAME / BROWSERSTACK_ACCESS_KEY.
+platforms:
+  - deviceName: iPhone 18 Pro
+    osVersion: '27'
+    browserName: safari
+  - deviceName: Google Pixel 11
+    osVersion: '17.0'
+    browserName: chrome
+parallelsPerPlatform: 1
+browserstackLocal: true
+projectName: octez.connect
+buildName: real-phones
+framework: playwright
+debug: false
+networkLogs: false
+consoleLogs: errors
+testObservability: false

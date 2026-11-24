@@ -95,3 +95,5 @@ packages/octez.connect-ui/src/ui/alert/wallet-lists.ts
 packages/octez.connect-ui/src/ui/alert/substrate-wallet-lists.ts
 packages/octez.connect-ui/src/ui/toast/toast-templates.ts
 ci-metrics
+e2e-phones/log/
+e2e-phones/browserstack.err
