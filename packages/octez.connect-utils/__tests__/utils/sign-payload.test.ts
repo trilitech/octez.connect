@@ -53,6 +53,15 @@ describe('assertSignPayloadConsistent', () => {
       expect(warn).toHaveBeenCalledTimes(2)
     })
 
+    it.each(['01abc', '01ab ', '0x02ab\n', '11abzz'])(
+      'raw watermark with lenient tail %j still warns',
+      (payload) => {
+        const warn = jest.fn()
+        assertSignPayloadConsistent(SigningType.RAW, payload, { onWarning: warn })
+        expect(warn).toHaveBeenCalledTimes(1)
+      }
+    )
+
     it('does not require a warning callback', () => {
       expect(() => assertSignPayloadConsistent(SigningType.RAW, '01ff')).not.toThrow()
     })
@@ -63,6 +72,11 @@ describe('assertSignPayloadConsistent', () => {
       ['raw 03', SigningType.RAW, '03abcdef'],
       ['raw 0x03', SigningType.RAW, '0x03abcdef'],
       ['raw uppercase 03', SigningType.RAW, '03ABCDEF'],
+      ['raw 03 trailing space', SigningType.RAW, '03abcd '],
+      ['raw 03 trailing newline', SigningType.RAW, '03abcd\n'],
+      ['raw 03 odd length', SigningType.RAW, '03abc'],
+      ['raw 03 non-hex tail', SigningType.RAW, '03abcdzz'],
+      ['raw 0x03 trailing space', SigningType.RAW, '0x03abcd '],
       ['operation without 03', SigningType.OPERATION, '05abcdef'],
       ['operation non-hex', SigningType.OPERATION, '03zz'],
       ['operation odd length', SigningType.OPERATION, '03abc'],
