@@ -186,12 +186,14 @@ export function toBeaconError(
   request: BeaconRequest,
   errorType: BeaconErrorType,
   _walletSenderId: string,
-  errorData?: unknown
+  errorData?: unknown,
+  description?: string
 ): unknown {
   return {
     id: request.id,
     type: BeaconMessageType.Error,
     errorType,
-    ...(errorData ? { errorData } : {})
+    ...(errorData ? { errorData } : {}),
+    ...(description ? { description } : {})
   }
 }

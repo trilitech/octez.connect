@@ -27,7 +27,14 @@ export function safeIconUrl(url: unknown): string | undefined {
   return undefined
 }
 
-export function renderApprovalModal(request: UIRequest, onApprove: ApproveHandler, onReject: RejectHandler): void {
+// Returns a promise that settles once the decoded view of an operation payload is ready (it
+// resolves immediately for every other request). The Approve button of an operation payload
+// stays disabled until the operation has been decoded.
+export function renderApprovalModal(
+  request: UIRequest,
+  onApprove: ApproveHandler,
+  onReject: RejectHandler
+): Promise<void> {
   // Remove existing modal if any
   hideApprovalModal()
 
@@ -42,6 +49,7 @@ export function renderApprovalModal(request: UIRequest, onApprove: ApproveHandle
   modalElement.className = 'w-[360px] bg-gray-900 flex flex-col'
 
   const content = getModalContent(request)
+  const mustDecode = request.type === 'sign' && request.signingType === 'operation'
 
   modalElement.innerHTML = `
     <!-- Header -->
@@ -70,7 +78,8 @@ export function renderApprovalModal(request: UIRequest, onApprove: ApproveHandle
       </button>
       <button
         id="btn-approve"
-        class="flex-1 py-2 px-4 bg-green-600 hover:bg-green-700 rounded-md font-medium transition"
+        class="flex-1 py-2 px-4 bg-green-600 hover:bg-green-700 rounded-md font-medium transition disabled:opacity-50 disabled:cursor-not-allowed"
+        ${mustDecode ? 'disabled' : ''}
       >
         Approve
       </button>
@@ -80,6 +89,7 @@ export function renderApprovalModal(request: UIRequest, onApprove: ApproveHandle
   // Event handlers
   modalElement.querySelector('#btn-approve')?.addEventListener('click', async () => {
     const btn = modalElement?.querySelector('#btn-approve') as HTMLButtonElement
+    if (btn.disabled) return
     btn.disabled = true
     btn.textContent = 'Processing...'
 
@@ -99,8 +109,10 @@ export function renderApprovalModal(request: UIRequest, onApprove: ApproveHandle
   document.body.appendChild(modalElement)
 
   if (request.type === 'sign' && request.signingType === 'operation') {
-    void showDecodedOperation(modalElement, request.payload)
+    return showDecodedOperation(modalElement, request.payload)
   }
+
+  return Promise.resolve()
 }
 
 export function hideApprovalModal(): void {
@@ -173,9 +185,24 @@ function getPermissionContent(request: UIPermissionRequest): string {
   `
 }
 
+const RAW_WATERMARK_REGEX = /^(?:0x)?(01|02|11|12|13)[0-9a-fA-F]{2}/i
+
 function getSignContent(request: UISignRequest): string {
   const truncatedPayload = request.payload.length > 200 ? request.payload.slice(0, 200) + '...' : request.payload
   const isOperation = request.signingType === 'operation'
+  const watermark = request.signingType === 'raw' ? RAW_WATERMARK_REGEX.exec(request.payload) : null
+
+  // Consensus operations and blocks carry these first bytes. A raw payload that starts like one
+  // is not a message: signing it could sign a consensus operation or a block.
+  const watermarkWarning = watermark
+    ? `
+      <div id="raw-watermark-warning" class="bg-red-900/30 border border-red-600 rounded p-3">
+        <p class="text-xs text-red-300 font-semibold">
+          This raw payload starts with the byte ${escapeHtml(watermark[1])}, which Tezos uses to
+          mark consensus operations and blocks. Do not approve it unless you know exactly what it is.
+        </p>
+      </div>`
+    : ''
 
   const operationWarning = isOperation
     ? `
@@ -196,6 +223,7 @@ function getSignContent(request: UISignRequest): string {
   return `
     <div class="space-y-3">
       ${operationWarning}
+      ${watermarkWarning}
       <div>
         <span class="text-xs text-gray-400">Signing Type</span>
         <div class="mt-1 px-3 py-2 bg-gray-700 rounded text-sm">${escapeHtml(request.signingType)}</div>
@@ -220,7 +248,11 @@ interface DecodedContent {
   source?: unknown
   destination?: unknown
   amount?: unknown
+  fee?: unknown
+  gas_limit?: unknown
+  storage_limit?: unknown
   delegate?: unknown
+  parameters?: { entrypoint?: unknown } | null
 }
 
 function formatMutez(amount: unknown): string {
@@ -230,28 +262,43 @@ function formatMutez(amount: unknown): string {
   return `${Number(text) / 1_000_000} XTZ (${text} mutez)`
 }
 
+const KNOWN_KINDS = ['transaction', 'delegation', 'reveal', 'origination']
+
 function renderDecodedContent(content: DecodedContent): string {
   let details = `<div class="font-medium capitalize">${escapeHtml(content.kind)}</div>`
-  if (content.source !== undefined) {
-    details += `<div class="text-xs text-gray-400 break-all">Source: ${escapeHtml(content.source)}</div>`
+  const line = (label: string, value: string) =>
+    `<div class="text-xs text-gray-400 break-all">${label}: ${escapeHtml(value)}</div>`
+
+  // Fields of a kind that is not known are not summarised: the full JSON below shows all of them.
+  if (typeof content.kind === 'string' && KNOWN_KINDS.includes(content.kind)) {
+    if (content.source !== undefined) details += line('Source', String(content.source))
+    if (content.destination !== undefined) details += line('Destination', String(content.destination))
+    if (content.amount !== undefined) details += line('Amount', formatMutez(content.amount))
+    if (content.fee !== undefined) details += line('Fee', formatMutez(content.fee))
+    if (content.gas_limit !== undefined) details += line('Gas limit', String(content.gas_limit))
+    if (content.storage_limit !== undefined) {
+      details += line('Storage limit', String(content.storage_limit))
+    }
+    if (content.delegate !== undefined) details += line('Delegate', String(content.delegate))
+    if (content.parameters && content.parameters.entrypoint !== undefined) {
+      details += line('Entrypoint', String(content.parameters.entrypoint))
+    }
+  } else {
+    details += `<div class="text-xs text-yellow-300">Unknown operation kind. All fields are shown below.</div>`
   }
-  if (content.destination !== undefined) {
-    details += `<div class="text-xs text-gray-400 break-all">Destination: ${escapeHtml(content.destination)}</div>`
-  }
-  if (content.amount !== undefined) {
-    details += `<div class="text-xs text-gray-400">Amount: ${escapeHtml(formatMutez(content.amount))}</div>`
-  }
-  if (content.delegate !== undefined) {
-    details += `<div class="text-xs text-gray-400 break-all">Delegate: ${escapeHtml(content.delegate)}</div>`
-  }
+
+  // The complete decoded operation, so that nothing the summary leaves out can stay hidden.
+  details += `<pre class="mt-2 p-2 bg-gray-900 border border-gray-700 rounded font-mono text-xs whitespace-pre-wrap break-all max-h-40 overflow-y-auto">${escapeHtml(JSON.stringify(content, null, 2))}</pre>`
 
   return `<div class="px-3 py-2 bg-gray-700 rounded">${details}</div>`
 }
 
 // Decodes the bytes the user is about to sign with the octez.js local forger, so that the
-// prompt shows the operation and not only the hex.
+// prompt shows the operation and not only the hex. The Approve button is enabled only when the
+// operation was decoded; while decoding, and when it fails, it stays disabled.
 async function showDecodedOperation(root: HTMLElement, payload: string): Promise<void> {
   const target = root.querySelector('#decoded-operation')
+  const approve = root.querySelector('#btn-approve') as HTMLButtonElement | null
   if (!target) return
 
   try {
@@ -259,12 +306,17 @@ async function showDecodedOperation(root: HTMLElement, payload: string): Promise
     // Drop the "03" watermark: the forger parses the bare forged operation.
     const parsed = await localForger.parse(hex.slice(2))
     const contents = (parsed.contents ?? []) as DecodedContent[]
-    target.innerHTML = contents.length
-      ? contents.map(renderDecodedContent).join('')
-      : '<div class="px-3 py-2 bg-gray-700 rounded text-xs text-yellow-300">The operation contains no contents.</div>'
+    if (!contents.length) {
+      target.innerHTML =
+        '<div class="px-3 py-2 bg-gray-700 rounded text-xs text-red-300">The operation contains no contents. It cannot be approved.</div>'
+
+      return
+    }
+    target.innerHTML = contents.map(renderDecodedContent).join('')
+    if (approve) approve.disabled = false
   } catch {
     target.innerHTML =
-      '<div class="px-3 py-2 bg-gray-700 rounded text-xs text-red-300">This operation could not be decoded. Do not approve it unless you know what it does.</div>'
+      '<div class="px-3 py-2 bg-gray-700 rounded text-xs text-red-300">This operation could not be decoded, so it cannot be approved.</div>'
   }
 }
 
