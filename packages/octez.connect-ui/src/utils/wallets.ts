@@ -61,11 +61,19 @@ function setWallet(newWallet: MergedWallet, wallet: Wallet) {
       choice = OSLink.DESKTOP
   }
 
-  newWallet.links[choice] = wallet.type === 'ios' ? wallet.deepLink ?? wallet.link : wallet.link
+  newWallet.links[choice] = wallet.type === 'ios' ? (wallet.deepLink ?? wallet.link) : wallet.link
 }
 
+// Default top slots when a dApp passes no featuredWallets. Each id must match the
+// start of a key in the wallet list (checked in __tests__/utils/wallets.test.ts).
+export const DEFAULT_FEATURED_WALLETS = ['kukai', 'temple', 'umami', 'airgap']
+
 export function arrangeTopWallets(arr: MergedWallet[], walletIds: string[]): MergedWallet[] {
-  const idsToMoveToFront = walletIds.slice(0, 4)
+  // Skip featured ids that match no wallet, so the next featured wallet moves up
+  // instead of an unrelated one filling the slot.
+  const idsToMoveToFront = walletIds
+    .filter((id) => arr.some((item) => item.key.startsWith(id)))
+    .slice(0, 4)
   const itemsToMoveToFront = []
   const itemsToSortByName = []
 
@@ -96,7 +104,7 @@ export function arrangeTopWallets(arr: MergedWallet[], walletIds: string[]): Mer
     }
   })
 
-  return [...itemsToMoveToFront, ...itemsToSortByName]
+  return [...itemsToMoveToFront.filter(Boolean), ...itemsToSortByName]
 }
 
 export function mergeWallets(wallets: Wallet[]): MergedWallet[] {
