@@ -190,9 +190,9 @@ export abstract class Transport<
     connectionInfo: ConnectionContext
   ): Promise<void> {
     if (this.listeners.length === 0) {
-      logger.warn('notifyListeners', '0 listeners notified!', this)
+      logger.warn('notifyListeners', '0 listeners notified!')
     } else {
-      logger.log('notifyListeners', `Notifying ${this.listeners.length} listeners`, this)
+      logger.log('notifyListeners', `Notifying ${this.listeners.length} listeners`)
     }
 
     this.listeners.forEach((listener) => {

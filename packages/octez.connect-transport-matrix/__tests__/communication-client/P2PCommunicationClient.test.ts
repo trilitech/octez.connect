@@ -85,6 +85,28 @@ describe('P2PCommunicationClient', () => {
       .mockResolvedValue({ server: 'relay.server', timestamp: 1234 })
   })
 
+  describe('generateNewKeyPair (relay deactivated the user)', () => {
+    it('stores the new seed but never logs it', async () => {
+      ;(generateGUID as jest.Mock).mockResolvedValue('new-secret-seed')
+      const spies = (['log', 'warn', 'debug', 'error', 'info'] as const).map((m) =>
+        jest.spyOn(console, m).mockImplementation(() => undefined)
+      )
+
+      await (client as any).generateNewKeyPair()
+
+      expect(mockStorage.set).toHaveBeenCalledWith(
+        StorageKey.BEACON_SDK_SECRET_SEED,
+        'new-secret-seed'
+      )
+      const logged = spies
+        .flatMap((s) => s.mock.calls)
+        .flat()
+        .map(String)
+      spies.forEach((s) => s.mockRestore())
+      expect(logged.some((line) => line.includes('new-secret-seed'))).toBe(false)
+    })
+  })
+
   describe('getPairingRequestInfo', () => {
     it('builds a P2PPairingRequest with id, name, publicKey, version & relayServer', async () => {
       const req = await client.getPairingRequestInfo()

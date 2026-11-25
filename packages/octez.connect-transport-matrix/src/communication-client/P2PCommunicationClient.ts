@@ -1023,7 +1023,9 @@ export class P2PCommunicationClient extends CommunicationClient {
   private async generateNewKeyPair() {
     const newSeed = await generateGUID()
 
-    console.warn(`The current user ID has been deactivated. Generating new ID: ${newSeed}`)
+    // Shown to all users, not only in debug mode, so never include the seed (it is secret).
+    // eslint-disable-next-line no-console
+    console.warn('The current user ID has been deactivated. Generating a new ID.')
 
     this.storage.set(StorageKey.BEACON_SDK_SECRET_SEED, newSeed)
 
