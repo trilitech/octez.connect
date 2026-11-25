@@ -1,7 +1,19 @@
 import { useEffect, useMemo, useState } from 'react'
 import { PostMessageTransport } from '@tezos-x/octez.connect-transport-postmessage'
-import { arrangeTopWallets, mergeWallets, parseWallets } from '../../../utils/wallets'
-import { Extension, NetworkType, ExtensionApp, DesktopApp, App, WebApp } from '@tezos-x/octez.connect-types'
+import {
+  arrangeTopWallets,
+  DEFAULT_FEATURED_WALLETS,
+  mergeWallets,
+  parseWallets
+} from '../../../utils/wallets'
+import {
+  Extension,
+  NetworkType,
+  ExtensionApp,
+  DesktopApp,
+  App,
+  WebApp
+} from '@tezos-x/octez.connect-types'
 import { windowRef } from '@tezos-x/octez.connect-core'
 import { fetchWalletListsFromGitHub } from '@tezos-x/octez.connect-utils'
 import bundledTezosRegistry from '../../../data/tezos.json'
@@ -33,8 +45,12 @@ const useWallets = (
   }, [blockchain])
 
   // Start with bundled wallet lists (instant display)
-  const [desktopList, setDesktopList] = useState<DesktopApp[]>(bundledRegistry.desktopList as DesktopApp[])
-  const [extensionList, setExtensionList] = useState<ExtensionApp[]>(bundledRegistry.extensionList as ExtensionApp[])
+  const [desktopList, setDesktopList] = useState<DesktopApp[]>(
+    bundledRegistry.desktopList as DesktopApp[]
+  )
+  const [extensionList, setExtensionList] = useState<ExtensionApp[]>(
+    bundledRegistry.extensionList as ExtensionApp[]
+  )
   const [iOSList, setIOSList] = useState<App[]>(bundledRegistry.iOSList as App[])
   const [webList, setWebList] = useState<WebApp[]>(bundledRegistry.webList as WebApp[])
 
@@ -159,7 +175,9 @@ const useWallets = (
       // For deprecated extension wallets, only keep if actually installed
       // (extensions can be auto-detected)
       if (wallet.types.includes('extension')) {
-        return availableExtensions.some((ext) => ext.id === wallet.id || ext.id === wallet.firefoxId)
+        return availableExtensions.some(
+          (ext) => ext.id === wallet.id || ext.id === wallet.firefoxId
+        )
       }
 
       // For deprecated desktop/iOS/web wallets, keep them in the list
@@ -167,11 +185,16 @@ const useWallets = (
       return true
     })
 
-    return arrangeTopWallets(
-      filteredWallets,
-      featuredWallets ?? ['kukai', 'temple', 'plenty', 'umami']
-    )
-  }, [desktopList, extensionList, iOSList, webList, availableExtensions, networkType, featuredWallets])
+    return arrangeTopWallets(filteredWallets, featuredWallets ?? DEFAULT_FEATURED_WALLETS)
+  }, [
+    desktopList,
+    extensionList,
+    iOSList,
+    webList,
+    availableExtensions,
+    networkType,
+    featuredWallets
+  ])
 
   // Memoize the final Map structure.
   // Guard against falsy / id-less entries: building a Map from a list that can
