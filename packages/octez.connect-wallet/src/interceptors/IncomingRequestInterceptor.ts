@@ -171,8 +171,15 @@ export class IncomingRequestInterceptor {
       case BeaconMessageType.BlockchainRequest:
         {
           const blockchainRequest = v3Message
-          const payloadType = (blockchainRequest.blockchainData as { type?: string }).type
-          const flatType = payloadType ? TEZOS_PAYLOAD_TO_FLAT_TYPE[payloadType] : undefined
+          const payloadType = (blockchainRequest.blockchainData as { type?: unknown } | undefined)
+            ?.type
+          // Own keys of string types only: a plain lookup would also resolve
+          // non-string keys (coerced) and inherited names like 'toString'.
+          const flatType =
+            typeof payloadType === 'string' &&
+            Object.prototype.hasOwnProperty.call(TEZOS_PAYLOAD_TO_FLAT_TYPE, payloadType)
+              ? TEZOS_PAYLOAD_TO_FLAT_TYPE[payloadType]
+              : undefined
 
           if (isTezos && flatType) {
             const appMetadata: AppMetadata = await IncomingRequestInterceptor.getAppMetadata(

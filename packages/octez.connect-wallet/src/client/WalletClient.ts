@@ -565,14 +565,29 @@ export class WalletClient extends Client {
       const inner = (request as BeaconMessageWrapper<BeaconBaseMessage>).message as {
         type?: string
         blockchainIdentifier?: string
-        blockchainData?: { type?: string; signingType?: unknown; payload?: unknown }
+        blockchainData?: { type?: unknown; signingType?: unknown; payload?: unknown }
       }
       if (
         inner?.type === BeaconMessageType.BlockchainRequest &&
-        (inner.blockchainIdentifier === 'tezos' || inner.blockchainIdentifier === 'xtz') &&
-        inner.blockchainData?.type === 'sign_payload_request'
+        (inner.blockchainIdentifier === 'tezos' || inner.blockchainIdentifier === 'xtz')
       ) {
-        signing = inner.blockchainData
+        // The interceptor maps this discriminator to the flat request type, so
+        // it must be a plain string here: anything else could be coerced by the
+        // lookup into a request this check never looked at.
+        if (typeof inner.blockchainData?.type !== 'string') {
+          logger.warn('refuseInconsistentSignRequest', 'non-string blockchainData.type')
+          await this.respond({
+            id: request.id,
+            type: BeaconMessageType.Error,
+            errorType: BeaconErrorType.PARAMETERS_INVALID_ERROR,
+            description: 'blockchainData.type must be a string'
+          })
+
+          return true
+        }
+        if (inner.blockchainData.type === 'sign_payload_request') {
+          signing = inner.blockchainData
+        }
       }
     } else if ((request as BeaconRequestMessage).type === BeaconMessageType.SignPayloadRequest) {
       signing = request as { signingType?: unknown; payload?: unknown }
