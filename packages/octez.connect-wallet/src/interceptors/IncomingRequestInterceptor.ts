@@ -151,13 +151,15 @@ export class IncomingRequestInterceptor {
             // network, networks?, scopes} — exactly the pre-fork shape.
             const payload = { ...(v3Message.blockchainData as Record<string, unknown>) }
             delete payload.appMetadata
+            // Envelope fields come after the spread: the dApp-supplied
+            // blockchainData must not be able to replace them.
             const request = {
+              ...payload,
               type: BeaconMessageType.PermissionRequest,
               id: wrappedMessage.id,
               version: wrappedMessage.version,
               senderId: wrappedMessage.senderId,
-              appMetadata,
-              ...payload
+              appMetadata
             } as unknown as BeaconRequestOutputMessage
             interceptorCallback(request, connectionInfo)
           } else {
@@ -190,12 +192,12 @@ export class IncomingRequestInterceptor {
             delete payload.type
             delete payload.scope
             const request = {
+              ...payload,
               type: flatType,
               id: wrappedMessage.id,
               version: wrappedMessage.version,
               senderId: wrappedMessage.senderId,
-              appMetadata,
-              ...payload
+              appMetadata
             } as unknown as BeaconRequestOutputMessage
             interceptorCallback(request, connectionInfo)
           } else {
