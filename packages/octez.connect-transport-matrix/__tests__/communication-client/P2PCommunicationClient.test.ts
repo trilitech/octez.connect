@@ -85,6 +85,33 @@ describe('P2PCommunicationClient', () => {
       .mockResolvedValue({ server: 'relay.server', timestamp: 1234 })
   })
 
+  // Deep search, so a seed nested inside a logged object is caught too (same as Transport.test.ts).
+  const contains = (value: unknown, needle: string, seen = new Set<unknown>()): boolean => {
+    if (typeof value === 'string') return value.includes(needle)
+    if (!value || typeof value !== 'object' || seen.has(value)) return false
+    seen.add(value)
+    return Object.values(value).some((v) => contains(v, needle, seen))
+  }
+
+  describe('generateNewKeyPair (relay deactivated the user)', () => {
+    it('stores the new seed but never logs it', async () => {
+      ;(generateGUID as jest.Mock).mockResolvedValue('new-secret-seed')
+      const spies = (['log', 'warn', 'debug', 'error', 'info'] as const).map((m) =>
+        jest.spyOn(console, m).mockImplementation(() => undefined)
+      )
+
+      await (client as any).generateNewKeyPair()
+
+      expect(mockStorage.set).toHaveBeenCalledWith(
+        StorageKey.BEACON_SDK_SECRET_SEED,
+        'new-secret-seed'
+      )
+      const logged = spies.flatMap((s) => s.mock.calls)
+      spies.forEach((s) => s.mockRestore())
+      expect(logged.some((args) => contains(args, 'new-secret-seed'))).toBe(false)
+    })
+  })
+
   describe('getPairingRequestInfo', () => {
     it('builds a P2PPairingRequest with id, name, publicKey, version & relayServer', async () => {
       const req = await client.getPairingRequestInfo()
