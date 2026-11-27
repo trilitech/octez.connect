@@ -1,6 +1,6 @@
 {
   "name": "@tezos-x/octez.connect-utils",
-  "version": "5.0.6-rc.0",
+  "version": "5.0.6-rc.1",
   "description": "This package contains utility functions that are used throughout the octez.connect-sdk",
   "author": "Blockchain Infra <blockchain.infra@trili.tech>",
   "homepage": "https://octez-connect.tezos.com",
@@ -40,7 +40,7 @@
     "@stablelib/nacl": "^2.0.1",
     "@stablelib/random": "^2.0.1",
     "@stablelib/utf8": "^2.1.0",
-    "@tezos-x/octez.connect-types": "5.0.6-rc.0",
+    "@tezos-x/octez.connect-types": "5.0.6-rc.1",
     "bs58check": "4.0.0"
   }
 }
